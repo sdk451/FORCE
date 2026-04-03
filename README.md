@@ -94,6 +94,8 @@ Each target is a boolean under **`targets`** in answers. **At least one** must b
 
 Any **`--answers`** file is parsed as JSON, then validated against **`packages/forge-vibe-cli/schemas/install-answers.partial.schema.json`**. Invalid JSON, non-object roots, unknown properties, invalid **`stack`** (only **`typescript`** | **`python`**), or invalid skill ids are **rejected with a clear error** before merge.
 
+**`context_advanced`:** defaults are all **`true`**; set keys to **`false`** to omit those sections from **AGENTS.md** and the matching advanced rule files for enabled hosts.
+
 Example:
 
 ```json

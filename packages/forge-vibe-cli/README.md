@@ -10,7 +10,7 @@ From your repository root (terminal with TTY):
 npx forge-vibe install
 ```
 
-You’ll get checkbox prompts for targets, core sections, optional skills, and packs; then files are written under the current directory (or `--project-root`).
+You’ll get checkbox prompts for targets, core sections, optional skills, and packs; then files are written under the current directory (or `--project-root`). If something like **AGENTS.md** already exists and does not match the new output, you are asked before overwriting (use **`--force`** to skip that prompt).
 
 ### Global CLI
 
@@ -28,8 +28,8 @@ forge-vibe write --answers answers.json --project-root .
 
 ## Commands
 
-- **`install`** — Interactive only; same output as `write` after prompts. Optional: `--project-root`, `--dry-run`, `--force`.
-- **`write`** — Scripting / CI: `--answers`, `--yes`, `--dry-run`, `--force`.
+- **`install`** — Interactive only; same output as `write` after prompts. Optional: `--project-root`, `--dry-run`, `--force` (overwrites differing files without confirmation).
+- **`write`** — Scripting / CI: `--answers`, `--yes`, `--dry-run`, `--force`. Interactive `write` (no `--answers` / `--yes`) also prompts before overwriting files that differ.
 - **`load`**, **`check`**, **`resolve-defaults`** — Inspect or verify planned files.
 
 Run **`forge-vibe --help`** for the full list.

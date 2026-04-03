@@ -8,6 +8,7 @@ import type { InstallAnswers } from "./types.js";
 import { activeAdapterIds, defaultAnswers } from "./types.js";
 import { buildPlannedFiles } from "./plan.js";
 import { checkFiles } from "./check.js";
+import { promptOverwriteExistingDiffs } from "./interactive/prompt-overwrite.js";
 import { writePlannedFiles } from "./write-files.js";
 import type { ContextAdvancedMap, ContextCoreMap } from "./context-config.js";
 import {
@@ -30,11 +31,14 @@ Primary flow (interactive TUI, like BMAD npx installers):
   install [--project-root <dir>] [--dry-run] [--force]
       Run checkbox prompts, then write AGENTS.md, host rules/skills, and docs under the
       project root. Default project root is the current working directory (your repo root).
-      Does not accept --answers or --yes (use write for automation).
+      If files already differ from the planned output, you are prompted before overwriting
+      (unless --force). Does not accept --answers or --yes (use write for automation).
 
 Other commands:
   write [--project-root <dir>] [--answers <file>] [--dry-run] [--force] [--yes]
       Non-interactive or scripted install; same file layout as install.
+      Interactive write (no --answers / --yes) prompts before overwriting differing files
+      unless --force.
   load [--json] [--answers <file>]     Resolved manifest + planned paths (JSON)
   check [--project-root <dir>] [--answers <file>]
   resolve-defaults [--answers <file>]  Merge partial answers with defaults (stdout JSON)
@@ -44,7 +48,7 @@ Options:
   --answers <file>       JSON partial/full answers; validated against the pack schema (not install)
   --json                 load: single-line JSON (no indentation); default load is pretty-printed
   --dry-run              install/write: print actions only
-  --force                install/write: overwrite differing files
+  --force                install/write: overwrite differing files without prompting
   --yes                  write: non-interactive (use defaultAnswers when no --answers)
 
 Environment:
@@ -265,6 +269,7 @@ async function main(): Promise<void> {
   });
 
   const root = path.resolve(values["project-root"] ?? process.cwd());
+  const ranInteractiveTui = cmd === "install" || (cmd === "write" && !values.answers && !values.yes);
 
   if (cmd === "install") {
     if (values.answers) {
@@ -288,8 +293,7 @@ async function main(): Promise<void> {
 
   let answers: InstallAnswers;
   try {
-    const useInteractiveTui = cmd === "install" || (cmd === "write" && !values.answers && !values.yes);
-    if (useInteractiveTui) {
+    if (ranInteractiveTui) {
       if (cmd === "install") {
         console.error(
           `forge-vibe install → project root: ${root}\n(AGENTS.md, host rules/skills, and docs are written with paths relative to this directory.)\n`,
@@ -366,10 +370,23 @@ async function main(): Promise<void> {
     const { files } = await buildPlannedFiles(answers);
     const verb = cmd === "install" ? "install" : "write";
     const prog = makeStderrProgress(verb, files.length);
+    let forceWrite = values.force;
+    if (!values["dry-run"] && !forceWrite && ranInteractiveTui && process.stdin.isTTY && process.stdout.isTTY) {
+      const checkResults = await checkFiles(root, files);
+      const diffPaths = checkResults.filter((r) => r.status === "diff").map((r) => r.path);
+      if (diffPaths.length > 0) {
+        const ok = await promptOverwriteExistingDiffs({ diffPaths });
+        if (!ok) {
+          console.error("Aborted — existing files were left unchanged.");
+          process.exit(0);
+        }
+        forceWrite = true;
+      }
+    }
     try {
       const results = await writePlannedFiles(root, files, {
         dryRun: values["dry-run"],
-        force: values.force,
+        force: forceWrite,
         onProgress: (p) => prog(p.current, p.path),
       });
       for (const r of results) {
