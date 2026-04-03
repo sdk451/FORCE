@@ -1,0 +1,18 @@
+id: forge-mvp-core
+version: "0.1.0"
+description: Core canonical slices for forge-vibe-code-enhancement MVP
+canonical_slices:
+  - portable_root
+  - modular_rules
+  - lifecycle_automation_optional
+  - project_memory_optional
+optional_packs:
+  - id: ui_ux_workflow
+    description: Figma MCP, Storybook, Playwright, shadcn-oriented guidance (FR36–FR41)
+reserved_pack_ids:
+  - quality_verification_layer
+directories:
+  - .claude/rules
+  - .cursor/rules
+  - .claude/skills/visual-verify
+  - docs

@@ -1,0 +1,16 @@
+{
+  "name": "forge-vibe-code-enhancement",
+  "private": true,
+  "description": "Versioned agent context packs + BMAD-style CLI (packages/forge-vibe-cli)",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build -w forge-vibe-cli",
+    "test": "npm run test -w forge-vibe-cli",
+    "forge-vibe": "node ./packages/forge-vibe-cli/dist/cli.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

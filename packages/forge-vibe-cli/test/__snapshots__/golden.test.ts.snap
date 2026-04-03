@@ -1,0 +1,19 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`buildPlannedFiles > emits stable path set for default MVP answers 1`] = `
+[
+  ".claude/rules/forge-core.md",
+  ".claude/rules/forge-stack.md",
+  ".claude/settings.json",
+  ".claude/skills/visual-verify/SKILL.md",
+  ".cursor/rules/forge-core.mdc",
+  ".cursor/rules/forge-memory.mdc",
+  ".cursor/rules/forge-stack.mdc",
+  "AGENTS.md",
+  "CLAUDE.md",
+  "PROJECT_MEMORY.md",
+  "docs/FORGE-COMPATIBILITY-MATRIX.md",
+  "docs/FORGE-MERGE-GUIDE.md",
+  "docs/FORGE-OMX-COMPANION.md",
+]
+`;

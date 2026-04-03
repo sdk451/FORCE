@@ -1,2 +1,6 @@
 _bmad/
 .cursor/
+node_modules/
+dist/
+*.tsbuildinfo
+coverage/
