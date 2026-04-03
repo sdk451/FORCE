@@ -1,10 +1,10 @@
 ---
-description: Forge core conventions for {{PROJECT_NAME}}
+description: Forge — align with AGENTS.md for {{PROJECT_NAME}}
 globs: "**/*"
-alwaysApply: false
+alwaysApply: true
 ---
 
 # Core
 
-- Align with **AGENTS.md** and **CLAUDE.md** for shared rules.
-- Prefer root-cause fixes; keep session summaries detailed for decisions.
+- **Portable truth:** root **AGENTS.md**. Keep **.mdc** rules consistent with it.
+- **Stack:** {{STACK}} — see **forge-stack.mdc**.

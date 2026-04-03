@@ -9,7 +9,15 @@ import { activeAdapterIds, defaultAnswers } from "./types.js";
 import { buildPlannedFiles } from "./plan.js";
 import { checkFiles } from "./check.js";
 import { writePlannedFiles } from "./write-files.js";
-import { assertAtLeastOneAgent } from "./validate-targets.js";
+import type { ContextAdvancedMap, ContextCoreMap } from "./context-config.js";
+import {
+  CONTEXT_ADVANCED_TUI,
+  CONTEXT_CORE_TUI,
+  defaultContextAdvanced,
+  defaultContextCore,
+  OPTIONAL_SKILL_TUI,
+} from "./context-config.js";
+import { assertAtLeastOneAgent, assertAtLeastOneCoreSection } from "./validate-targets.js";
 import { promptCheckbox, promptLine } from "./interactive/checkbox-prompt.js";
 
 function printHelp(): void {
@@ -36,6 +44,10 @@ Answers JSON — targets (optional; at least one agent required):
   targets.claude_code, targets.cursor (default true)
   targets.cline, targets.gemini_cli, targets.openai_codex,
   targets.github_copilot, targets.kimi_code (default false)
+
+context_core — AGENTS.md §1.1 sections (default all true); at least one required.
+context_advanced — optional §1.2 sections (default all false).
+optional_skills — array of skill ids (see canonical-agents-md-research Part 2).
 `);
 }
 
@@ -97,9 +109,47 @@ async function promptInteractive(): Promise<InstallAnswers> {
     ],
   });
 
+  const coreMap = await promptCheckbox({
+    title: "Core AGENTS.md sections (§1.1)",
+    subtitle:
+      "Research-backed portable context. All on by default — turn off sections you want minimal. At least one required.",
+    minSelected: 1,
+    minSelectedMessage: "Keep at least one core section enabled.",
+    items: CONTEXT_CORE_TUI.map((row) => ({
+      id: row.id,
+      label: row.label,
+      hint: row.hint,
+      checked: defaultContextCore[row.id],
+    })),
+  });
+
+  const advMap = await promptCheckbox({
+    title: "Advanced context (§1.2 — optional add-ons)",
+    subtitle: "Security, behavior, compaction, UI workflow text, debugging, forbidden patterns.",
+    minSelected: 0,
+    items: CONTEXT_ADVANCED_TUI.map((row) => ({
+      id: row.id,
+      label: row.label,
+      hint: row.hint,
+      checked: defaultContextAdvanced[row.id],
+    })),
+  });
+
+  const skillMap = await promptCheckbox({
+    title: "Optional skill bundles (top-10 shortlist)",
+    subtitle: "Forge emits stub SKILL.md per selection (extend or replace with upstream skills). None required.",
+    minSelected: 0,
+    items: OPTIONAL_SKILL_TUI.map((row) => ({
+      id: row.id,
+      label: row.label,
+      hint: row.hint,
+      checked: false,
+    })),
+  });
+
   const optMap = await promptCheckbox({
-    title: "Optional packs & settings",
-    subtitle: "Space toggles each line; Enter continues.",
+    title: "Hooks & optional packs",
+    subtitle: "UI workflow doc, memory file, Claude hooks (high risk).",
     minSelected: 0,
     items: [
       {
@@ -123,9 +173,18 @@ async function promptInteractive(): Promise<InstallAnswers> {
     ],
   });
 
+  const optional_skills = OPTIONAL_SKILL_TUI.map((row) => row.id).filter((id) => skillMap.get(id) === true);
+
   return resolveDefaults({
     project_name,
     stack,
+    context_core: Object.fromEntries(
+      CONTEXT_CORE_TUI.map((row) => [row.id, coreMap.get(row.id) ?? false]),
+    ) as ContextCoreMap,
+    context_advanced: Object.fromEntries(
+      CONTEXT_ADVANCED_TUI.map((row) => [row.id, advMap.get(row.id) ?? false]),
+    ) as ContextAdvancedMap,
+    optional_skills,
     targets: {
       claude_code: agentMap.get("claude_code") ?? false,
       cursor: agentMap.get("cursor") ?? false,
@@ -179,6 +238,7 @@ async function main(): Promise<void> {
         ? await promptInteractive()
         : resolveDefaults(partial);
     assertAtLeastOneAgent(answers.targets);
+    assertAtLeastOneCoreSection(answers);
   } catch (e) {
     console.error((e as Error).message);
     process.exit(1);
@@ -196,6 +256,9 @@ async function main(): Promise<void> {
       optional_packs_selected: {
         ui_ux_workflow: answers.include_ui_workflow_pack,
       },
+      context_core: answers.context_core,
+      context_advanced: answers.context_advanced,
+      optional_skills: answers.optional_skills,
       reserved: ["quality_verification_layer"],
     };
     if (values.json) {

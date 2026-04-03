@@ -1,10 +1,18 @@
+import { mergeContextAdvanced, mergeContextCore, normalizeOptionalSkills } from "./context-config.js";
 import type { InstallAnswers } from "./types.js";
 import { defaultAnswers } from "./types.js";
 
 export function resolveDefaults(partial: Partial<InstallAnswers>): InstallAnswers {
+  const optional =
+    partial.optional_skills !== undefined
+      ? normalizeOptionalSkills(partial.optional_skills)
+      : defaultAnswers.optional_skills;
   return {
     project_name: partial.project_name ?? defaultAnswers.project_name,
     stack: partial.stack ?? defaultAnswers.stack,
+    context_core: mergeContextCore(partial.context_core),
+    context_advanced: mergeContextAdvanced(partial.context_advanced),
+    optional_skills: optional,
     targets: {
       claude_code: partial.targets?.claude_code ?? defaultAnswers.targets.claude_code,
       cursor: partial.targets?.cursor ?? defaultAnswers.targets.cursor,

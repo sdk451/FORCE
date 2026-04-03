@@ -35,6 +35,7 @@ epic_fr_focus:
   epic-3: "FR36-41, FR16 — UI/UX extension pack"
   epic-4: "FR-MAP-02, FR28, FR30-31 — growth adapters (remaining Copilot/Windsurf rows = backlog)"
   epic-5: "FR42 — quality_verification_layer reserved / blocked on external OSS"
+  epic-6: "FR-MAP-01 depth, FR6-7, FR27, FR34-35, FR-MEM — community context catalog + top-10 optional skills + TUI"
 
 development_status:
   epic-1: ready-for-review
@@ -51,3 +52,6 @@ development_status:
 
   epic-5: backlog
   epic-5-retrospective: optional
+
+  epic-6: backlog
+  epic-6-retrospective: optional

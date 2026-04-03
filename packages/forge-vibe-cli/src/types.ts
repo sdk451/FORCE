@@ -1,8 +1,19 @@
+import type { ContextAdvancedMap, ContextCoreMap, OptionalSkillId } from "./context-config.js";
+import { defaultContextAdvanced, defaultContextCore } from "./context-config.js";
+
+export type { ContextAdvancedMap, ContextCoreMap, OptionalSkillId } from "./context-config.js";
+
 export type StackId = "typescript" | "python";
 
 export interface InstallAnswers {
   project_name: string;
   stack: StackId;
+  /** Part 3 Step 2 — core AGENTS sections (§1.1); default all on. */
+  context_core: ContextCoreMap;
+  /** Part 3 Step 3 — advanced optional sections (§1.2). */
+  context_advanced: ContextAdvancedMap;
+  /** Part 3 Step 4 — optional skill bundle ids (stub SKILL.md in pack). */
+  optional_skills: OptionalSkillId[];
   targets: {
     claude_code: boolean;
     cursor: boolean;
@@ -25,6 +36,9 @@ export interface InstallAnswers {
 export const defaultAnswers: InstallAnswers = {
   project_name: "my-project",
   stack: "typescript",
+  context_core: { ...defaultContextCore },
+  context_advanced: { ...defaultContextAdvanced },
+  optional_skills: [],
   targets: {
     claude_code: true,
     cursor: true,

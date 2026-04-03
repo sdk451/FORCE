@@ -1,3 +1,4 @@
+import { countEnabledCore } from "./context-config.js";
 import type { InstallAnswers } from "./types.js";
 
 /** Keys under `targets` that represent a supported coding agent / host adapter. */
@@ -26,6 +27,15 @@ export function assertAtLeastOneAgent(targets: InstallAnswers["targets"]): void 
     throw new Error(
       "At least one agent target is required (e.g. Claude Code, Cursor, Gemini CLI, Cline, Codex, GitHub Copilot, Kimi Code). " +
         "Fix your --answers JSON or pass --yes for defaults.",
+    );
+  }
+}
+
+export function assertAtLeastOneCoreSection(answers: InstallAnswers): void {
+  if (countEnabledCore(answers.context_core) < 1) {
+    throw new Error(
+      "At least one core AGENTS.md section is required (overview, tech_stack, commands, …). " +
+        "Fix your --answers JSON `context_core` or re-run the interactive installer.",
     );
   }
 }

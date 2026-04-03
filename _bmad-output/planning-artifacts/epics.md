@@ -21,7 +21,7 @@ productOwnerNotes: >-
 
 This document decomposes **forge-vibe-code-enhancement** into **implementation-ready epics and stories**, aligned with the **PRD**, **architecture**, **ADR-0001**, and consolidated **domain research** (`domain-agent-context-claude-cursor-gemini-research-2026-04-03.md`). It encodes the **default canonical approach**: one **normative pack source** and **host adapters**, borrowing the best-stable patterns from **[AGENTS.md](https://agents.md/)**, **Claude Code** (hooks, `.claude/rules`, skills), **Cursor** (`.mdc`, globs, `.cursor/skills`), **Gemini CLI** (`GEMINI.md`, `context.fileName`, `/memory`), **OpenAI Codex CLI** (**`AGENTS.md`**; optional **[oh-my-codex (OMX)](https://github.com/sdk451/oh-my-codex)** documented only as a **runtime companion** in pack README), and growth hosts (**Cline**, **Copilot** surfaces, **Windsurf**) per **FR-MAP-02**.
 
-**Suggested implementation order:** complete **Epic 1** (template spec gate) → **Epic 2** (MVP CLI + dual host) → **Epic 3** (UI extension) in parallel with early **Epic 4** spikes only as capacity allows.
+**Suggested implementation order:** complete **Epic 1** (template spec gate) → **Epic 2** (MVP CLI + dual host) → **Epic 3** (UI extension) in parallel with early **Epic 4** spikes only as capacity allows. Run **Epic 6** when deepening **AGENTS.md / CLAUDE.md / GEMINI.md / memory** beyond v1 stubs—or in parallel once Epic 2 questionnaire shape is stable (6.6 wires into the same TUI / `answers` JSON).
 
 ---
 
@@ -89,6 +89,7 @@ _Not applicable_ for product GUI (CLI-only). CLI usability ACs live under **Epic
 | FR-MAP-02, FR30–FR31 | Epic 4 | **4.1–4.5** |
 | FR28 | Epic 4 | **4.1** (+ Epic 2 manifest extensibility) |
 | FR42 | Epic 5 | **5.1** |
+| FR-MAP-01 (depth), FR6–FR7, FR27, FR34–FR35 (skills breadth) | Epic 6 | **6.1–6.6** |
 
 ---
 
@@ -101,6 +102,7 @@ _Not applicable_ for product GUI (CLI-only). CLI usability ACs live under **Epic
 | **3** | UI/UX extension pack | FR36–FR41 conditional slice + host substitutes. |
 | **4** | Growth host adapters | Gemini, **Codex** (single row + OMX **doc** appendix), Cline, Copilot/Windsurf per **FR-MAP-02**. |
 | **5** | Quality layer pack (post-MVP) | FR42 placeholder only until external OSS GA. |
+| **6** | Community-informed context depth & optional skills | **Audit** vibe-coding best practices for root/memory templates; **option catalog** (core vs TUI); **top-10 skills** shortlist + **TUI** opt-in emission. |
 
 ---
 
@@ -348,6 +350,79 @@ As a **product owner**, I want **`quality_verification_layer`** reserved **witho
 
 ---
 
+## Epic 6: Community-informed canonical depth & optional skill bundles
+
+**Epic goal:** Move **forge** root and memory templates from **lightweight placeholders** to a **research-backed, evolvable system**: a **comprehensive catalog** of context options the vibe-coding community and vendors broadly agree on (with **confidence tiers**), a **core vs optional (TUI)** matrix, and a **top-ten optional skill** shortlist users can toggle in the **installer TUI** (and `answers` JSON).
+
+**Primary users:** pack maintainers, installer users, architect.
+
+**Traceability:** **FR-MAP-01** (portable root + modular norms), **FR6–FR7**, **FR27** (questionnaire extensibility), **FR34–FR35** (skills), **FR-MEM-01/02** (memory shape depth), **NFR-I2** (documented template evolution).
+
+**Primary input:** Consolidated domain research — [`domain-agent-context-claude-cursor-gemini-research-2026-04-03.md`](./research/domain-agent-context-claude-cursor-gemini-research-2026-04-03.md) (executive summary, §5 root context table, §5–§6 verification/UI, §7 mapping, §8 recommendations, §9 AGENTS.md FAQ / CLAUDE.md hacks / `gemini_md_tutorial` / Reddit heuristics, §10 sources). Re-verify **vendor** facts against current docs at implementation time (FR22).
+
+### Story 6.1: Source corpus & confidence taxonomy
+
+As a **maintainer**, I want a **tagged bibliography** of practices (not just URLs), so that **Epic 6** options are auditable.
+
+**Acceptance criteria:**
+
+- **Given** domain research §10 and §9, **when** the corpus doc is read, **then** each major claim links to **primary** (vendor/standard), **secondary** (structured community tutorial), or **tertiary** (anecdotal / marketplace) tier.
+- **And** **conflict resolution** rules: vendor wins on mechanics; community wins on “patterns worth offering as TUI toggles” only when not contradicted by vendor docs.
+- **Deliverable (path):** `_bmad-output/planning-artifacts/research/community-context-practices-source-corpus.md` (or equivalent under `research/`).
+
+### Story 6.2: Root & memory — community option catalog
+
+As a **pack maintainer**, I want a **single catalog** of **optional sections and bullets** for **AGENTS.md**, **CLAUDE.md**, **GEMINI.md**, and **PROJECT_MEMORY.md**, so that we can **promote** lines into core templates or **expose** them as installer choices.
+
+**Acceptance criteria:**
+
+- **Given** research §5 “Root context file content” table, §9 AGENTS.md FAQ (precedence, nested repos), §9 `gemini_md_tutorial` (six-section pattern, imports, sprint block), Anthropic **verification-first** and **explore → plan → code**, **when** the catalog is reviewed, **then** each **row** has: **id**, **host applicability** (portable / Claude-only / Gemini-only / memory), **verbatim intent**, **source cite**, **suggested default** (off / soft-default / core-candidate).
+- **And** explicit items for: **project overview & boundaries**, **commands** (install/build/lint/test/e2e), **architecture map**, **verification / DOD**, **Git & PR conventions**, **security & dependency rules**, **precedence & overrides** (AGENTS vs CLAUDE vs GEMINI), **context window discipline** (what not to stuff in root), **root-cause / high-fidelity summary** norms (§9 Reddit + tutorial alignment).
+- **Deliverable:** `_bmad-output/planning-artifacts/community-root-context-and-memory-option-catalog.md`.
+
+### Story 6.3: Core vs TUI vs pack-gated matrix
+
+As a **architect**, I want every catalog option **classified**, so that **generator and UX** stay maintainable.
+
+**Acceptance criteria:**
+
+- **Given** the option catalog, **when** the matrix is read, **then** each option is exactly one of: **`core_always`**, **`core_default_on`**, **`tui_optional`**, **`ui_pack_only`** (FR36–41), **`host_slice_only`** (e.g. CLAUDE-only hooks narrative), **`docs_only`** (maintainer guidance, not emitted).
+- **And** **composition rules**: no contradictory MUST lines across portable vs host files; **volatile** content (sprint, experiments) directed to memory or optional blocks per research §9.
+- **Deliverable:** same file as 6.2 (new section) or companion `_bmad-output/planning-artifacts/community-context-core-vs-optional-matrix.md`.
+
+### Story 6.4: Top-ten optional skills — evidence shortlist
+
+As a **product owner**, I want a **ranked shortlist of ten** skill bundles the community **repeatedly treats as high leverage**, so that the installer can offer **credible** opt-ins (not an unbounded marketplace).
+
+**Acceptance criteria:**
+
+- **Given** research §4–§5 (skills vs rules vs root), §6 UI workflow (Figma → Storybook → Playwright), §9 AITemplate note (discovery only, vet security), **when** the shortlist is published, **then** **exactly ten** candidates are listed with: **stable `skill_id`**, **one-line trigger description** (agentskills-style), **primary use case**, **evidence tier** (vendor example / widely copied pattern / community anecdotal), **safety note** (scripts, network, license).
+- **And** the list **includes** at minimum thematic coverage: **verification / test discipline**, **UI proof (screenshot or story)**, **plan-or-spec before large edit**, **memory / handoff compaction**, **dependency or security sanity**, **MCP-assisted workflow** (optional doc-heavy), **refactor / migration checklist**, **incident / root-cause**, **release or PR hygiene** — exact names are **implementation choices** in the shortlist doc, not fixed here.
+- **Deliverable:** `_bmad-output/planning-artifacts/community-top-ten-skills-shortlist.md`.
+
+### Story 6.5: Pack layout & host mapping for optional skills
+
+As a **maintainer**, I want **pack source layout** for each shortlisted skill, so that **Epic 2/4 adapters** can emit **Claude** and **Cursor** paths without one-off hacks.
+
+**Acceptance criteria:**
+
+- **Given** the ten `skill_id` values, **when** packs are inspected, **then** each has a **canonical source** under `packages/forge-vibe-cli/packs/skills/<skill_id>/` (or agreed module path) with **SKILL.md** (+ optional `references/`) per [agentskills.io](https://agentskills.io/) / Anthropic skills guidance (lean body, trigger-oriented `description`).
+- **And** generator contract states mapping: **`.claude/skills/<skill_id>/`**, **`.cursor/skills/<skill_id>/`** when those targets are selected; skills **never** silently duplicate OMX runtime skills (document boundary).
+- **Dependency:** Story **6.4** approved.
+
+### Story 6.6: Installer TUI + `answers` + `load` for optional skills
+
+As an **installer user**, I want a **checkbox step** for optional skills, so that **FR6–FR7** and **FR34–FR35** extend to **community-vetted bundles** without bloating core.
+
+**Acceptance criteria:**
+
+- **Given** interactive `write`, **when** the user completes agent and pack steps, **then** a **multiselect** (BMAD-style `[ ]` / `[x]`) lists **up to the ten** shortlisted skills (Space toggles, Enter confirms; **none required**). *(Shipped: step after advanced context, before hooks/packs.)*
+- **Given** `--answers` JSON, **when** `optional_skills: string[]` is present, **then** `resolve-defaults` normalizes ids and **`load --json`** exposes **`optional_skills`**, **`context_core`**, **`context_advanced`**. *(Shipped.)*
+- **Given** `write`, **when** skills are selected, **then** planned files include **`.claude/skills/<id>/SKILL.md`** and **`.cursor/skills/<id>/SKILL.md`** per enabled host; stub bodies live under `packs/skills/<id>/`. *(Shipped — stubs; replace with upstream skill content as needed.)*
+- **Dependency:** Stories **6.4**, **6.5**; Epic **2** TUI pattern (checkbox prompts). **Note:** Full **6.4** shortlist doc and **6.5** non-stub skill bodies remain follow-up polish.
+
+---
+
 ## Validation checklist (create-epics-and-stories)
 
 - [x] FR1–FR42 + FR-INST/MAP/MEM traced to at least one epic/story.
@@ -355,4 +430,5 @@ As a **product owner**, I want **`quality_verification_layer`** reserved **witho
 - [x] MVP bounded: Epic 2 = Claude + Cursor only; growth = Epic 4.
 - [x] **Single Codex row + OMX as doc appendix** explicit in principles, FR map, Epic 4.3, PRD/architecture alignment.
 - [x] **Default canonical principles** distilled from domain research and multi-tool best practices.
+- [x] **Epic 6** added for community-informed template depth + optional skills (FR-MAP-01 / questionnaire / skills trace).
 - [ ] **Execution:** Complete Epic 1 deliverable, then implement Epic 2 in story order.

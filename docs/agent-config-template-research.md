@@ -11,6 +11,7 @@
 | [_bmad-output/planning-artifacts/prd.md](../_bmad-output/planning-artifacts/prd.md) | Authoritative FRs including **FR-MAP-01**, **FR-MAP-02**, **FR-MEM-01/02**, **FR36–FR42** |
 | [_bmad-output/planning-artifacts/epics.md](../_bmad-output/planning-artifacts/epics.md) | Epic/story traceability |
 | [_bmad-output/planning-artifacts/research/domain-agent-context-claude-cursor-gemini-research-2026-04-03.md](../_bmad-output/planning-artifacts/research/domain-agent-context-claude-cursor-gemini-research-2026-04-03.md) | Consolidated domain research (citations, heuristics, Codex/OMX) |
+| [_bmad-output/planning-artifacts/research/canonical-agents-md-research-2026-04-03.md](../_bmad-output/planning-artifacts/research/canonical-agents-md-research-2026-04-03.md) | **Canonical AGENTS.md sections, top-10 skills, TUI architecture** — drives `compose-canonical.ts` + installer |
 | [AGENTS.md](https://agents.md/) | Portable interchange: closest file wins; user overrides |
 
 ## Epic 1 functional trace
@@ -23,6 +24,8 @@
 | 1.4 | FR-MEM-01/02, FR18–FR21 | §Project memory |
 | 1.5 | Consolidated spec deliverable | Whole document |
 | 1.6 | Growth stubs | §Growth-host mapping (DRAFT) |
+
+**Epic 6 (planned):** Community-sourced **option catalog** for richer `AGENTS.md` / `CLAUDE.md` / `GEMINI.md` / `PROJECT_MEMORY.md`, **core vs TUI** matrix, and **top-ten optional skills** with installer checkboxes — see [_bmad-output/planning-artifacts/epics.md](../_bmad-output/planning-artifacts/epics.md) **Epic 6**. This v1 document remains the baseline until Epic 6 deliverables land.
 
 ## Canonical artifact types (FR-MAP-01)
 

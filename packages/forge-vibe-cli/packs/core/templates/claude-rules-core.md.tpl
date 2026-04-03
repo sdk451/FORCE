@@ -1,5 +1,4 @@
-# Core conventions — {{PROJECT_NAME}}
+# Forge — align with AGENTS.md
 
-- Match existing code style in each directory.
-- Run format/lint/test after substantive edits when available.
-- Do not add dependencies without a brief justification in the task context.
+- **Portable truth:** root **AGENTS.md** (forge-composed sections). Do not contradict it in this file.
+- **Stack:** {{STACK}} — details in **.claude/rules/forge-stack.md**.

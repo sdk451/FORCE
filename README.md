@@ -46,13 +46,24 @@ Example `answers.json`:
   },
   "include_ui_workflow_pack": false,
   "include_memory_enhanced": true,
-  "allow_hooks": false
+  "allow_hooks": false,
+  "context_core": {
+    "overview": true,
+    "tech_stack": true,
+    "commands": true,
+    "architecture": true,
+    "code_style": true,
+    "verification": true,
+    "git_pr": true
+  },
+  "context_advanced": { "security": false, "agent_behavior": true },
+  "optional_skills": ["tdd", "planning-with-files"]
 }
 ```
 
-`npm run forge-vibe -- load --json --yes` includes an **`adapters`** array listing enabled host IDs.
+`npm run forge-vibe -- load --json --yes` includes **`adapters`**, **`context_core`**, **`context_advanced`**, and **`optional_skills`**.
 
-Interactive **`write`** (no `--yes` / `--answers`) uses a **BMAD-style checkbox** UI: **`[ ]` / `[x]`** lines, **Space** toggles, **Enter** confirms, **↑/↓** or **j/k** moves. You must enable **at least one** coding agent.
+Interactive **`write`** (no `--yes` / `--answers`) follows **`canonical-agents-md-research-2026-04-03.md` Part 3**: project → stack → **target agents** (≥1) → **core AGENTS §1.1 sections** (≥1) → **advanced §1.2** → **optional skills (top 10)** → **hooks & packs**. **Space** toggles, **Enter** confirms, **↑/↓** or **j/k** moves.
 
 ## Offline / vendored install
 

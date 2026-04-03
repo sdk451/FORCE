@@ -1,6 +1,17 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import type { InstallAnswers, PackManifest, PlannedFile } from "./types.js";
+import {
+  buildAgentsMd,
+  buildClaudeMd,
+  buildGeminiMd,
+  buildProjectMemoryMd,
+  sectionAgentBehavior,
+  sectionDebuggingProtocol,
+  sectionForbiddenPatterns,
+  sectionSecurity,
+} from "./compose-canonical.js";
+import { wrapCursorMdc } from "./cursor-mdc-wrap.js";
 import { loadPackManifest } from "./manifest.js";
 import { packsDir } from "./pack-root.js";
 import { applyTemplate } from "./template.js";
@@ -8,6 +19,16 @@ import { applyTemplate } from "./template.js";
 async function readTpl(rel: string): Promise<string> {
   const p = path.join(packsDir(), rel);
   return fs.readFile(p, "utf8");
+}
+
+async function readPackSkill(skillId: string): Promise<string> {
+  const p = path.join(packsDir(), "skills", skillId, "SKILL.md");
+  return fs.readFile(p, "utf8");
+}
+
+function canonVars(a: InstallAnswers): { PROJECT_NAME: string; STACK: string } {
+  const stackLabel = a.stack === "typescript" ? "TypeScript / Node" : "Python";
+  return { PROJECT_NAME: a.project_name, STACK: stackLabel };
 }
 
 function varsFor(a: InstallAnswers): Record<string, string> {
@@ -39,15 +60,15 @@ export async function buildPlannedFiles(answers: InstallAnswers): Promise<{
 }> {
   const manifest = await loadPackManifest();
   const v = varsFor(answers);
+  const cv = canonVars(answers);
   const files: PlannedFile[] = [];
 
-  const agents = applyTemplate(await readTpl("core/templates/AGENTS.md.tpl"), v);
-  files.push({ path: "AGENTS.md", content: agents });
+  files.push({ path: "AGENTS.md", content: buildAgentsMd(answers, cv) });
 
   if (answers.targets.claude_code) {
     files.push({
       path: "CLAUDE.md",
-      content: applyTemplate(await readTpl("core/templates/CLAUDE.md.tpl"), v),
+      content: buildClaudeMd(answers, cv, v.HOOKS_BLOCK),
     });
     files.push({
       path: ".claude/rules/forge-core.md",
@@ -84,10 +105,41 @@ You enabled **allow_hooks**. The emitted \`.claude/settings.json\` contains **ex
       });
     }
 
-    files.push({
-      path: ".claude/skills/visual-verify/SKILL.md",
-      content: applyTemplate(await readTpl("core/templates/SKILL-visual-verify.md.tpl"), v),
-    });
+    if (answers.context_core.verification) {
+      files.push({
+        path: ".claude/skills/visual-verify/SKILL.md",
+        content: applyTemplate(await readTpl("core/templates/SKILL-visual-verify.md.tpl"), v),
+      });
+    }
+
+    for (const sid of answers.optional_skills) {
+      files.push({
+        path: `.claude/skills/${sid}/SKILL.md`,
+        content: await readPackSkill(sid),
+      });
+    }
+
+    if (answers.context_advanced.agent_behavior) {
+      files.push({
+        path: ".claude/rules/forge-behavior.md",
+        content: sectionAgentBehavior(cv),
+      });
+    }
+    if (answers.context_advanced.security) {
+      files.push({ path: ".claude/rules/forge-security.md", content: sectionSecurity(cv) });
+    }
+    if (answers.context_advanced.debugging_protocol) {
+      files.push({
+        path: ".claude/rules/forge-debugging.md",
+        content: sectionDebuggingProtocol(cv),
+      });
+    }
+    if (answers.context_advanced.forbidden_patterns) {
+      files.push({
+        path: ".claude/rules/forge-forbidden.md",
+        content: sectionForbiddenPatterns(cv),
+      });
+    }
   }
 
   if (answers.targets.cursor) {
@@ -103,6 +155,58 @@ You enabled **allow_hooks**. The emitted \`.claude/settings.json\` contains **ex
       path: ".cursor/rules/forge-stack.mdc",
       content: applyTemplate(await readTpl(cursorStack), v),
     });
+
+    for (const sid of answers.optional_skills) {
+      files.push({
+        path: `.cursor/skills/${sid}/SKILL.md`,
+        content: await readPackSkill(sid),
+      });
+    }
+
+    if (answers.context_advanced.agent_behavior) {
+      files.push({
+        path: ".cursor/rules/forge-behavior.mdc",
+        content: wrapCursorMdc({
+          description: `Agent behavior norms — ${answers.project_name}`,
+          globs: "**/*",
+          alwaysApply: true,
+          body: sectionAgentBehavior(cv),
+        }),
+      });
+    }
+    if (answers.context_advanced.security) {
+      files.push({
+        path: ".cursor/rules/forge-security.mdc",
+        content: wrapCursorMdc({
+          description: `Security boundaries — ${answers.project_name}`,
+          globs: "**/*",
+          alwaysApply: true,
+          body: sectionSecurity(cv),
+        }),
+      });
+    }
+    if (answers.context_advanced.debugging_protocol) {
+      files.push({
+        path: ".cursor/rules/forge-debugging.mdc",
+        content: wrapCursorMdc({
+          description: `Debugging protocol — ${answers.project_name}`,
+          globs: "**/*",
+          alwaysApply: false,
+          body: sectionDebuggingProtocol(cv),
+        }),
+      });
+    }
+    if (answers.context_advanced.forbidden_patterns) {
+      files.push({
+        path: ".cursor/rules/forge-forbidden.mdc",
+        content: wrapCursorMdc({
+          description: `Forbidden patterns — ${answers.project_name}`,
+          globs: "**/*",
+          alwaysApply: true,
+          body: sectionForbiddenPatterns(cv),
+        }),
+      });
+    }
   }
 
   if (answers.targets.cline) {
@@ -129,7 +233,7 @@ You enabled **allow_hooks**. The emitted \`.claude/settings.json\` contains **ex
   if (answers.targets.gemini_cli) {
     files.push({
       path: "GEMINI.md",
-      content: applyTemplate(await readTpl("core/templates/GEMINI.md.tpl"), v),
+      content: buildGeminiMd(answers, cv),
     });
     files.push({
       path: ".gemini/settings.json",
@@ -161,7 +265,7 @@ You enabled **allow_hooks**. The emitted \`.claude/settings.json\` contains **ex
   if (answers.include_memory_enhanced) {
     files.push({
       path: "PROJECT_MEMORY.md",
-      content: applyTemplate(await readTpl("core/templates/PROJECT_MEMORY.md.tpl"), v),
+      content: buildProjectMemoryMd(answers, cv),
     });
     if (answers.targets.cursor) {
       files.push({
@@ -205,6 +309,7 @@ function mergeGuide(): string {
 - **Codex**: primary instructions live in **AGENTS.md**; keep **docs/FORGE-CODEX.md** in sync with team Codex/OMX practices.
 - **GitHub Copilot**: merge **.github/copilot-instructions.md** with any existing Copilot instructions.
 - **Kimi Code**: keep **AGENTS.md** authoritative; align **docs/FORGE-KIMI.md** with team Kimi workflow.
+- **Optional rules:** \`forge-behavior\`, \`forge-security\`, \`forge-debugging\`, \`forge-forbidden\` — merge if you already use the same filenames.
 `;
 }
 

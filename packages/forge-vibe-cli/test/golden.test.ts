@@ -63,4 +63,15 @@ describe("buildPlannedFiles", () => {
     expect(paths.has("docs/FORGE-KIMI.md")).toBe(true);
     expect(paths.has("AGENTS.md")).toBe(true);
   });
+
+  it("emits optional skill paths when optional_skills set", async () => {
+    const answers = resolveDefaults({
+      optional_skills: ["tdd", "systematic-debugging"],
+      targets: { claude_code: true, cursor: true },
+    });
+    const { files } = await buildPlannedFiles(answers);
+    const paths = new Set(files.map((f) => f.path));
+    expect(paths.has(".claude/skills/tdd/SKILL.md")).toBe(true);
+    expect(paths.has(".cursor/skills/systematic-debugging/SKILL.md")).toBe(true);
+  });
 });
