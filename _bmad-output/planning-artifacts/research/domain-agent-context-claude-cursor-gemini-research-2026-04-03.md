@@ -22,6 +22,8 @@ last_updated: "2026-04-03"
 supplementary_review: >-
   User-requested URLs: agents.md (deep FAQ), claude-code-hacks.lovable.app, sdk451/gemini_md_tutorial,
   aitmpl.com/skills; Reddit heuristics (root-cause fixes, high-fidelity summarization).
+codex_omx_review: >-
+  OpenAI Codex CLI + sdk451/oh-my-codex (OMX) evaluated for canonical artifact mapping (2026-04-03).
 web_research_enabled: true
 source_verification: true
 scope_note: >-
@@ -39,9 +41,9 @@ scope_note: >-
 
 ## Research Overview
 
-This report synthesizes **current public documentation and emerging standards** for how coding agents consume **project context**, **rules**, **skills**, **hooks/MCP**, and **UI/UX verification** workflows. The focus is practical applicability to **Claude Code**, **Cursor**, and **Google Gemini CLI**, with cross-tool alignment via **[AGENTS.md](https://agents.md/)** and related specs.
+This report synthesizes **current public documentation and emerging standards** for how coding agents consume **project context**, **rules**, **skills**, **hooks/MCP**, and **UI/UX verification** workflows. The focus is practical applicability to **Claude Code**, **Cursor**, **Google Gemini CLI**, and **OpenAI Codex CLI** (including optional **oh-my-codex / OMX** workflow layers), with cross-tool alignment via **[AGENTS.md](https://agents.md/)** and related specs.
 
-**Key takeaways:** (1) Treat **verification** (tests, screenshots, linters) as first-class context—Anthropic explicitly positions this as the highest-leverage CLAUDE.md pattern. (2) Use **layered context** (global → repo root → subdirectory) consistently across tools, with a clear mapping from **canonical** content to **Cursor `.mdc` rules** and **Gemini `GEMINI.md` / `AGENTS.md`**. (3) **Hooks** (Claude Code) and **globs + description** (Cursor) are the main levers for deterministic automation; Gemini relies more on **context files + `/memory`**. (4) **Agent Skills** (`SKILL.md`, [agentskills.io](https://agentskills.io/)) complement root context for progressive disclosure. (5) For UI/UX, combine **Storybook**, **Playwright / Playwright MCP**, and optional **Figma MCP** with explicit “definition of done” in context files.
+**Key takeaways:** (1) Treat **verification** (tests, screenshots, linters) as first-class context—Anthropic explicitly positions this as the highest-leverage CLAUDE.md pattern. (2) Use **layered context** (global → repo root → subdirectory) consistently across tools, with a clear mapping from **canonical** content to **Cursor `.mdc` rules** and **Gemini `GEMINI.md` / `AGENTS.md`**. (3) **Hooks** (Claude Code) and **globs + description** (Cursor) are the main levers for deterministic automation; Gemini relies more on **context files + `/memory`**; **Codex + OMX** uses **workflow commands** (`$deep-interview`, `$ralplan`, `$ralph`, `$team`) and **`.omx/`** state as a different—but mappable—automation and memory shape. (4) **Agent Skills** (`SKILL.md`, [agentskills.io](https://agentskills.io/)) complement root context for progressive disclosure; OMX adds a **repo-local `skills/`** tree and in-session surfaces that can carry the same *semantic* procedures with **host-specific** invocation. (5) For UI/UX, combine **Storybook**, **Playwright / Playwright MCP**, and optional **Figma MCP** with explicit “definition of done” in context files—reflect that guidance in **AGENTS.md** so it survives cross-host emission including Codex-oriented repos.
 
 Full synthesis and citations appear in the sections below.
 
@@ -62,6 +64,7 @@ The **AI coding agent tooling** space is converging on a small set of **interope
 3. **Document hook substitutes** for Cursor and Gemini where Claude Code hooks are unavailable.
 4. **Version** MCP setup (Figma, Playwright) as optional pack slices with clear prerequisites.
 5. Encode **root-cause debugging** and **high-fidelity summarization** rules in context and memory-compaction guidance (see [§9](#9-supplementary-resources--community-heuristics)).
+6. For **Codex CLI**, treat **[AGENTS.md](https://agents.md/)** as the primary **portable** carrier of canonical root context; if the user adopts **[oh-my-codex (OMX)](https://github.com/sdk451/oh-my-codex)**, add an **optional adapter slice** that documents **`.omx/`**, **`omx setup`**, and how canonical **skills** / **memory** map to OMX’s layout—without conflating “vanilla Codex” with “Codex+OMX” in the compatibility matrix (see [§3 — Codex / OMX](#codex-cli-and-optional-oh-my-codex-omx)).
 
 ---
 
@@ -147,6 +150,32 @@ Official docs: [Provide Context with GEMINI.md Files](https://google-gemini.gith
 
 **Implication:** Your **canonical** narrative can target **AGENTS.md + GEMINI.md** alignment; Claude-specific nuance stays in **CLAUDE.md** and **hooks**.
 
+### Codex CLI and optional oh-my-codex (OMX)
+
+**Baseline:** [OpenAI Codex CLI](https://www.npmjs.com/package/@openai/codex) (`@openai/codex`) is the **execution engine** for agentic coding in this stack. For **forge** canonical mapping, assume **project guidance** is carried where the host reads it—**[AGENTS.md](https://agents.md/)** remains the best **cross-host** interchange (consistent with [agents.md](https://agents.md/) ecosystem list citing Codex). **Always verify** file-discovery rules and any Codex-specific config against **current OpenAI Codex documentation** when you ship a `codex-cli` adapter row (FR-MAP-02).
+
+**[oh-my-codex (OMX)](https://github.com/sdk451/oh-my-codex)** — community **workflow layer** around Codex (repo: [sdk451/oh-my-codex](https://github.com/sdk451/oh-my-codex), fork lineage from [Yeachan-Heo/oh-my-codex](https://github.com/Yeachan-Heo/oh-my-codex); MIT). OMX **does not replace** Codex; it adds prompts, skills, operator commands, and **durable state** under **`.omx/`** ([README](https://github.com/sdk451/oh-my-codex/blob/main/README.md)).
+
+**What OMX adds (relevant to canonical artifacts):**
+
+| OMX surface | Role | Canonical mapping (forge) |
+|-------------|------|---------------------------|
+| **Scoped `AGENTS.md`** | Project guidance (OMX explicitly positions this) | **Portable root context** — same canonical body you emit for other hosts; OMX users run `omx setup` to align scaffolding. |
+| **`prompts/`**, **`templates/`**, **`missions/`** | Workflow and task templates | **Modular rules** / **procedure slices** — map canonical modular sections into OMX prompt templates or keep as named sections in `AGENTS.md` with a **manifest** listing paths OMX should install or reference. |
+| **`skills/`** + in-session commands (`$deep-interview`, `$ralplan`, `$ralph`, `$team`, `/skills`) | Reusable workflows and role routing | **Agent skills** (semantic alignment) — canonical **SKILL.md**-style procedures may be **translated** into OMX skill definitions + short **“how to invoke”** docs; do not assume **byte-identical** SKILL.md discovery vs Claude/Cursor. |
+| **`.omx/`** (plans, logs, memory, mode tracking) | Durable session/project state | **Project memory** — maps to FR-MEM-style “durable repo knowledge”; **compaction** may be **manual**, **tool-assisted**, or OMX-specific—document **substitutes** in the gap table (no Claude `SessionEnd` hook parity claimed). |
+| **`omx setup`**, **`omx doctor`**, **`omx --madmax --high`** | Install / health / launch modes | **Installer docs slice** — not emitted by forge’s CLI, but your pack README can state **prerequisites** (Node **20+**, global `codex` + `oh-my-codex`, optional `tmux` / **psmux** on Windows for `omx team`). |
+| **Team runtime** (`omx team …`, tmux/psmux) | Parallel/durable execution | **Lifecycle automation substitute** — conceptually replaces some “orchestration” you might otherwise encode in hooks; **high complexity** and **platform-dependent**—mark **optional** in packs. |
+
+**Recommended workflow (per OMX docs):** clarify with `$deep-interview` → plan approval with `$ralplan` → complete with `$ralph` or parallelize with `$team`. That sequence is a **pack-level “definition of done” pattern** you can echo in canonical **verification** sections (aligns with explore → plan → code themes elsewhere in this report).
+
+**Canonical approach — how forge should treat Codex:**
+
+1. **Single canonical source** for stack facts, DOD, and UI verification still lives in **pack YAML/Markdown**; **emit `AGENTS.md`** for Codex-using repos as the **default** portable file.  
+2. **Optional `codex_omx` pack flag:** when true, append **OMX integration appendix** (paths, commands, `.omx/` hygiene, link to upstream docs) and optionally **generate or symlink** skill/prompt stubs that mirror canonical skill IDs—**without** requiring every adopter to use OMX.  
+3. **Matrix rows:** keep **“Codex CLI”** and **“Codex CLI + OMX”** as **separate** capability rows if OMX-specific paths (`skills/`, `.omx/`) are assumed—avoids false parity with vanilla Codex-only installs.  
+4. **Risk:** Third-party workflow layer—**version drift** vs `@openai/codex`; pin **documented** OMX + Codex versions in FR22-style notes; prefer linking to [upstream docs](https://yeachan-heo.github.io/oh-my-codex-website/) / repo README over copying large procedural text.
+
 ---
 
 ## 4. Standards, formats, and governance
@@ -194,6 +223,7 @@ This aligns with Anthropic’s **verification-first** guidance ([Best Practices]
 - **Claude Code:** `.claude/rules/*.md` — scope by topic; keep root CLAUDE.md for universal truths.
 - **Cursor:** `.cursor/rules/*.mdc` — use **`globs`** for path scoping, **`description`** for relevance, **`alwaysApply`** sparingly ([community guides](https://forum.cursor.com/t/my-take-on-cursor-rules/67535)).
 - **Gemini CLI:** Prefer **nested GEMINI.md** or **`@imports`** for large repos ([GEMINI.md docs](https://google-gemini.github.io/gemini-cli/docs/cli/gemini-md.html)).
+- **Codex (+ optional OMX):** **Root** → `AGENTS.md` first; **modular** → `prompts/` / `templates/` / sectioned guidance post-`omx setup`; **skills** → OMX `skills/` + `$…` commands; treat **hooks** as **not equivalent**—use **workflow commands + `.omx/`** as documented substitutes when OMX is enabled.
 
 ### When to use Skills vs rules vs root context
 
@@ -235,6 +265,16 @@ Anthropic’s best-practices doc explicitly contrasts vague UI prompts with **sc
 | Deterministic automation | **Hooks** in settings | Rules + tasks / manual substitutes | Context + `/memory`; fewer hook equivalents |
 | UI verification | Hooks + MCP + tests | Substitute docs + terminal tests | Same; emphasize Playwright in context |
 
+**Codex CLI — canonical mapping (supplement to table above)**
+
+| Concern | Codex CLI (portable baseline) | Codex + [oh-my-codex (OMX)](https://github.com/sdk451/oh-my-codex) |
+|---------|------------------------------|---------------------------------------------------------------------|
+| Root instructions | **`AGENTS.md`** (recommended interchange); confirm Codex read paths in OpenAI docs | Same; OMX **`omx setup`** scaffolds **scoped** `AGENTS.md` per project |
+| Modular / scoped guidance | Split sections inside `AGENTS.md`; optional repo-specific docs | **`prompts/`**, **`templates/`**, **`missions/`** — map from canonical modular rules |
+| Skills / procedures | Document in `AGENTS.md` or linked markdown; verify native Codex skill model separately | **`skills/`**, **`$deep-interview`**, **`$ralplan`**, **`$ralph`**, **`$team`**, `/skills` |
+| Deterministic automation | Limited vs Claude **hooks** — use **tests/CI** + explicit checklists in context | **Workflow commands** + **team runtime** (`omx team`, tmux/psmux) as **optional** orchestration substitute |
+| Memory / durable state | Repo markdown (e.g. hand-rolled memory file) per FR-MEM-02 patterns | **`.omx/`** — plans, logs, memory; define **merge vs ignore** for `.gitignore` in pack docs |
+
 ---
 
 ## 8. Strategic recommendations
@@ -245,6 +285,7 @@ Anthropic’s best-practices doc explicitly contrasts vague UI prompts with **sc
 4. **Pin** Claude Code hook schema and Gemini `settings.json` keys in the **compatibility matrix** (FR22, NFR-I1).  
 5. **Treat AGENTS.md as the cross-tool interchange** for teams using Gemini + Cursor + Claude Code together ([agents.md](https://agents.md/), [Gemini context.fileName](https://google-gemini.github.io/gemini-cli/docs/cli/gemini-md.html)).  
 6. **Pack “agent behavior” rules** should state: prefer **fixes at the cause** (not symptom patches) and **summaries that retain decision-critical detail**—aligned with Reddit-validated heuristics and with `gemini_md_tutorial` role-based guidance ([§9](#9-supplementary-resources--community-heuristics)).
+7. **Codex adapters:** ship **`AGENTS.md` from canonical root context** by default; add an **optional OMX slice** ([§3 — Codex / OMX](#codex-cli-and-optional-oh-my-codex-omx)) with separate **compatibility matrix** rows for **vanilla Codex** vs **Codex+OMX**, and document **Node 20+**, **tmux/psmux**, and **`.omx/`** ownership expectations.
 
 ---
 
@@ -334,11 +375,14 @@ Community consensus (summarized from recurring r/ChatGPT, r/ClaudeAI, r/cursor, 
 | CLAUDE.md Deep Dive (same site) | https://claude-code-hacks.lovable.app/claude-md | `/init`, paths, `@imports`, `.claude/rules` |
 | gemini_md_tutorial | https://github.com/sdk451/gemini_md_tutorial | GEMINI.md structure, roles, root-cause, iteration |
 | AITemplate Skills | https://www.aitmpl.com/skills | Marketplace ideas; vet templates |
+| oh-my-codex (OMX) | https://github.com/sdk451/oh-my-codex | Codex CLI workflow layer; AGENTS.md, `.omx/`, skills, `$` commands; fork of [Yeachan-Heo/oh-my-codex](https://github.com/Yeachan-Heo/oh-my-codex) |
+| OMX docs / site | https://yeachan-heo.github.io/oh-my-codex-website/ | Upstream documentation (verify against sdk451 fork) |
 
 ### Confidence & gaps
 
 - **High confidence** on Anthropic best-practices themes and Gemini context file mechanics (fetched 2026-04-03).  
 - **Medium confidence** on exact Cursor `.mdc` activation rules—**confirm against Cursor product version**.  
+- **Medium confidence** on **plain Codex CLI** file-discovery without OMX—**confirm against OpenAI Codex docs**; **higher confidence** on OMX behaviors described in [sdk451/oh-my-codex README](https://github.com/sdk451/oh-my-codex/blob/main/README.md) (tertiary / community).  
 - **Evolving** hook handler types and JSON schema—**regenerate snippets** from official docs per release.  
 - **Reddit-style heuristics** are **pattern summaries**, not citable threads—treat as **style guidance** unless echoed in vendor docs or structured tutorials.
 
@@ -346,12 +390,12 @@ Community consensus (summarized from recurring r/ChatGPT, r/ClaudeAI, r/cursor, 
 
 ## Research conclusion
 
-This document supports **Epic 1** (agent configuration template research) and **PRD** implementation for **forge-vibe-code-enhancement**: it ties **AGENTS.md**, **Claude Code** hooks/skills, **Cursor** rules, and **Gemini CLI** context files into one **mapping narrative**, elevates **UI verification** (Storybook, Playwright, Figma MCP, shadcn), and adds **§9** on **user-requested supplementary sources** plus **root-cause / high-fidelity summarization** norms for rules and memory.
+This document supports **Epic 1** (agent configuration template research) and **PRD** implementation for **forge-vibe-code-enhancement**: it ties **AGENTS.md**, **Claude Code** hooks/skills, **Cursor** rules, **Gemini CLI** context files, and **OpenAI Codex CLI** (with optional **[oh-my-codex (OMX)](https://github.com/sdk451/oh-my-codex)**) into one **mapping narrative**, elevates **UI verification** (Storybook, Playwright, Figma MCP, shadcn), and adds **§9** on **user-requested supplementary sources** plus **root-cause / high-fidelity summarization** norms for rules and memory.
 
-**Next steps:** Fold **§7–§9** into `docs/agent-config-template-research.md` (or equivalent) when Epic 1 Story 1.5 completes; link from `epics.md` Epic 1.
+**Next steps:** Fold **§3 (Codex), §7 (Codex supplement), §8 rec. 7, §9–§10** into `docs/agent-config-template-research.md` (or equivalent) when Epic 1 Story 1.5 completes; link from `epics.md` Epic 1; extend **FR-MAP-02** adapter notes with **Codex vs Codex+OMX** rows when formalizing the matrix.
 
 ---
 
 **Research completion date:** 2026-04-03  
-**Last updated:** 2026-04-03 (supplementary URL + Reddit heuristic review)  
-**Verification:** Web search + primary doc fetch + GitHub README API for `gemini_md_tutorial`; secondary / tertiary sources labeled.
+**Last updated:** 2026-04-03 (Codex / oh-my-codex canonical mapping; prior supplementary + Reddit heuristic review)  
+**Verification:** Web search + primary doc fetch + GitHub README API for `gemini_md_tutorial`; OMX from [sdk451/oh-my-codex](https://github.com/sdk451/oh-my-codex) README; secondary / tertiary sources labeled.
