@@ -38,20 +38,20 @@ epic_fr_focus:
   epic-6: "FR-MAP-01 depth, FR6-7, FR27, FR34-35, FR-MEM — community context catalog + top-10 optional skills + TUI"
 
 development_status:
-  epic-1: ready-for-review
+  epic-1: done
   epic-1-retrospective: optional
 
-  epic-2: ready-for-review
+  epic-2: done
   epic-2-retrospective: optional
 
-  epic-3: ready-for-review
+  epic-3: done
   epic-3-retrospective: optional
 
-  epic-4: ready-for-review
+  epic-4: done
   epic-4-retrospective: optional
 
   epic-5: backlog
   epic-5-retrospective: optional
 
-  epic-6: ready-for-review
+  epic-6: done
   epic-6-retrospective: optional
