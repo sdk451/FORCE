@@ -122,8 +122,10 @@ describe("buildPlannedFiles", () => {
     });
     const { files } = await buildPlannedFiles(answers);
     const paths = new Set(files.map((f) => f.path));
-    expect(paths.has(".claude/skills/tdd/SKILL.md")).toBe(true);
-    expect(paths.has(".cursor/skills/systematic-debugging/SKILL.md")).toBe(true);
+    expect(paths.has(".claude/skills/forge-tdd/SKILL.md")).toBe(true);
+    expect(paths.has(".claude/skills/forge-tdd/workflow.md")).toBe(true);
+    expect(paths.has(".cursor/skills/forge-systematic-debugging/SKILL.md")).toBe(true);
+    expect(paths.has(".cursor/skills/forge-systematic-debugging/workflow.md")).toBe(true);
   });
 
   it("includes optional skills section in GEMINI.md when Gemini and optional_skills are enabled", async () => {
@@ -141,7 +143,7 @@ describe("buildPlannedFiles", () => {
     expect(gemini).toBeDefined();
     expect(gemini!.content).toContain("## Optional skills (forge)");
     expect(gemini!.content).toContain(".gemini/skills");
-    expect(gemini!.content).toContain("`tdd`");
+    expect(gemini!.content).toContain("`forge-tdd`");
   });
 
   it("emits optional skills for Cline, Gemini, Codex, Copilot, and Kimi targets", async () => {
@@ -160,10 +162,10 @@ describe("buildPlannedFiles", () => {
     });
     const { files } = await buildPlannedFiles(answers);
     const paths = new Set(files.map((f) => f.path));
-    expect(paths.has(".clinerules/skills/tdd/SKILL.md")).toBe(true);
-    expect(paths.has(".gemini/skills/tdd/SKILL.md")).toBe(true);
-    expect(paths.has("docs/forge-skills/codex/tdd/SKILL.md")).toBe(true);
-    expect(paths.has(".github/forge-skills/tdd/SKILL.md")).toBe(true);
-    expect(paths.has("docs/forge-skills/kimi/tdd/SKILL.md")).toBe(true);
+    expect(paths.has(".clinerules/skills/forge-tdd/SKILL.md")).toBe(true);
+    expect(paths.has(".gemini/skills/forge-tdd/SKILL.md")).toBe(true);
+    expect(paths.has("docs/forge-skills/codex/forge-tdd/SKILL.md")).toBe(true);
+    expect(paths.has(".github/forge-skills/forge-tdd/SKILL.md")).toBe(true);
+    expect(paths.has("docs/forge-skills/kimi/forge-tdd/SKILL.md")).toBe(true);
   });
 });

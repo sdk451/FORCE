@@ -1,8 +1,6 @@
 ---
-name: tdd
-description: Enforce Red → Green → Refactor. Write or extend a failing test before implementation; only then implement to pass.
+name: forge-tdd
+description: 'Enforce Red → Green → Refactor. Use when the user wants test-first development, TDD, or to add behavior with a failing test first.'
 ---
 
-# Test-driven development (stub)
-
-Forge **stub**. Pair with repo test commands from **AGENTS.md**. Prefer smallest test that proves the behavior.
+Follow the instructions in [workflow.md](workflow.md).

@@ -16,15 +16,17 @@
 
 ### Optional skills (when `optional_skills` is non-empty)
 
+Answer id `tdd` installs under folder **`forge-tdd`** (always `forge-` + id). Each folder includes **`SKILL.md`** and **`workflow.md`**.
+
 | Host | Path pattern |
 |------|----------------|
-| Claude Code | `.claude/skills/<id>/SKILL.md` |
-| Cursor | `.cursor/skills/<id>/SKILL.md` |
-| Cline | `.clinerules/skills/<id>/SKILL.md` |
-| Gemini CLI | `.gemini/skills/<id>/SKILL.md` (reference from `GEMINI.md` / `@import` if desired) |
-| Codex CLI | `docs/forge-skills/codex/<id>/SKILL.md` |
-| GitHub Copilot | `.github/forge-skills/<id>/SKILL.md` |
-| Kimi Code | `docs/forge-skills/kimi/<id>/SKILL.md` |
+| Claude Code | `.claude/skills/forge-<id>/SKILL.md` (+ `workflow.md`) |
+| Cursor | `.cursor/skills/forge-<id>/SKILL.md` (+ `workflow.md`) |
+| Cline | `.clinerules/skills/forge-<id>/SKILL.md` (+ `workflow.md`) |
+| Gemini CLI | `.gemini/skills/forge-<id>/SKILL.md` (+ `workflow.md`) |
+| Codex CLI | `docs/forge-skills/codex/forge-<id>/SKILL.md` (+ `workflow.md`) |
+| GitHub Copilot | `.github/forge-skills/forge-<id>/SKILL.md` (+ `workflow.md`) |
+| Kimi Code | `docs/forge-skills/kimi/forge-<id>/SKILL.md` (+ `workflow.md`) |
 
 ### OpenAI Codex CLI + optional OMX
 

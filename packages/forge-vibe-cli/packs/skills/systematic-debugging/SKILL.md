@@ -1,8 +1,6 @@
 ---
-name: systematic-debugging
-description: Debug with reproduce → hypothesis → single test → iterate. No random edits or symptom masking.
+name: forge-systematic-debugging
+description: 'Debug with reproduce → hypothesis → minimal proof → fix. Use when the user is stuck on a bug, flaky test, or unexpected behavior.'
 ---
 
-# Systematic debugging (stub)
-
-Forge **stub**. Follow the four-step protocol in **AGENTS.md** debugging section when this skill is active.
+Follow the instructions in [workflow.md](workflow.md).

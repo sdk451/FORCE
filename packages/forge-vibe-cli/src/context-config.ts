@@ -1,7 +1,7 @@
 /**
  * Canonical context sections & optional skills — aligned with
  * `_bmad-output/planning-artifacts/research/canonical-agents-md-research-2026-04-03.md`
- * (Part 1 §1.1–1.2, Part 2 top-10 skills, Part 3 TUI).
+ * (Part 1 core/advanced sections, Part 2 top-10 skills, Part 3 TUI).
  */
 
 export const CONTEXT_CORE_IDS = [
@@ -26,7 +26,7 @@ export const CONTEXT_ADVANCED_IDS = [
 ] as const;
 export type ContextAdvancedId = (typeof CONTEXT_ADVANCED_IDS)[number];
 
-/** Top-10 skills from canonical research Part 2 (stub packs under packs/skills/). */
+/** Top-10 skills from canonical research Part 2 (packs under packs/skills/: SKILL.md + workflow.md). */
 export const OPTIONAL_SKILL_IDS = [
   "frontend-design",
   "superpowers",
@@ -55,13 +55,13 @@ export const defaultContextCore: ContextCoreMap = {
 };
 
 export const defaultContextAdvanced: ContextAdvancedMap = {
-  security: false,
-  agent_behavior: false,
-  context_compaction: false,
-  memory_handoff: false,
-  ui_ux_workflow_section: false,
-  debugging_protocol: false,
-  forbidden_patterns: false,
+  security: true,
+  agent_behavior: true,
+  context_compaction: true,
+  memory_handoff: true,
+  ui_ux_workflow_section: true,
+  debugging_protocol: true,
+  forbidden_patterns: true,
 };
 
 export function mergeContextCore(partial?: Partial<ContextCoreMap>): ContextCoreMap {
@@ -104,23 +104,23 @@ export function countEnabledCore(c: ContextCoreMap): number {
 
 /** TUI labels — align with `canonical-agents-md-research-2026-04-03.md` Part 3. */
 export const CONTEXT_CORE_TUI: { id: ContextCoreId; label: string; hint: string }[] = [
-  { id: "overview", label: "Project overview & identity", hint: "§1.1 — what repo is / isn’t" },
-  { id: "tech_stack", label: "Tech stack declaration", hint: "§1.1 — versions & frameworks" },
-  { id: "commands", label: "Commands (install, build, test, lint)", hint: "§1.1 — copy-paste verify" },
-  { id: "architecture", label: "Architecture & file structure", hint: "§1.1 — boundaries, references" },
-  { id: "code_style", label: "Code style & conventions", hint: "§1.1 — +/− rules with alternatives" },
-  { id: "verification", label: "Verification & definition of done", hint: "§1.1 — non-text proof" },
-  { id: "git_pr", label: "Git & PR conventions", hint: "§1.1 — branches, commits" },
+  { id: "overview", label: "Project overview & identity", hint: "What the repo is / isn’t" },
+  { id: "tech_stack", label: "Tech stack declaration", hint: "Versions & frameworks" },
+  { id: "commands", label: "Commands (install, build, test, lint)", hint: "Copy-paste verify" },
+  { id: "architecture", label: "Architecture & file structure", hint: "Boundaries, references" },
+  { id: "code_style", label: "Code style & conventions", hint: "Do / don’t with alternatives" },
+  { id: "verification", label: "Verification & definition of done", hint: "Non-text proof" },
+  { id: "git_pr", label: "Git & PR conventions", hint: "Branches, commits" },
 ];
 
 export const CONTEXT_ADVANCED_TUI: { id: ContextAdvancedId; label: string; hint: string }[] = [
-  { id: "security", label: "Security boundaries", hint: "§1.2" },
-  { id: "agent_behavior", label: "Agent behavior rules", hint: "§1.2 — root-cause, plan-first" },
-  { id: "context_compaction", label: "Context & compaction (Claude)", hint: "§1.2 — CLAUDE.md + long sessions" },
-  { id: "memory_handoff", label: "Memory & session handoff", hint: "§1.2 — PROJECT_MEMORY" },
-  { id: "ui_ux_workflow_section", label: "UI/UX verification workflow", hint: "§1.2 — stories / Playwright" },
-  { id: "debugging_protocol", label: "Debugging protocol", hint: "§1.2 — reproduce → hypothesis" },
-  { id: "forbidden_patterns", label: "Forbidden patterns / anti-patterns", hint: "§1.2 — NEVER X; prefer Y" },
+  { id: "security", label: "Security boundaries", hint: "Secrets, trust boundaries" },
+  { id: "agent_behavior", label: "Agent behavior rules", hint: "Root-cause, plan-first" },
+  { id: "context_compaction", label: "Context & compaction (Claude)", hint: "CLAUDE.md + long sessions" },
+  { id: "memory_handoff", label: "Memory & session handoff", hint: "PROJECT_MEMORY" },
+  { id: "ui_ux_workflow_section", label: "UI/UX verification workflow", hint: "Stories / Playwright" },
+  { id: "debugging_protocol", label: "Debugging protocol", hint: "Reproduce → hypothesis" },
+  { id: "forbidden_patterns", label: "Forbidden patterns / anti-patterns", hint: "Never X; prefer Y" },
 ];
 
 export const OPTIONAL_SKILL_TUI: { id: OptionalSkillId; label: string; hint: string }[] = [

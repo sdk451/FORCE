@@ -12,7 +12,7 @@ export interface InstallAnswers {
   context_core: ContextCoreMap;
   /** Part 3 Step 3 — advanced optional sections (§1.2). */
   context_advanced: ContextAdvancedMap;
-  /** Part 3 Step 4 — optional skill bundle ids (stub SKILL.md in pack). */
+  /** Part 3 Step 4 — optional skill bundle ids (pack SKILL.md + workflow.md → forge-<id>/ on install). */
   optional_skills: OptionalSkillId[];
   targets: {
     claude_code: boolean;

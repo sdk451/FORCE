@@ -8,4 +8,4 @@
 - **GitHub Copilot**: merge **.github/copilot-instructions.md** with any existing Copilot instructions.
 - **Kimi Code**: keep **AGENTS.md** authoritative; align **docs/FORGE-KIMI.md** with team Kimi workflow.
 - **Optional rules:** `forge-behavior`, `forge-security`, `forge-debugging`, `forge-forbidden` — merge if you already use the same filenames (**Claude** `.claude/rules`, **Cursor** `.mdc`, **Cline** `.clinerules`).
-- **Optional skills (installer):** `.claude/skills/<id>/`, `.cursor/skills/<id>/`, `.clinerules/skills/<id>/`, `.gemini/skills/<id>/`, `docs/forge-skills/codex/<id>/`, `.github/forge-skills/<id>/`, `docs/forge-skills/kimi/<id>/` — same `SKILL.md` body per id where that host was selected.
+- **Optional skills (installer):** under each host tree, `forge-<skill-id>/` with `SKILL.md` + `workflow.md` (e.g. `.cursor/skills/forge-tdd/`). Merge or replace per skill like any other skill folder.

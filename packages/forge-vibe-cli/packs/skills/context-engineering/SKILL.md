@@ -1,8 +1,6 @@
 ---
-name: context-engineering
-description: Design what context the agent sees — avoid instruction collisions, split long procedures into skills, keep root files lean.
+name: forge-context-engineering
+description: 'Audit and shape what the agent loads — rules, skills, and root docs. Use before large tasks, when context feels noisy, or when instructions conflict.'
 ---
 
-# Context engineering (stub)
-
-Forge **stub**. Operationalizes “context management is paramount” — audit active rules/skills before large tasks.
+Follow the instructions in [workflow.md](workflow.md).

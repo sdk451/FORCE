@@ -1,8 +1,6 @@
 ---
-name: superpowers
-description: End-to-end disciplined workflow — brainstorm, spec, worktree, TDD, review. Use for large features needing structure (obra/superpowers pattern).
+name: forge-superpowers
+description: 'End-to-end disciplined workflow for large features — brainstorm, spec, isolated work, TDD, review. Use when the user wants structure similar to obra/superpowers or a phased delivery.'
 ---
 
-# Superpowers (stub)
-
-Forge **stub** — community workflow from **obra/superpowers**. Install upstream for chained skills and full procedures. Use this file as a team pointer and customize steps for your repo.
+Follow the instructions in [workflow.md](workflow.md).

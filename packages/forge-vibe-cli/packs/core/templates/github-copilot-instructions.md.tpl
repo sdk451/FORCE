@@ -4,7 +4,7 @@ Repository instructions for [GitHub Copilot](https://docs.github.com/copilot/cus
 
 ## Optional skills (forge)
 
-When the installer included optional skills, **Agent Skills–style** stubs are under **`.github/forge-skills/<skill-id>/SKILL.md`**. Point Copilot workflows at those paths if your setup reads repo markdown beyond this file.
+When the installer included optional skills, **Agent Skills–style** bundles are under **`.github/forge-skills/forge-<skill-id>/SKILL.md`** (+ **`workflow.md`**). Point Copilot workflows at those paths if your setup reads repo markdown beyond this file.
 
 ## Stack
 

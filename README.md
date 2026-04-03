@@ -88,7 +88,7 @@ Each target is a boolean under **`targets`** in answers. **At least one** must b
 | **`github_copilot`** | GitHub Copilot | `.github/copilot-instructions.md`, optional `.github/forge-skills/` |
 | **`kimi_code`** | Kimi Code | `docs/FORGE-KIMI.md` + root `AGENTS.md`, optional `docs/forge-skills/kimi/` |
 
-**Optional skills** (installer checkbox / `optional_skills` array): the same stub **`SKILL.md`** body is written under each **enabled** host’s skill path. Allowed ids are fixed in **`schemas/install-answers.partial.schema.json`** (keep in sync with `OPTIONAL_SKILL_IDS` in code).
+**Optional skills** (installer checkbox / `optional_skills` array): for each selected id, the installer writes **`forge-<id>/SKILL.md`** and **`forge-<id>/workflow.md`** under each **enabled** host’s skills path (BMAD-style: thin entry + workflow body). Allowed ids are fixed in **`schemas/install-answers.partial.schema.json`** (keep in sync with `OPTIONAL_SKILL_IDS` in code).
 
 ## Answers JSON & validation
 

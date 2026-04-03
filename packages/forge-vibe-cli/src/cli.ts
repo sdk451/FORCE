@@ -20,7 +20,7 @@ import {
 import { assertAtLeastOneAgent, assertAtLeastOneCoreSection } from "./validate-targets.js";
 import { validateInstallAnswersPartialOrThrow } from "./validate-answers-json.js";
 import { makeStderrProgress } from "./progress-stderr.js";
-import { promptCheckbox, promptLine } from "./interactive/checkbox-prompt.js";
+import { promptCheckbox, promptStack } from "./interactive/checkbox-prompt.js";
 import { promptProjectName } from "./interactive/prompt-project-name.js";
 
 function printHelp(): void {
@@ -35,7 +35,7 @@ Primary flow (interactive TUI, like BMAD npx installers):
 Other commands:
   write [--project-root <dir>] [--answers <file>] [--dry-run] [--force] [--yes]
       Non-interactive or scripted install; same file layout as install.
-  load [--json] [--answers <file>]     Resolved manifest + planned paths (FR4)
+  load [--json] [--answers <file>]     Resolved manifest + planned paths (JSON)
   check [--project-root <dir>] [--answers <file>]
   resolve-defaults [--answers <file>]  Merge partial answers with defaults (stdout JSON)
 
@@ -48,7 +48,7 @@ Options:
   --yes                  write: non-interactive (use defaultAnswers when no --answers)
 
 Environment:
-  No network is required for core commands (FR5 / NFR-S1).
+  No network is required for core install/write/check/load commands.
 
 Target agents (answers.targets.* — booleans; at least one must be true after merge):
 
@@ -63,10 +63,10 @@ Target agents (answers.targets.* — booleans; at least one must be true after m
 Defaults: claude_code + cursor on; other targets off unless toggled or set in answers.
 
 Context (portable AGENTS.md composition):
-  context_core       §1.1 sections — default all true; at least one required after merge
-  context_advanced   §1.2 optional add-ons — default all false (security, behavior, debugging, …)
+  context_core       Core sections — default all true; at least one required after merge
+  context_advanced   Optional add-ons — default all true (security, behavior, debugging, …); turn off to slim AGENTS.md
 
-optional_skills — top-10 shortlist; each id emits SKILL.md under host-native paths where that target is on.
+optional_skills — top-10 shortlist; each id emits forge-<id>/SKILL.md + workflow.md under host-native paths where that target is on.
   See schemas/install-answers.partial.schema.json for allowed ids.
 
 Schema (in published package):
@@ -110,16 +110,12 @@ async function promptInteractive(projectRoot: string): Promise<InstallAnswers> {
     projectRoot,
     fallbackHint: defaultAnswers.project_name,
   });
-  const stackRaw =
-    (await promptLine(`Stack (typescript|python) [${defaultAnswers.stack}]: `)) || defaultAnswers.stack;
-  const stack = stackRaw === "python" ? "python" : "typescript";
+  const stack = await promptStack({ initial: defaultAnswers.stack });
 
   const agentMap = await promptCheckbox({
     title: "Target coding agents",
-    subtitle:
-      "BMAD-style numbered list: type line number(s) to toggle [ ]/[x], empty line when done. At least one agent required.",
+    subtitle: "Space toggles, Enter confirms. At least one agent required.",
     minSelected: 1,
-    minSelectedMessage: "Select at least one agent: enter number(s) to toggle, then empty line to confirm.",
     items: [
       {
         id: "claude_code",
@@ -157,11 +153,10 @@ async function promptInteractive(projectRoot: string): Promise<InstallAnswers> {
   });
 
   const coreMap = await promptCheckbox({
-    title: "Core AGENTS.md sections (§1.1)",
+    title: "Core AGENTS.md sections",
     subtitle:
-      "Research-backed portable context. All on by default — turn off sections you want minimal. At least one required.",
+      "Portable baseline context. All on by default — turn off sections you want minimal. At least one required.",
     minSelected: 1,
-    minSelectedMessage: "Keep at least one core section enabled.",
     items: CONTEXT_CORE_TUI.map((row) => ({
       id: row.id,
       label: row.label,
@@ -171,8 +166,8 @@ async function promptInteractive(projectRoot: string): Promise<InstallAnswers> {
   });
 
   const advMap = await promptCheckbox({
-    title: "Advanced context (§1.2 — optional add-ons)",
-    subtitle: "Security, behavior, compaction, UI workflow text, debugging, forbidden patterns.",
+    title: "Advanced context (optional add-ons)",
+    subtitle: "All on by default — disable sections you want omitted from AGENTS.md / host rules.",
     minSelected: 0,
     items: CONTEXT_ADVANCED_TUI.map((row) => ({
       id: row.id,
@@ -184,7 +179,7 @@ async function promptInteractive(projectRoot: string): Promise<InstallAnswers> {
 
   const skillMap = await promptCheckbox({
     title: "Optional skill bundles (top-10 shortlist)",
-    subtitle: "Forge emits stub SKILL.md per selection (extend or replace with upstream skills). None required.",
+    subtitle: "Each selection installs forge-<name>/SKILL.md + workflow.md (BMAD-style). Replace or extend in your repo as needed. None required.",
     minSelected: 0,
     items: OPTIONAL_SKILL_TUI.map((row) => ({
       id: row.id,
@@ -201,7 +196,7 @@ async function promptInteractive(projectRoot: string): Promise<InstallAnswers> {
     items: [
       {
         id: "ui_pack",
-        label: "UI workflow pack (FR36–41)",
+        label: "UI workflow pack",
         hint: "Figma, Storybook, Playwright…",
         checked: defaultAnswers.include_ui_workflow_pack,
       },

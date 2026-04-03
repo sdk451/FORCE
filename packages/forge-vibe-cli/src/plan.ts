@@ -15,6 +15,7 @@ import { wrapCursorMdc } from "./cursor-mdc-wrap.js";
 import { loadPackManifest } from "./manifest.js";
 import { packsDir } from "./pack-root.js";
 import { applyTemplate } from "./template.js";
+import { forgeSkillInstallDir } from "./forge-skill-path.js";
 
 async function readTpl(rel: string): Promise<string> {
   const p = path.join(packsDir(), rel);
@@ -26,24 +27,47 @@ async function readPackSkill(skillId: string): Promise<string> {
   return fs.readFile(p, "utf8");
 }
 
+async function readPackSkillWorkflow(skillId: string): Promise<string | undefined> {
+  const p = path.join(packsDir(), "skills", skillId, "workflow.md");
+  try {
+    return await fs.readFile(p, "utf8");
+  } catch {
+    return undefined;
+  }
+}
+
+function pushSkillBundle(
+  files: PlannedFile[],
+  basePath: string,
+  skillMd: string,
+  workflowMd: string | undefined,
+): void {
+  files.push({ path: `${basePath}/SKILL.md`, content: skillMd });
+  if (workflowMd !== undefined) {
+    files.push({ path: `${basePath}/workflow.md`, content: workflowMd });
+  }
+}
+
 /** Optional skills: native trees for Claude/Cursor; documented mirrors for other targets. */
 async function emitOptionalSkillFiles(files: PlannedFile[], answers: InstallAnswers): Promise<void> {
   if (answers.optional_skills.length === 0) return;
   const t = answers.targets;
   for (const sid of answers.optional_skills) {
-    const content = await readPackSkill(sid);
-    if (t.claude_code) files.push({ path: `.claude/skills/${sid}/SKILL.md`, content });
-    if (t.cursor) files.push({ path: `.cursor/skills/${sid}/SKILL.md`, content });
-    if (t.cline) files.push({ path: `.clinerules/skills/${sid}/SKILL.md`, content });
-    if (t.gemini_cli) files.push({ path: `.gemini/skills/${sid}/SKILL.md`, content });
+    const dir = forgeSkillInstallDir(sid);
+    const skillMd = await readPackSkill(sid);
+    const workflowMd = await readPackSkillWorkflow(sid);
+    if (t.claude_code) pushSkillBundle(files, `.claude/skills/${dir}`, skillMd, workflowMd);
+    if (t.cursor) pushSkillBundle(files, `.cursor/skills/${dir}`, skillMd, workflowMd);
+    if (t.cline) pushSkillBundle(files, `.clinerules/skills/${dir}`, skillMd, workflowMd);
+    if (t.gemini_cli) pushSkillBundle(files, `.gemini/skills/${dir}`, skillMd, workflowMd);
     if (t.openai_codex) {
-      files.push({ path: `docs/forge-skills/codex/${sid}/SKILL.md`, content });
+      pushSkillBundle(files, `docs/forge-skills/codex/${dir}`, skillMd, workflowMd);
     }
     if (t.github_copilot) {
-      files.push({ path: `.github/forge-skills/${sid}/SKILL.md`, content });
+      pushSkillBundle(files, `.github/forge-skills/${dir}`, skillMd, workflowMd);
     }
     if (t.kimi_code) {
-      files.push({ path: `docs/forge-skills/kimi/${sid}/SKILL.md`, content });
+      pushSkillBundle(files, `docs/forge-skills/kimi/${dir}`, skillMd, workflowMd);
     }
   }
 }
@@ -68,7 +92,7 @@ function varsFor(a: InstallAnswers): Record<string, string> {
       : "Hooks **disabled** in emitted `.claude/settings.json` (safe default). Enable via installer with `allow_hooks: true` plus review.";
   const optionalSkillsNote =
     a.optional_skills.length > 0
-      ? `\n- **Optional skills (forge):** stubs for **${a.optional_skills.join(", ")}** — paths per host in **docs/FORGE-COMPATIBILITY-MATRIX.md**.\n`
+      ? `\n- **Optional skills (forge):** **${a.optional_skills.map((id) => forgeSkillInstallDir(id)).join(", ")}** — each bundle is \`SKILL.md\` + \`workflow.md\`; paths per host in **docs/FORGE-COMPATIBILITY-MATRIX.md**.\n`
       : "";
   return {
     PROJECT_NAME: a.project_name,
@@ -354,7 +378,7 @@ function mergeGuide(): string {
 - **GitHub Copilot**: merge **.github/copilot-instructions.md** with any existing Copilot instructions.
 - **Kimi Code**: keep **AGENTS.md** authoritative; align **docs/FORGE-KIMI.md** with team Kimi workflow.
 - **Optional rules:** \`forge-behavior\`, \`forge-security\`, \`forge-debugging\`, \`forge-forbidden\` — merge if you already use the same filenames (**Claude** \`.claude/rules\`, **Cursor** \`.mdc\`, **Cline** \`.clinerules\`).
-- **Optional skills (installer):** \`.claude/skills/<id>/\`, \`.cursor/skills/<id>/\`, \`.clinerules/skills/<id>/\`, \`.gemini/skills/<id>/\`, \`docs/forge-skills/codex/<id>/\`, \`.github/forge-skills/<id>/\`, \`docs/forge-skills/kimi/<id>/\` — same \`SKILL.md\` body per id where that host was selected.
+- **Optional skills (installer):** under each host tree, directories \`forge-<skill-id>/\` with \`SKILL.md\` + \`workflow.md\` (e.g. \`.cursor/skills/forge-tdd/\`). Same bundle per skill where that host was selected.
 `;
 }
 
@@ -381,15 +405,17 @@ function buildMatrixDoc(a: InstallAnswers, packVersion: string): string {
 
 ### Optional skills (when \`optional_skills\` is non-empty)
 
+Skill id \`tdd\` → install folder \`forge-tdd\` (always \`forge-\` prefix). Each folder contains \`SKILL.md\` and \`workflow.md\`.
+
 | Host | Path pattern |
 |------|----------------|
-| Claude Code | \`.claude/skills/<id>/SKILL.md\` |
-| Cursor | \`.cursor/skills/<id>/SKILL.md\` |
-| Cline | \`.clinerules/skills/<id>/SKILL.md\` |
-| Gemini CLI | \`.gemini/skills/<id>/SKILL.md\` (reference from \`GEMINI.md\` / \`@import\` if desired) |
-| Codex CLI | \`docs/forge-skills/codex/<id>/SKILL.md\` |
-| GitHub Copilot | \`.github/forge-skills/<id>/SKILL.md\` |
-| Kimi Code | \`docs/forge-skills/kimi/<id>/SKILL.md\` |
+| Claude Code | \`.claude/skills/forge-<id>/SKILL.md\` (+ \`workflow.md\`) |
+| Cursor | \`.cursor/skills/forge-<id>/SKILL.md\` (+ \`workflow.md\`) |
+| Cline | \`.clinerules/skills/forge-<id>/SKILL.md\` (+ \`workflow.md\`) |
+| Gemini CLI | \`.gemini/skills/forge-<id>/SKILL.md\` (+ \`workflow.md\`) |
+| Codex CLI | \`docs/forge-skills/codex/forge-<id>/SKILL.md\` (+ \`workflow.md\`) |
+| GitHub Copilot | \`.github/forge-skills/forge-<id>/SKILL.md\` (+ \`workflow.md\`) |
+| Kimi Code | \`docs/forge-skills/kimi/forge-<id>/SKILL.md\` (+ \`workflow.md\`) |
 
 ### OpenAI Codex CLI + optional OMX
 

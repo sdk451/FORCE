@@ -1,5 +1,6 @@
 import type { ContextAdvancedMap, ContextCoreMap, InstallAnswers } from "./types.js";
 import { CONTEXT_ADVANCED_IDS, CONTEXT_CORE_IDS } from "./context-config.js";
+import { forgeSkillInstallDir } from "./forge-skill-path.js";
 
 export interface CanonicalVars {
   PROJECT_NAME: string;
@@ -264,7 +265,7 @@ export function buildGeminiMd(a: InstallAnswers, v: CanonicalVars): string {
       "",
       block(
         "Optional skills (forge)",
-        `Stubs under **\`.gemini/skills/<id>/SKILL.md\`** for: ${a.optional_skills.map((id) => `\`${id}\``).join(", ")}. Pull into context with \`@.gemini/skills/...\` or nested \`GEMINI.md\` per [Gemini CLI docs](https://google-gemini.github.io/gemini-cli/docs/cli/gemini-md.html).`,
+        `Skill bundles under **\`.gemini/skills/forge-<id>/\`** (\`SKILL.md\` + \`workflow.md\`) for: ${a.optional_skills.map((id) => `\`${forgeSkillInstallDir(id)}\``).join(", ")}. Pull into context with \`@.gemini/skills/...\` or nested \`GEMINI.md\` per [Gemini CLI docs](https://google-gemini.github.io/gemini-cli/docs/cli/gemini-md.html).`,
       ),
     );
   }

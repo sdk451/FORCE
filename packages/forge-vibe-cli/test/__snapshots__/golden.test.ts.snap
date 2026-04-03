@@ -2,12 +2,20 @@
 
 exports[`buildPlannedFiles > emits stable path set for default MVP answers 1`] = `
 [
+  ".claude/rules/forge-behavior.md",
   ".claude/rules/forge-core.md",
+  ".claude/rules/forge-debugging.md",
+  ".claude/rules/forge-forbidden.md",
+  ".claude/rules/forge-security.md",
   ".claude/rules/forge-stack.md",
   ".claude/settings.json",
   ".claude/skills/visual-verify/SKILL.md",
+  ".cursor/rules/forge-behavior.mdc",
   ".cursor/rules/forge-core.mdc",
+  ".cursor/rules/forge-debugging.mdc",
+  ".cursor/rules/forge-forbidden.mdc",
   ".cursor/rules/forge-memory.mdc",
+  ".cursor/rules/forge-security.mdc",
   ".cursor/rules/forge-stack.mdc",
   "AGENTS.md",
   "CLAUDE.md",

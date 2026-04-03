@@ -1,8 +1,6 @@
 ---
-name: skill-creator
-description: Meta-skill — draft new SKILL.md files, descriptions, and folder layout for recurring team workflows.
+name: forge-skill-creator
+description: 'Author new Agent Skills — SKILL.md plus workflow body, triggers, and layout. Use when the user wants to add a skill, extract a procedure from chat, or document a recurring workflow.'
 ---
 
-# Skill creator (stub)
-
-Forge **stub**. Follow [agentskills.io](https://agentskills.io/) and Anthropic skill guidelines; keep descriptions trigger-oriented.
+Follow the instructions in [workflow.md](workflow.md).

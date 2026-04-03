@@ -1,8 +1,6 @@
 ---
-name: playwright-browser
-description: Browser verification — navigate, interact, screenshot. Prefer Playwright CLI or MCP where configured; cite evidence in PR/UI tasks.
+name: forge-playwright-browser
+description: 'Browser verification with Playwright — navigate, assert, screenshot. Use when the user needs E2E checks, UI proof, or repro in a real browser.'
 ---
 
-# Playwright browser automation (stub)
-
-Forge **stub**. Wire to **Playwright MCP** or local `npx playwright` per **docs/UI-WORKFLOW-PACK.md** when UI pack is enabled.
+Follow the instructions in [workflow.md](workflow.md).
