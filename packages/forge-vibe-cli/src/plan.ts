@@ -26,6 +26,28 @@ async function readPackSkill(skillId: string): Promise<string> {
   return fs.readFile(p, "utf8");
 }
 
+/** Optional skills: native trees for Claude/Cursor; documented mirrors for other targets. */
+async function emitOptionalSkillFiles(files: PlannedFile[], answers: InstallAnswers): Promise<void> {
+  if (answers.optional_skills.length === 0) return;
+  const t = answers.targets;
+  for (const sid of answers.optional_skills) {
+    const content = await readPackSkill(sid);
+    if (t.claude_code) files.push({ path: `.claude/skills/${sid}/SKILL.md`, content });
+    if (t.cursor) files.push({ path: `.cursor/skills/${sid}/SKILL.md`, content });
+    if (t.cline) files.push({ path: `.clinerules/skills/${sid}/SKILL.md`, content });
+    if (t.gemini_cli) files.push({ path: `.gemini/skills/${sid}/SKILL.md`, content });
+    if (t.openai_codex) {
+      files.push({ path: `docs/forge-skills/codex/${sid}/SKILL.md`, content });
+    }
+    if (t.github_copilot) {
+      files.push({ path: `.github/forge-skills/${sid}/SKILL.md`, content });
+    }
+    if (t.kimi_code) {
+      files.push({ path: `docs/forge-skills/kimi/${sid}/SKILL.md`, content });
+    }
+  }
+}
+
 function canonVars(a: InstallAnswers): { PROJECT_NAME: string; STACK: string } {
   const stackLabel = a.stack === "typescript" ? "TypeScript / Node" : "Python";
   return { PROJECT_NAME: a.project_name, STACK: stackLabel };
@@ -44,6 +66,10 @@ function varsFor(a: InstallAnswers): Record<string, string> {
     a.allow_hooks
       ? "Hooks **opt-in** is enabled — see **docs/FORGE-HOOK-OPTIN.md** and review `.claude/settings.json`."
       : "Hooks **disabled** in emitted `.claude/settings.json` (safe default). Enable via installer with `allow_hooks: true` plus review.";
+  const optionalSkillsNote =
+    a.optional_skills.length > 0
+      ? `\n- **Optional skills (forge):** stubs for **${a.optional_skills.join(", ")}** — paths per host in **docs/FORGE-COMPATIBILITY-MATRIX.md**.\n`
+      : "";
   return {
     PROJECT_NAME: a.project_name,
     STACK: stackLabel,
@@ -51,6 +77,7 @@ function varsFor(a: InstallAnswers): Record<string, string> {
     UI_SECTION: ui,
     MEMORY_SECTION: mem,
     HOOKS_BLOCK: hooks,
+    OPTIONAL_SKILLS_NOTE: optionalSkillsNote,
   };
 }
 
@@ -112,13 +139,6 @@ You enabled **allow_hooks**. The emitted \`.claude/settings.json\` contains **ex
       });
     }
 
-    for (const sid of answers.optional_skills) {
-      files.push({
-        path: `.claude/skills/${sid}/SKILL.md`,
-        content: await readPackSkill(sid),
-      });
-    }
-
     if (answers.context_advanced.agent_behavior) {
       files.push({
         path: ".claude/rules/forge-behavior.md",
@@ -155,13 +175,6 @@ You enabled **allow_hooks**. The emitted \`.claude/settings.json\` contains **ex
       path: ".cursor/rules/forge-stack.mdc",
       content: applyTemplate(await readTpl(cursorStack), v),
     });
-
-    for (const sid of answers.optional_skills) {
-      files.push({
-        path: `.cursor/skills/${sid}/SKILL.md`,
-        content: await readPackSkill(sid),
-      });
-    }
 
     if (answers.context_advanced.agent_behavior) {
       files.push({
@@ -262,6 +275,8 @@ You enabled **allow_hooks**. The emitted \`.claude/settings.json\` contains **ex
     });
   }
 
+  await emitOptionalSkillFiles(files, answers);
+
   if (answers.include_memory_enhanced) {
     files.push({
       path: "PROJECT_MEMORY.md",
@@ -310,6 +325,7 @@ function mergeGuide(): string {
 - **GitHub Copilot**: merge **.github/copilot-instructions.md** with any existing Copilot instructions.
 - **Kimi Code**: keep **AGENTS.md** authoritative; align **docs/FORGE-KIMI.md** with team Kimi workflow.
 - **Optional rules:** \`forge-behavior\`, \`forge-security\`, \`forge-debugging\`, \`forge-forbidden\` — merge if you already use the same filenames.
+- **Optional skills (installer):** \`.claude/skills/<id>/\`, \`.cursor/skills/<id>/\`, \`.clinerules/skills/<id>/\`, \`.gemini/skills/<id>/\`, \`docs/forge-skills/codex/<id>/\`, \`.github/forge-skills/<id>/\`, \`docs/forge-skills/kimi/<id>/\` — same \`SKILL.md\` body per id where that host was selected.
 `;
 }
 
@@ -333,6 +349,18 @@ function buildMatrixDoc(a: InstallAnswers, packVersion: string): string {
 | **OpenAI Codex CLI** | \`AGENTS.md\` + \`docs/FORGE-CODEX.md\` |
 | **GitHub Copilot** | \`.github/copilot-instructions.md\` |
 | **Kimi Code** | \`docs/FORGE-KIMI.md\` + root \`AGENTS.md\` |
+
+### Optional skills (when \`optional_skills\` is non-empty)
+
+| Host | Path pattern |
+|------|----------------|
+| Claude Code | \`.claude/skills/<id>/SKILL.md\` |
+| Cursor | \`.cursor/skills/<id>/SKILL.md\` |
+| Cline | \`.clinerules/skills/<id>/SKILL.md\` |
+| Gemini CLI | \`.gemini/skills/<id>/SKILL.md\` (reference from \`GEMINI.md\` / \`@import\` if desired) |
+| Codex CLI | \`docs/forge-skills/codex/<id>/SKILL.md\` |
+| GitHub Copilot | \`.github/forge-skills/<id>/SKILL.md\` |
+| Kimi Code | \`docs/forge-skills/kimi/<id>/SKILL.md\` |
 
 ### OpenAI Codex CLI + optional OMX
 

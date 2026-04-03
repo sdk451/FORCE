@@ -259,6 +259,15 @@ export function buildGeminiMd(a: InstallAnswers, v: CanonicalVars): string {
   if (a.include_ui_workflow_pack) {
     parts.push("", sectionUiUxWorkflow(v));
   }
+  if (a.optional_skills.length > 0) {
+    parts.push(
+      "",
+      block(
+        "Optional skills (forge)",
+        `Stubs under **\`.gemini/skills/<id>/SKILL.md\`** for: ${a.optional_skills.map((id) => `\`${id}\``).join(", ")}. Pull into context with \`@.gemini/skills/...\` or nested \`GEMINI.md\` per [Gemini CLI docs](https://google-gemini.github.io/gemini-cli/docs/cli/gemini-md.html).`,
+      ),
+    );
+  }
   parts.push(
     "",
     "Use **`/memory show`** / **`/memory refresh`** to inspect hierarchical context.",

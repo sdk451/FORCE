@@ -2,6 +2,10 @@
 
 Repository instructions for [GitHub Copilot](https://docs.github.com/copilot/customizing-copilot/adding-custom-instructions-for-github-copilot). Complements root **AGENTS.md** (portable interchange).
 
+## Optional skills (forge)
+
+When the installer included optional skills, **Agent Skills–style** stubs are under **`.github/forge-skills/<skill-id>/SKILL.md`**. Point Copilot workflows at those paths if your setup reads repo markdown beyond this file.
+
 ## Stack
 
 {{STACK}}

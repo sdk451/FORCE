@@ -16,6 +16,10 @@ directories:
   - .cursor/rules
   - .claude/skills/visual-verify
   - .gemini
+  - .gemini/skills
   - .clinerules
+  - .clinerules/skills
   - .github
+  - .github/forge-skills
   - docs
+  - docs/forge-skills

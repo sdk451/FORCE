@@ -74,4 +74,27 @@ describe("buildPlannedFiles", () => {
     expect(paths.has(".claude/skills/tdd/SKILL.md")).toBe(true);
     expect(paths.has(".cursor/skills/systematic-debugging/SKILL.md")).toBe(true);
   });
+
+  it("emits optional skills for Cline, Gemini, Codex, Copilot, and Kimi targets", async () => {
+    const answers = resolveDefaults({
+      optional_skills: ["tdd"],
+      targets: {
+        claude_code: false,
+        cursor: false,
+        cline: true,
+        gemini_cli: true,
+        openai_codex: true,
+        github_copilot: true,
+        kimi_code: true,
+      },
+      include_memory_enhanced: false,
+    });
+    const { files } = await buildPlannedFiles(answers);
+    const paths = new Set(files.map((f) => f.path));
+    expect(paths.has(".clinerules/skills/tdd/SKILL.md")).toBe(true);
+    expect(paths.has(".gemini/skills/tdd/SKILL.md")).toBe(true);
+    expect(paths.has("docs/forge-skills/codex/tdd/SKILL.md")).toBe(true);
+    expect(paths.has(".github/forge-skills/tdd/SKILL.md")).toBe(true);
+    expect(paths.has("docs/forge-skills/kimi/tdd/SKILL.md")).toBe(true);
+  });
 });
