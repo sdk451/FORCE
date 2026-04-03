@@ -25,18 +25,25 @@ import { promptCheckbox, promptLine } from "./interactive/checkbox-prompt.js";
 function printHelp(): void {
   console.log(`forge-vibe — BMAD-style installer for versioned agent context packs
 
-Commands:
+Primary flow (interactive TUI, like BMAD npx installers):
+  install [--project-root <dir>] [--dry-run] [--force]
+      Run checkbox prompts, then write AGENTS.md, host rules/skills, and docs under the
+      project root. Default project root is the current working directory (your repo root).
+      Does not accept --answers or --yes (use write for automation).
+
+Other commands:
+  write [--project-root <dir>] [--answers <file>] [--dry-run] [--force] [--yes]
+      Non-interactive or scripted install; same file layout as install.
   load [--json] [--answers <file>]     Resolved manifest + planned paths (FR4)
   check [--project-root <dir>] [--answers <file>]
   resolve-defaults [--answers <file>]  Merge partial answers with defaults (stdout JSON)
-  write [--project-root <dir>] [--answers <file>] [--dry-run] [--force] [--yes]
 
 Options:
-  --project-root <dir>   Target repo (default: cwd)
-  --answers <file>       JSON partial/full answers; validated against the pack schema
+  --project-root <dir>   Target repo root (default: cwd). All emitted paths are relative to this.
+  --answers <file>       JSON partial/full answers; validated against the pack schema (not install)
   --json                 load: single-line JSON (no indentation); default load is pretty-printed
-  --dry-run              write: print actions only
-  --force                write: overwrite differing files
+  --dry-run              install/write: print actions only
+  --force                install/write: overwrite differing files
   --yes                  write: non-interactive (use defaultAnswers when no --answers)
 
 Environment:
@@ -61,8 +68,8 @@ Context (portable AGENTS.md composition):
 optional_skills — top-10 shortlist; each id emits SKILL.md under host-native paths where that target is on.
   See schemas/install-answers.partial.schema.json for allowed ids.
 
-Schema:
-  packages/forge-vibe-cli/schemas/install-answers.partial.schema.json (draft-07; unknown keys rejected)
+Schema (in published package):
+  schemas/install-answers.partial.schema.json (draft-07; unknown keys rejected)
 
 Docs in-repo:
   docs/FORGE-COMPATIBILITY-MATRIX.md — per-host paths and optional skills table (after write)
@@ -93,7 +100,9 @@ async function readAnswersFile(file: string): Promise<Partial<InstallAnswers>> {
 
 async function promptInteractive(): Promise<InstallAnswers> {
   if (!process.stdin.isTTY || !process.stdout.isTTY) {
-    throw new Error("Interactive write requires a terminal (TTY). Use --answers <file> or --yes.");
+    throw new Error(
+      "Interactive mode requires a terminal (TTY). From a terminal run: npx forge-vibe install (or forge-vibe install). For CI/scripts use: forge-vibe write --answers <file> or --yes.",
+    );
   }
 
   const project_name =
@@ -259,19 +268,39 @@ async function main(): Promise<void> {
 
   const root = path.resolve(values["project-root"] ?? process.cwd());
 
+  if (cmd === "install") {
+    if (values.answers) {
+      console.error("install does not accept --answers. Use: forge-vibe write --project-root <dir> --answers <file>");
+      process.exit(1);
+    }
+    if (values.yes) {
+      console.error("install does not accept --yes. Use: forge-vibe write --yes --project-root <dir>");
+      process.exit(1);
+    }
+  }
+
   let partial: Partial<InstallAnswers> = {};
   if (values.answers) {
     partial = await readAnswersFile(values.answers);
   } else if (cmd === "write" && values.yes) {
     partial = {};
+  } else if (cmd === "install") {
+    partial = {};
   }
 
   let answers: InstallAnswers;
   try {
-    answers =
-      cmd === "write" && !values.answers && !values.yes
-        ? await promptInteractive()
-        : resolveDefaults(partial);
+    const useInteractiveTui = cmd === "install" || (cmd === "write" && !values.answers && !values.yes);
+    if (useInteractiveTui) {
+      if (cmd === "install") {
+        console.error(
+          `forge-vibe install → project root: ${root}\n(AGENTS.md, host rules/skills, and docs are written with paths relative to this directory.)\n`,
+        );
+      }
+      answers = await promptInteractive();
+    } else {
+      answers = resolveDefaults(partial);
+    }
     assertAtLeastOneAgent(answers.targets);
     assertAtLeastOneCoreSection(answers);
   } catch (e) {
@@ -335,9 +364,10 @@ async function main(): Promise<void> {
     process.exit(missing.length + diff.length > 0 ? 1 : 0);
   }
 
-  if (cmd === "write") {
+  if (cmd === "write" || cmd === "install") {
     const { files } = await buildPlannedFiles(answers);
-    const prog = makeStderrProgress("write", files.length);
+    const verb = cmd === "install" ? "install" : "write";
+    const prog = makeStderrProgress(verb, files.length);
     try {
       const results = await writePlannedFiles(root, files, {
         dryRun: values["dry-run"],

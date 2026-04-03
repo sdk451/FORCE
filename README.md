@@ -10,7 +10,7 @@ Teams want one **canonical** description of how AI coding agents should work in 
 
 | Path | Purpose |
 |------|---------|
-| **`packages/forge-vibe-cli`** | Publishable npm package (`forge-vibe-cli`): CLI binary `forge-vibe`, packs, JSON Schema for answers |
+| **`packages/forge-vibe-cli`** | Publishable npm package **`forge-vibe`** (folder name differs): CLI `forge-vibe`, packs, JSON Schema |
 | **`packages/forge-vibe-cli/packs/`** | Core templates, stack variants (TypeScript / Python), optional UI workflow pack, stub **optional skills** |
 | **`packages/forge-vibe-cli/schemas/`** | **`install-answers.partial.schema.json`** — validates `--answers` JSON (draft-07; unknown keys rejected) |
 | **`docs/`** | Research, growth adapter notes, FR42 placeholder |
@@ -28,6 +28,24 @@ npm run build
 npm test
 ```
 
+**Local private package (build + test + pack):** `npm run repack-forge-vibe` writes **`private-dist/forge-vibe-*.tgz`** (ignored by git). See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md#local-repack-private-smoke-test).
+
+### Recommended install flow (published package)
+
+From your **repository root** (TTY required for prompts):
+
+```bash
+npx forge-vibe install
+```
+
+All generated paths (**`AGENTS.md`**, **`.claude/`**, **`.cursor/`**, **`GEMINI.md`**, **`docs/`**, etc.) are **relative to the project root** — by default the directory where you run the command; override with **`--project-root <dir>`**.
+
+After **`npm install -g forge-vibe`**:
+
+```bash
+forge-vibe install
+```
+
 CLI help (all targets and options):
 
 ```bash
@@ -38,25 +56,27 @@ npm run forge-vibe -- --help
 
 | Command | Purpose |
 |---------|---------|
+| **`install`** | **BMAD-style TUI**: prompts for targets, context sections, optional skills, packs; then writes files under **`--project-root`** (default **cwd**). No **`--answers`** / **`--yes`**. Optional **`--dry-run`**, **`--force`**. |
+| **`write`** | Same files as **`install`**, for **automation**: **`--answers`**, **`--yes`**, **`--dry-run`**, **`--force`**. Interactive if neither **`--answers`** nor **`--yes`**. |
 | **`load`** | Resolve manifest + full planned file list (and answers). Default output is **pretty JSON**; **`--json`** emits **single-line** JSON for piping. |
 | **`check`** | Compare planned files to an on-disk project; prints JSON summary; exit **1** if anything is missing or differs. Progress on **stderr** when more than **25** files are planned. |
-| **`write`** | Create/update files under `--project-root`. Use **`--dry-run`**, **`--force`**, or **`--yes`** for automation. Progress on **stderr** when more than **25** files are planned. |
 | **`resolve-defaults`** | Print fully merged **`InstallAnswers`** after defaults (and **`--answers`** if provided). |
 
-Non-interactive examples:
+Examples:
 
 ```bash
+npm run forge-vibe -- install --project-root .
 npm run forge-vibe -- load --json --yes
 npm run forge-vibe -- check --project-root .
 npm run forge-vibe -- write --dry-run --yes --project-root path/to/repo
 npm run forge-vibe -- write --yes --project-root . --answers answers.json
 ```
 
-Interactive **`write`** (no `--yes` / `--answers`) walks through: project name → stack → **targets** (≥1) → **core AGENTS §1.1** (≥1) → **advanced §1.2** → **optional skills** → **hooks & packs**.
+Interactive **`install`** or **`write`** (without **`--yes`** / **`--answers`**) walks through: project name → stack → **targets** (≥1) → **core AGENTS §1.1** (≥1) → **advanced §1.2** → **optional skills** → **hooks & packs**.
 
 ## Target agents (summary)
 
-Each target is a boolean under **`targets`** in answers. **At least one** must be true. After **`write`**, see **`docs/FORGE-COMPATIBILITY-MATRIX.md`** in the target repo for the exact table.
+Each target is a boolean under **`targets`** in answers. **At least one** must be true. After **`install`** or **`write`**, see **`docs/FORGE-COMPATIBILITY-MATRIX.md`** in the target repo for the exact table.
 
 | Target key | Product / surface | Typical emitted paths |
 |------------|-------------------|------------------------|
@@ -119,16 +139,17 @@ Duplicate skill ids in the array are **deduped** after validation.
 
 ```bash
 npm pack packages/forge-vibe-cli
-npm install -g ./forge-vibe-cli-0.1.0.tgz
-forge-vibe --help
+npm install -g ./forge-vibe-0.1.0.tgz
+forge-vibe install
 ```
 
-Published package name: **`forge-vibe-cli`** (this root `package.json` is a **private** workspace orchestrator).
+Published npm package name: **`forge-vibe`** (this root `package.json` is a **private** workspace orchestrator; sources live under **`packages/forge-vibe-cli/`**).
 
 ## Documentation index
 
 | Topic | Location |
 |-------|----------|
+| Build, pack & npm publish | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) |
 | Template & research (Epic 1) | [docs/agent-config-template-research.md](docs/agent-config-template-research.md) |
 | Growth adapters (Epic 4) | [docs/growth-adapters/README.md](docs/growth-adapters/README.md) |
 | FR42 reserved pack | [docs/FR42-quality-verification-layer.md](docs/FR42-quality-verification-layer.md) |

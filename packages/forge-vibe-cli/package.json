@@ -1,7 +1,19 @@
 {
-  "name": "forge-vibe-cli",
+  "name": "forge-vibe",
   "version": "0.1.0",
-  "description": "BMAD-style installer for forge agent packs (Claude Code, Cursor, …)",
+  "description": "BMAD-style agent context installer: npx forge-vibe install (AGENTS.md + Claude, Cursor, Gemini, …)",
+  "keywords": [
+    "agents.md",
+    "claude",
+    "cursor",
+    "cline",
+    "gemini",
+    "copilot",
+    "codex",
+    "bmad",
+    "installer",
+    "ai-agents"
+  ],
   "type": "module",
   "main": "./dist/cli.js",
   "bin": {

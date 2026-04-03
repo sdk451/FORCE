@@ -14,4 +14,4 @@ Codex typically walks from the repository root toward the working directory and 
 
 ---
 
-*Generated {{DATE_ISO}} by forge-vibe-cli.*
+*Generated {{DATE_ISO}} by forge-vibe.*
