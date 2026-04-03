@@ -1,239 +1,358 @@
 ---
-stepsCompleted: []
+stepsCompleted:
+  - create-epics-and-stories-v2-implementation-ready-2026-04-03
 inputDocuments:
   - _bmad-output/planning-artifacts/prd.md
   - _bmad-output/planning-artifacts/architecture.md
   - _bmad-output/planning-artifacts/adr/0001-installer-runtime-node-npx.md
   - _bmad-output/planning-artifacts/research/domain-agent-context-claude-cursor-gemini-research-2026-04-03.md
 productOwnerNotes: >-
-  Architecture direction: **canonical interoperable artifact set** (portable root context incl. AGENTS.md,
-  modular rules, skills, lifecycle automation, project memory, optional extension slices) → **per-host adapters**
-  for vibe coding agents (Claude Code, Cursor, Cline, GitHub Copilot, VS Code Copilot, Codex CLI, Gemini CLI,
-  Windsurf, Kimi Code, Microsoft Copilot where applicable, BMAD MCP taxonomy).
-  **UI/UX design & implementation** is a **named extension pack** (FR36–FR41), not the core default.
-  **Post-MVP:** default-aligned pack for **Agent-agnostic configurable quality verification layer** (separate OSS
-  product Simon is building)—**FR42**; no MVP blocker.
-  Replicate BMAD’s setup process (npx-style init, manifest/directories, per-IDE adapters) per shipped host.
+  **Canonical model:** small interoperable artifact set (portable root context → AGENTS.md + host files;
+  modular rules; Agent Skills-style procedures; lifecycle automation / hook or substitutes; project memory;
+  optional UI/UX + reserved FR42) → per-host adapters. **MVP:** Claude Code + Cursor.
+  **Growth:** Cline, Windsurf, GitHub Copilot, VS Code Copilot, **OpenAI Codex CLI** (single row; **oh-my-codex / OMX** = optional doc appendix only),
+  Gemini CLI (see domain research §3 Codex/OMX, §7). Distilled principles in **Default canonical design
+  principles** below. Replicate BMAD-style npx init (manifest, directories, adapters) per shipped host.
 ---
 
-# forge-vibe-code-enhancement - Epic Breakdown
+# forge-vibe-code-enhancement — Epic & story breakdown
 
 ## Overview
 
-This document provides the epic and story breakdown for **forge-vibe-code-enhancement** (PRD working name; BMM `config.yaml` may still reference `clean-code`), decomposing requirements from the PRD, Architecture (including ADRs), **canonical artifact + adapter model**, consolidated **domain research**, and optional UX into implementable stories.
+This document decomposes **forge-vibe-code-enhancement** into **implementation-ready epics and stories**, aligned with the **PRD**, **architecture**, **ADR-0001**, and consolidated **domain research** (`domain-agent-context-claude-cursor-gemini-research-2026-04-03.md`). It encodes the **default canonical approach**: one **normative pack source** and **host adapters**, borrowing the best-stable patterns from **[AGENTS.md](https://agents.md/)**, **Claude Code** (hooks, `.claude/rules`, skills), **Cursor** (`.mdc`, globs, `.cursor/skills`), **Gemini CLI** (`GEMINI.md`, `context.fileName`, `/memory`), **OpenAI Codex CLI** (**`AGENTS.md`**; optional **[oh-my-codex (OMX)](https://github.com/sdk451/oh-my-codex)** documented only as a **runtime companion** in pack README), and growth hosts (**Cline**, **Copilot** surfaces, **Windsurf**) per **FR-MAP-02**.
 
-## Requirements Inventory
-
-### Functional Requirements
-
-- **FR-INST-01:** **Node.js (LTS) CLI** via **npm** / **`npx`**, semantic parity with **`bmad_init.py` / BMAD installer:** **`load`**, **`check`**, **`resolve-defaults`**, **`write`**; YAML-driven prompts; merged config artifact; **`check`** = missing / would-change; **`write`** interactive or JSON; **`load`** = machine-readable manifest; pack manifest (YAML/JSON) with core + optional pack IDs, target adapters, conditional emission (e.g. `include_ui_workflow_pack`); create declared directories; **idempotent** or confirm-before-overwrite; **offline** path documented (tarball / local `node_modules`).
-- **FR-MAP-01:** Versioned canonical → per-tool mapping table (CLAUDE.md, `.claude/rules`, skills, hooks, local overrides vs Cursor `.mdc`/rules/skills); audit BMAD `_bmad` + `.cursor/skills` layout and replicate mapping strategy in the generator.
-- **FR-MAP-02 (PRD normative minimum):** Matrix and install adapters for **Cline**, **Windsurf**, **GitHub Copilot**, **VS Code Copilot**, **OpenAI Codex CLI**, **Google Gemini CLI**, using the same taxonomy as internal **BMAD MCP** docs (per-tool config paths and limitations). Each adapter documents: **where context lives**, **whether skills exist**, **hook substitutes**, **memory substitute**, **portable root context** (`AGENTS.md` vs host-native).
-- **FR-MAP-02 (product-owner extensions, not yet in PRD table):** Track additional hosts in roadmap/epics as needed — e.g. **Kimi Code**, **GitHub Copilot** / **Microsoft Copilot** where surfaces or install paths differ materially from **VS Code Copilot**; fold into PRD when scope is formalized.
-- **FR-MEM-01:** Project-level memory format; post-session compaction (deterministic pipeline, prune, max length, decisions vs scratch; bounded optional LLM assist); hook or manual procedure for Claude Code.
-- **FR-MEM-02:** For Cursor and each supported tool without native memory: repo-local memory + rules approximating read-at-start / compact-at-end; document gaps and workarounds in matrix.
-- **FR1:** User can discover existing configuration and gaps (`check`).
-- **FR2:** User can answer structured questions and materialize selected core + optional packs into project root.
-- **FR3:** User can re-run install with same answers without unintended destructive overwrite (idempotent or confirm).
-- **FR4:** User can obtain machine-readable manifest of planned or applied install (`load`).
-- **FR5:** User can install offline using only bundled/local pack content.
-- **FR6:** User can select primary stack profile for base pack.
-- **FR7:** User can opt in/out of optional packs via questionnaire (incl. **UI-forward**, memory-enhanced, **UI/UX opinionated workflow pack** FR36).
-- **FR8:** Team lead can merge library output with existing agent config per documented merge/replace rules.
-- **FR9:** Reader can understand pack contents and affected hosts from docs.
-- **FR10:** User can target Claude Code and receive instructions, modular rules, hooks/settings, skills in expected shapes.
-- **FR11:** User can target Cursor and receive mapped rules/skills without manual translation from Claude-only layout.
-- **FR12:** Reader can see normative mapping of canonical concepts to each supported host’s artifacts.
-- **FR13:** Reader can see documented automation gaps and recommended substitutes per host.
-- **FR14:** Claude Code teams can apply hook recipes tying file changes to quality steps when included in pack.
-- **FR15:** Cursor teams receive equivalent intent via rules, commands, or documented manual steps per gap table.
-- **FR16:** UI-forward pack users have documented/enforced non-text-only verification before “done.”
-- **FR17:** User explicitly opts in before hooks/scripts run arbitrary commands (no silent destructive hooks).
-- **FR18:** Claude Code teams follow documented project memory format.
-- **FR19:** Teams run post-session compaction per published rules.
-- **FR20:** Cursor (or host without native memory) uses repo-local memory artifact + rules within host limits.
-- **FR21:** Reader sees workarounds when host lacks session lifecycle hooks for auto compaction.
-- **FR22:** Reader consults compatibility matrix (library/pack vs host versions and limitations).
-- **FR23:** Maintainer publishes migration guidance on host API/hook changes.
-- **FR24:** Adopter can manually copy artifacts from same pack sources if CLI unavailable.
-- **FR25:** Adopter can verify pack provenance (tags, checksums, or signatures).
-- **FR26:** Reader sees stated security expectations (no answer exfiltration, no surprise network on default path).
-- **FR27:** Maintainer adds optional pack without changing core CLI contract (manifest-driven).
-- **FR28:** Maintainer adds host adapter via manifest + tests without rewriting unrelated packs.
-- **FR29:** Contributor path for pack changes (e.g. PR + checklist) described.
-- **FR30:** User can select at least one additional host beyond Claude Code + Cursor once adapter ships.
-- **FR31:** Each shipped additional host gets FR10–FR13-level mapping and gap documentation.
-- **FR32:** Reader sees base packs are not legal/compliance advice; vertical use needs professional review.
-- **FR33:** Vertical/regulated add-ons only when explicitly selected.
-- **FR34:** User can install ≥1 optional Agent Skill bundle aligned to pack theme when pilot enabled.
-- **FR35:** Teams use installed skills in host discovery flow without conflicting duplicates (coordination with CLAUDE.md/rules documented).
-- **FR36:** User can opt in via questionnaire to optional **UI/UX opinionated workflow pack** (Figma MCP + Storybook + Playwright/Playwright MCP + shadcn/ui-oriented conventions) without forcing on minimal installs.
-- **FR37:** With FR36, emitted artifacts include **Figma MCP** workflow guidance (tokens/frames, design–code parity, prerequisites, human sign-off boundaries).
-- **FR38:** With FR36, emitted artifacts include **Storybook** workflow guidance (stories as ground truth, CSF/interaction tests, hooks or manual gates, optional VRT pointers).
-- **FR39:** With FR36, emitted artifacts include **Playwright** guidance (Playwright MCP setup, screenshot/a11y checks, multi-viewport smoke, host substitutes where MCP/hooks missing).
-- **FR40:** With FR36, emitted artifacts include **shadcn/ui**-oriented conventions (CLI patterns, primitives vs custom, theming/tokens, anti-default aesthetics).
-- **FR41:** UI/UX workflow pack coordinates with **compatibility matrix** for suggested tooling compatibility notes (no vendor endorsement claims).
-- **FR42 (post-MVP / future):** When **Agent-agnostic configurable quality verification layer** OSS product is GA, installer can emit **default-aligned extension pack** integrating that layer; **manifest placeholder only** until then—does not block MVP.
-
-**Cross-cutting FR notes (PRD “Non-functional” under cross-tool):** golden repo per MVP target + installer CI smoke; installer must not exfiltrate answers; optional packs scoped (no surprise shell hooks without opt-in).
-
-**Canonical model (cross-cutting):** **FR-MAP-01** defines **canonical artifact types** and MVP mapping table; **FR12** requires published mapping per host; **FR-INST-01** manifest declares canonical slices + adapters (see `architecture.md` — Canonical artifact model & host adapters).
-
-### NonFunctional Requirements
-
-- **NFR-P1:** `check` on typical project (≤10k files, cold disk) completes in ≤5 seconds (reference laptop profile).
-- **NFR-P2:** `write` with MVP packs to empty target completes in ≤60 seconds (same profile; excludes user think time / optional network).
-- **NFR-P3:** Generated artifacts avoid unnecessary bloat; per-host size budgets documented.
-- **NFR-S1:** Default install path performs no outbound network unless user opts in.
-- **NFR-S2:** Questionnaire answers and local paths not sent to third parties in MVP (telemetry only if separately documented and opt-in).
-- **NFR-S3:** Hook recipes that run shell commands labeled by risk tier; high-risk requires explicit install-time confirmation.
-- **NFR-S4:** Releases support integrity verification (checksums/signatures) per FR25.
-- **NFR-R1:** Golden fixtures: repeated `write` with same inputs yields byte-identical or semantically equivalent trees per equivalence rules.
-- **NFR-R2:** CI smoke tests block releases on failure (golden CLI + file tree assertions).
-- **NFR-R3:** Migration guides validated against ≥1 simulated host version bump per major release.
-- **NFR-M1:** ≥80% line coverage on critical CLI paths (`load` / `check` / `resolve-defaults` / `write`) unless stricter policy adopted.
-- **NFR-M2:** Each shipped host adapter has ≥1 automated test or golden snapshot before “supported.”
-- **NFR-M3:** Changelog SemVer; breaking manifest/output changes are major bumps.
-- **NFR-I1:** Emitted JSON validates against documented host schema when validator exists.
-- **NFR-I2:** Compatibility matrix updated before claiming support for new host minor class (e.g. new hook events).
-
-**Explicitly out of scope (PRD):** multi-tenant SaaS scale; WCAG for a product GUI (no shipped GUI in MVP).
-
-### Additional Requirements
-
-- **ADR-0001 (Accepted):** Installer in **Node.js (LTS)**; **npm** + **`npx`**; document minimum Node in README and CI; BMAD parity: `load` / `check` / `resolve-defaults` / `write` — **aligned with updated PRD / FR-INST-01**.
-- **Offline / npx:** Document offline path (e.g. `npm pack` + local `npx`, or project-local `node_modules` scripts) to satisfy FR5/NFR-S1 when registry access is unavailable.
-- **Greenfield developer tool:** Golden-file tests per adapter; security defaults (no network in default path; sensitive hooks opt-in); new host = manifest slice + tests (PRD implementation considerations).
-- **BMAD repo alignment:** Generator should follow proven patterns from this repo’s `_bmad` layout and Cursor mirror (FR-MAP-01 R&D).
-- **Extended agent hosts (PRD FR-MAP-02 / FR30–FR31):** Normative growth list: **Cline**, **Windsurf**, **GitHub Copilot**, **VS Code Copilot**, **Codex CLI**, **Gemini CLI** (BMAD MCP taxonomy). **Product-owner backlog** may add hosts (e.g. **Kimi Code**, **Microsoft Copilot**) before full adapter specs. Each shipped host: **canonical slices → adapter emission**; document **context**, **skills**, **hook substitutes**, **memory substitute**, **AGENTS.md** strategy.
-- **FR42 / quality layer:** Reserved extension pack; **no implementation** until external OSS product ships.
-- **Domain research:** `_bmad-output/planning-artifacts/research/domain-agent-context-claude-cursor-gemini-research-2026-04-03.md` informs Epic 1 and pack authoring.
-- **No product GUI / UX spec:** Terminal CLI + documentation only (per `architecture.md`); PRD “UI” requirements apply to **emitted packs** for customer repos, not installer chrome.
-
-### UX Design Requirements
-
-_Not applicable._ There is no separate UX design artifact for this product. The installer is **CLI-only**. End-user interaction is **terminal prompts/output** and **published docs**. Usability expectations for the CLI (clarity of `check` output, non-destructive defaults, `--help`) should be reflected in story acceptance criteria under relevant epics rather than as UX-DR items.
-
-### FR Coverage Map
-
-| FR / area | Epic / story (preliminary) |
-|-----------|----------------------------|
-| FR-MAP-01, FR12, FR13, canonical types | Epic 1 (1.1–1.2, 1.3 matrix stub, **1.5** template spec) |
-| FR-MEM-01, FR-MEM-02, FR18–FR21 | Epic 1 (1.4) |
-| FR14, FR17, NFR-S3 | Epic 1 (1.3) |
-| FR-INST-01, FR1–FR5, FR6–FR9, FR10–FR11, FR22–FR29 | _Epic: CLI + manifest + MVP adapters (TBD numbering)_ |
-| FR36–FR41 (UI/UX extension pack) | _Epic: UI/UX pack content + conditional emission (TBD)_ |
-| FR-MAP-02, FR30–FR31 | _Epic: Multi-host adapters post-MVP duo (TBD)_ |
-| FR42 | _Post-MVP; manifest placeholder + doc only until OSS quality layer GA_ |
-
-### Epic List
-
-1. **Epic 1 — Agent configuration templates & canonical model research** (this document): evidence-backed templates and **normative canonical artifact type definitions** (aligned with domain research): root context ([AGENTS.md](https://agents.md/) + host files), modular rules (Claude / Cursor), hooks & MCP, memory/compaction, **UI extension patterns** — _feeds FR-MAP-01, FR-MEM-01/02, FR12–FR13, FR18–FR21, FR36–FR41 authoring rationale, pack source structure._
-2. **Epic 2 — Installer CLI, manifest, MVP dual-host emission (planned):** Node/npx CLI (FR-INST-01), golden repos, **canonical → Claude Code + Cursor** adapters, compatibility matrix v1 — _FR1–FR5, FR6–FR11, FR22–FR29, NFRs._
-3. **Epic 3 — UI/UX design & implementation extension pack (planned):** Questionnaire opt-in, Figma/Storybook/Playwright/shadcn slice content and host substitutes — _FR36–FR41._
-4. **Epic 4 — Additional vibe coding agent adapters (planned / phased):** Cline, Windsurf, Copilot surfaces, Codex CLI, Gemini CLI, etc. — _FR-MAP-02, FR30–FR31._
-5. **Epic 5 — Quality verification layer pack (post-MVP):** **Blocked** on external OSS product; FR42 manifest placeholder and integration design only until GA.
+**Suggested implementation order:** complete **Epic 1** (template spec gate) → **Epic 2** (MVP CLI + dual host) → **Epic 3** (UI extension) in parallel with early **Epic 4** spikes only as capacity allows.
 
 ---
 
-## Epic 1: Research and standardize agent configuration templates
+## Default canonical design principles
 
-**Epic goal:** Produce a **maintainer-facing research brief** and **canonical artifact specification** so pack authors and the installer generator align on: (1) the **small set of interoperable canonical types** (portable root context, modular rules, skills, lifecycle automation, project memory, **optional UI/UX extension slice**) and **merge/composition rules**; (2) **agent root context** files, including **[AGENTS.md](https://agents.md/)** and host-native parallels (**CLAUDE.md**, **GEMINI.md**, Copilot instructions); (3) **modular rules** (Claude `.claude/rules`, Cursor `.cursor/rules` / `.mdc`); (4) **hooks, MCP, and tool-use**; (5) **project memory** and **compaction** (incl. **high-fidelity summarization** per domain research §9). Outcomes **inform** FR-MAP-01, FR-MEM-01/02, FR12–FR13, FR36–FR41 content strategy, and **future** FR42 placeholder semantics.
+_Synthesized from domain research (executive summary, §5–§8, §9 heuristics). These are **normative for pack authors and the generator**._
 
-**Primary users:** maintainers, pack authors, architect implementing FR-INST-01 / FR-MAP-01.
+| Principle | Source patterns | Forge application |
+|-----------|-----------------|-------------------|
+| **1. Verification-first context** | Anthropic Claude Code best practices; UI subdomain | Root + modular text must state **how** the agent proves work (tests, story run, Playwright/screenshot)—not prose-only “done.” |
+| **2. Portable interchange + host optimization** | [AGENTS.md](https://agents.md/); Gemini `context.fileName` | Emit **`AGENTS.md`** from canonical **portable root context** when teams want cross-tool sharing; always allow **`CLAUDE.md`**, **`GEMINI.md`**, `.mdc` from the **same** canonical body. Document **precedence** (closest file, user override). |
+| **3. Layered context** | GEMINI.md hierarchy; nested AGENTS.md | Support **global → repo → subpackage** mental model in docs and optional nested emissions. |
+| **4. Modular rules over megafiles** | `.claude/rules`, Cursor `globs` / `description` | Split **canonical** rules into slices; map to **`.claude/rules/*.md`** and **`.cursor/rules/*.mdc`** with explicit globs. |
+| **5. Skills for long procedures** | [Agent Skills](https://agentskills.io/), Claude/Cursor skill dirs, OMX `skills/` | Keep **SKILL.md** (or equivalent) **lean**; progressive disclosure; map **semantic** procedures to host discovery paths—**not** byte-identical across OMX vs Claude. |
+| **6. Automation where the host allows** | Claude **hooks**; Cursor tasks/rules; Gemini context + `/memory`; OMX **`$…` commands + `.omx/`** | **Lifecycle automation** canonical type → **hooks** on Claude; **documented substitutes** elsewhere (rules, checklists, OMX workflow, repo-local memory). **Never claim hook parity** without evidence. |
+| **7. MCP as shared tool layer** | PRD FR36–FR39; research §5 | Figma / Playwright MCP (and peers) documented as **optional extension** with **prerequisites** split from emitted files. |
+| **8. Root-cause & high-fidelity memory** | Research §9; `gemini_md_tutorial` | Rules and compaction: **fix causes not symptoms**; **summaries preserve decisions, constraints, errors** (“decisions vs scratch”). |
+| **9. Explicit gaps matrix** | FR12–FR13 | Every shipped adapter row lists **substitutes** for missing features (e.g. no SessionEnd hook). |
+| **10. Codex + optional OMX** | Research §3 Codex; FR-MAP-02 | **One** Codex matrix row (**`AGENTS.md`** + OpenAI docs); **[oh-my-codex (OMX)](https://github.com/sdk451/oh-my-codex)** = **runtime companion**—document coexistence in **README appendix** (`.omx/`, `omx setup`, **Node 20+**, tmux/psmux)—**no** second adapter or **`codex_omx`** flag. |
 
-**Traceability:** FR-MAP-01 (audit BMAD layout + mapping strategy), FR-MEM-01, FR-MEM-02, FR12, FR13, FR18, FR19, FR20, FR21, FR14 (hooks context), NFR-I1/I2 (schema/matrix implications).
+---
 
-### Story 1.1: Research root agent context — AGENTS.md, CLAUDE.md, and nesting
+## Requirements inventory
 
-As a **pack maintainer**,  
-I want **documented best practices for root-level agent context** (including [AGENTS.md](https://agents.md/) and CLAUDE.md-style instructions),  
-So that **emitted packs stay compatible with a broad agent ecosystem** without duplicating or conflicting instructions.
+### Functional requirements
+
+Functional requirements are **authoritative in `prd.md`**. This epic doc **traces** them; the inventory below stays **synchronized** with the PRD (including **FR42** and **FR-MAP-02** — **single Codex row**, OMX as **docs-only** companion).
+
+- **FR-INST-01** through **FR-MAP-02**, **FR-MEM-01/02**, **FR1–FR42** — see PRD §Cross-tool installer & memory and §Functional requirements.
+
+### Non-functional requirements — traceability
+
+| NFR | Primary epic | Notes |
+|-----|----------------|-------|
+| NFR-P1, P2 | Epic 2 (2.3, 2.5) | `check` / `write` budgets |
+| NFR-P3 | Epic 2, Epic 3 | Size budgets in matrix / pack docs |
+| NFR-S1–S4 | Epic 2 (2.1, 2.7, 2.12) | No default network; telemetry; hook risk; integrity |
+| NFR-R1–R3 | Epic 2 (2.5, 2.10, 2.12) | Golden fixtures; CI gate; migration validation |
+| NFR-M1–M3 | Epic 2 (2.1, 2.10, release process) | Coverage, adapter tests, SemVer |
+| NFR-I1–I2 | Epic 2 (2.9, 2.10) | Schema validation; matrix before new host class |
+
+### UX design requirements
+
+_Not applicable_ for product GUI (CLI-only). CLI usability ACs live under **Epic 2** stories.
+
+---
+
+## FR coverage map
+
+| FR / area | Epic | Stories |
+|-----------|------|---------|
+| FR-MAP-01, FR12, FR13, canonical types | Epic 1 | 1.1–1.3, **1.5**, **1.6**; Epic 2 **2.9** |
+| FR-MEM-01, FR-MEM-02, FR18–FR21 | Epic 1 | **1.4**; Epic 2 **2.11** |
+| FR14, FR17, NFR-S3 (hooks context) | Epic 1 | **1.3**; Epic 2 **2.7** |
+| FR-INST-01, FR1–FR5 | Epic 2 | **2.1–2.5** |
+| FR6–FR7, FR27 | Epic 2 | **2.6** |
+| FR10, FR14 | Epic 2 | **2.7** |
+| FR11, FR15 | Epic 2 | **2.8** |
+| FR22, NFR-I2 | Epic 2 | **2.10** |
+| FR8, FR9, FR23, FR24, FR25, FR26, FR29, FR32, FR33, FR5 | Epic 2 | **2.12** |
+| FR34–FR35 | Epic 2 | **2.11** |
+| NFR-P/R/M/S/I (remaining) | Epic 2 | **2.1, 2.3, 2.5, 2.10, 2.12** |
+| FR36–FR41 | Epic 3 | **3.1–3.6** |
+| FR16 | Epic 3 | **3.6** (+ Epic 2 pack baseline) |
+| FR-MAP-02, FR30–FR31 | Epic 4 | **4.1–4.5** |
+| FR28 | Epic 4 | **4.1** (+ Epic 2 manifest extensibility) |
+| FR42 | Epic 5 | **5.1** |
+
+---
+
+## Epic list
+
+| # | Epic | Goal |
+|---|------|------|
+| **1** | Canonical template & research gate | Lock **template spec** and **growth-host stubs** before scaling generator. |
+| **2** | MVP installer & dual-host adapters | **Node/npx** CLI, manifest, **Claude + Cursor** emission, matrix, golden CI, memory + skill pilot, docs. |
+| **3** | UI/UX extension pack | FR36–FR41 conditional slice + host substitutes. |
+| **4** | Growth host adapters | Gemini, **Codex** (single row + OMX **doc** appendix), Cline, Copilot/Windsurf per **FR-MAP-02**. |
+| **5** | Quality layer pack (post-MVP) | FR42 placeholder only until external OSS GA. |
+
+---
+
+## Epic 1: Canonical template & research gate
+
+**Epic goal:** Deliver the **single maintainer-facing template specification** (and cited research closure) so **Epic 2** implements the generator against stable **canonical types**, **merge order**, **AGENTS.md vs host-native** rules, **growth-host stub rows** (Gemini, Codex with **optional OMX appendix** text, Cline), and **design principles** above.
+
+**Primary users:** pack maintainers, architect.
+
+**Traceability:** FR-MAP-01, FR-MEM-01/02, FR12, FR13, FR14, FR17, FR18–FR21, NFR-I1/I2 (inputs).
+
+### Story 1.1: Root agent context — AGENTS.md, CLAUDE.md, nesting
+
+As a **pack maintainer**, I want **documented root context rules** (AGENTS.md, CLAUDE.md, precedence, nesting), so that **cross-host emissions** stay consistent.
 
 **Acceptance criteria:**
 
-- **Given** public guidance from [agents.md](https://agents.md/) (open format, nested `AGENTS.md` in monorepos, “closest file wins” resolution),  
-  **When** the research brief is reviewed,  
-  **Then** it states **when to emit `AGENTS.md` vs `CLAUDE.md` vs both**, how to avoid contradictory directives, and how nested packages are handled.
+- **Given** [agents.md](https://agents.md/) FAQ (closest file wins, user overrides), **when** the template spec is read, **then** it states **when to emit `AGENTS.md` alone vs with `CLAUDE.md` / `GEMINI.md`**, and **nested monorepo** guidance.
+- **Given** MVP hosts Claude + Cursor, **then** per-host **read order** and mapping to **FR-MAP-01** table are explicit.
+- **And** primary sources are cited; version-sensitive gaps flagged.
 
-- **Given** MVP targets Claude Code and Cursor per PRD,  
-  **When** recommendations are written,  
-  **Then** they include **per-host** notes for which root files each host reads first and how our **canonical → mapped** table (FR-MAP-01) should treat `AGENTS.md`.
+### Story 1.2: Modular rules — Claude vs Cursor (.mdc)
 
-- **And** the brief links **primary sources** (e.g. [AGENTS.md project site](https://agents.md/), Anthropic Claude Code docs where relevant) and flags **gaps** where host behavior is undocumented or version-dependent.
-
-### Story 1.2: Research modular rules — Claude rules vs Cursor rules (.mdc)
-
-As a **pack maintainer**,  
-I want **clear patterns for splitting rules** across `.claude/rules` and `.cursor/rules` (including `.mdc` glob frontmatter),  
-So that **one canonical intent** maps cleanly to **modular, scoped** rules per FR-MAP-01.
+As a **pack maintainer**, I want **generator-friendly modular rule patterns**, so that **one canonical intent** maps to `.claude/rules` and `.cursor/rules/*.mdc`.
 
 **Acceptance criteria:**
 
-- **Given** Claude Code modular rules and Cursor rule file conventions,  
-  **When** research completes,  
-  **Then** the brief recommends **folder layout, naming, glob strategy**, and **what belongs in root context vs modular rules**.
+- **Given** Claude modular rules and Cursor MDC (`globs`, `description`, `alwaysApply`), **then** the spec recommends **layout, naming, glob strategy**, and **root vs modular** split.
+- **Given** FR-MAP-01 single-source goal, **then** anti-patterns (uncontrolled duplication) and **snippet** patterns are listed.
+- **And** Cursor-specific metadata is exemplified or linked to official docs.
 
-- **Given** FR-MAP-01 requirement to preserve single-source templates where possible,  
-  **When** recommendations are documented,  
-  **Then** they specify **generator-friendly patterns** (e.g. shared snippets, section mapping) and **anti-patterns** (duplicated drift-prone copies).
+### Story 1.3: Hooks, MCP, quality gates
 
-- **And** Cursor-specific items (e.g. MDC metadata, `globs`) are **called out explicitly** with examples or references to official docs.
-
-### Story 1.3: Research hooks, MCP, and tool-use for quality gates
-
-As a **pack maintainer**,  
-I want **documented patterns for hooks and MCP/tool integration** (PostToolUse, PreToolUse, optional MCP servers),  
-So that **deterministic checks** align with FR14, FR17, and NFR-S3 **risk-tier** expectations.
+As a **pack maintainer**, I want **hook and MCP patterns** documented, so that **FR14, FR17, NFR-S3** are satisfied in emitted recipes.
 
 **Acceptance criteria:**
 
-- **Given** Claude Code hooks documentation (events, handler types, `$schema` for settings),  
-  **When** the research is summarized,  
-  **Then** it lists **recommended hook recipes** for format/lint/test/smoke and **when hooks are inappropriate** (substitute with rules/tasks per FR13).
+- **Given** Claude Code hooks docs, **then** recommended **PostToolUse / PreToolUse** recipes and **when to use rules/tasks instead** are listed.
+- **Given** UI pack tooling (Playwright MCP, Figma, Storybook), **then** **emitted vs prerequisite** split is explicit.
+- **And** a **capability stub** lists MVP hosts: hooks vs substitutes (feeds FR12–FR13).
 
-- **Given** UI-forward and FR36–FR39 packs may reference Playwright MCP, Figma MCP, Storybook,  
-  **When** the brief covers tooling,  
-  **Then** it separates **install-time emitted config** from **user prerequisites** (API keys, local servers) and references **opt-in / labeling** for command execution (FR17, NFR-S3).
+### Story 1.4: Project memory & compaction
 
-- **And** a **capability matrix stub** identifies which MVP hosts support hooks vs rules-only substitutes (feeds FR12–FR13).
-
-### Story 1.4: Research project memory, session save, and compaction
-
-As a **pack maintainer**,  
-I want **evidence-backed patterns for durable project memory and post-session compaction**,  
-So that **FR-MEM-01/02 and FR18–FR21** are implementable consistently across Claude Code and Cursor (and future adapters).
+As a **pack maintainer**, I want **memory file shapes and compaction rules**, so that **FR-MEM-01/02 and FR18–FR21** are implementable.
 
 **Acceptance criteria:**
 
-- **Given** FR-MEM-01 (format, compaction pipeline, bounded LLM assist) and FR-MEM-02 (repo-local parity),  
-  **When** research completes,  
-  **Then** the brief proposes **at least one normative memory file shape** (or versioned options), **trigger points** (SessionEnd, manual command), and **deterministic compaction steps** vs optional summarization.
+- **Given** FR-MEM-01/02, **then** at least one **normative memory artifact** shape, **triggers**, **deterministic compaction**, and **bounded LLM** optional step are defined.
+- **Given** hosts without SessionEnd hooks, **then** **repo-local + rules** workarounds match FR21.
+- **And** NFR-S2 (no exfiltration) is explicit for memory flows.
 
-- **Given** hosts without native memory or session hooks,  
-  **When** recommendations are written,  
-  **Then** they specify **repo-local artifact + rule text** patterns and **documented workarounds** (FR21).
+### Story 1.5: Consolidate template specification (deliverable)
 
-- **And** privacy and **no-exfiltration** alignment with NFR-S2 is **explicit** (what may never leave the machine by default).
-
-### Story 1.5: Consolidate findings into maintainer template specification
-
-As a **project architect**,  
-I want **a single research deliverable** (markdown in repo, e.g. `docs/agent-config-template-research.md` or under `_bmad-output/planning-artifacts/`),  
-So that **epic implementation teams** can adopt **one normative “template spec”** before building pack manifests.
+As a **project architect**, I want **`docs/agent-config-template-research.md`** (or `_bmad-output/...` equivalent), so that **Epic 2** can implement manifests and adapters.
 
 **Acceptance criteria:**
 
-- **Given** stories 1.1–1.4,  
-  **When** the deliverable is approved,  
-  **Then** it contains **per-area recommendations** (context, rules, hooks/MCP, memory), **open questions**, **version-stamped “best template” choices** for v1 packs, and a **normative list of canonical artifact types** matching PRD **FR-MAP-01** (table) with **composition order** (base stack → optional UI/UX slice → reserved FR42 slot documented as inactive).
+- **Given** stories 1.1–1.4, **then** the deliverable contains **canonical artifact type list** (matching PRD FR-MAP-01), **composition order** (base → UI slice → inactive FR42 slot), and **version-stamped v1 choices**.
+- **Given** FR-MAP-01 audit, **then** comparison vs this repo’s `_bmad` + `.cursor` patterns is included (path may be illustrative if `_bmad` is gitignored locally).
+- **And** embedded or linked **FR trace** for Epic 1; references **`domain-agent-context-claude-cursor-gemini-research-2026-04-03.md`**.
 
-- **Given** FR-MAP-01 audit requirement,  
-  **When** the doc is complete,  
-  **Then** it includes a **short comparison** of this repo’s `_bmad` + `.cursor` patterns vs the recommended external baselines (AGENTS.md, official host docs) and references **`domain-agent-context-claude-cursor-gemini-research-2026-04-03.md`** for citations.
+### Story 1.6: Growth-host mapping stubs (Gemini, Codex, Cline)
 
-- **And** the **Epic 1 → FR traceability table** is embedded or linked so `epics.md` FR Coverage Map can reference it in a later pass.
+As a **pack maintainer**, I want **documented stub rows** for growth hosts, so that **Epic 4** does not rediscover mapping from scratch.
 
-- **And** the deliverable states **adapter mapping intent** for **MVP hosts** (Claude Code, Cursor) and a **stub matrix** row pattern for **growth hosts** (Cline, Copilot, Codex CLI, Gemini CLI, Windsurf) per **FR-MAP-02**, without claiming unsupported hosts as shipped.
+**Acceptance criteria:**
 
-<!-- Additional epics appended by workflow steps 2–4 -->
+- **Given** domain research §3 (Gemini, **Codex**), §7 Codex supplement, **then** the template spec includes **draft matrix rows** for: **Gemini CLI**, **OpenAI Codex CLI** (single row: **`AGENTS.md`** baseline + OpenAI doc pointers), **Cline** (and pointer for **Windsurf / Copilot** as “TBD verify paths”).
+- **Given** FR-MAP-02, **then** **oh-my-codex (OMX)** is captured only as **optional README / appendix** text (coexistence with **`.omx/`**, `omx setup`, links to [sdk451/oh-my-codex](https://github.com/sdk451/oh-my-codex))—**not** a second matrix row or manifest flag.
+- **And** each **adapter** row lists: context path, skills, automation substitute, memory substitute, `AGENTS.md` strategy—**marked DRAFT** until Epic 4 ships.
+
+---
+
+## Epic 2: MVP installer & dual-host adapters
+
+**Epic goal:** Ship the **Node.js (LTS) npx CLI** with **BMAD-parity** commands, **pack manifest**, **canonical → Claude Code + Cursor** generation, **`AGENTS.md` export**, **compatibility matrix v1**, **golden CI**, **optional hooks with opt-in**, **memory + SKILL pilot**, and **docs/trust** for MVP FRs.
+
+**Primary users:** installer user, team lead, maintainer.
+
+**Dependency:** Epic **1.5** (and preferably **1.6**) approved.
+
+### Story 2.1: CLI package scaffold & trust baseline
+
+As a **developer**, I want a **publishable Node CLI** with `--help` and **no default network**, so that **FR-INST-01** and **NFR-S1** are met.
+
+**Acceptance criteria:** `package.json` / `npx` entry; documented **Node LTS**; `--help`; default code paths perform **no outbound network**; CI runs **lint + unit tests** on shared libs; **NFR-M1** plan documented (≥80% on `load`/`check`/`resolve-defaults`/`write` when implemented).
+
+### Story 2.2: `load` — machine-readable manifest
+
+As an **automation user**, I want **`load`** to output the resolved manifest, so that **FR4** is satisfied.
+
+**Acceptance criteria:** Stable JSON/YAML shape; includes **adapters**, **pack IDs**, **canonical slices**; fixture test.
+
+### Story 2.3: `check` — discover gaps
+
+As an **installer user**, I want **`check`** to report missing/changed artifacts, so that **FR1** and **NFR-P1** are met.
+
+**Acceptance criteria:** Clear stdout for typical repo; completes within **≤5s** on reference profile (≤10k files); fixture test.
+
+### Story 2.4: `resolve-defaults`
+
+As an **installer user**, I want **`resolve-defaults`** to merge answers and defaults, so that **FR-INST-01** BMAD parity holds.
+
+**Acceptance criteria:** Accepts keyed answers + defaults; output suitable for non-interactive `write`; tests.
+
+### Story 2.5: `write` — materialize & idempotence
+
+As an **installer user**, I want **`write`** to emit files and support **safe re-run**, so that **FR2, FR3, NFR-P2, NFR-R1** are met.
+
+**Acceptance criteria:** Interactive + JSON inputs; idempotent or confirm-before-overwrite; **≤60s** for MVP packs to empty target on reference profile; golden **tree** comparison tests.
+
+### Story 2.6: Questionnaire & optional packs
+
+As an **installer user**, I want to choose **stack**, **optional packs**, and **targets**, so that **FR6, FR7, FR27** are met.
+
+**Acceptance criteria:** YAML-driven prompts; flags for **UI pack** (feeds Epic 3) and **memory-heavy** profile; manifest declares **`ui_ux_workflow`**, **`quality_verification_layer`** reserved (no separate OMX pack ID).
+
+### Story 2.7: Emit Claude Code artifacts + hook opt-in
+
+As an **installer user** targeting **Claude Code**, I want **CLAUDE.md, .claude/rules, hooks, skills paths**, so that **FR10, FR14, FR17** are met.
+
+**Acceptance criteria:** Emitted tree matches PRD FR-MAP-01 Claude column; **hook recipes** require **explicit opt-in**; **NFR-S3** risk labels on command hooks.
+
+### Story 2.8: Emit Cursor artifacts + substitutes
+
+As an **installer user** targeting **Cursor**, I want **`.cursor/rules` / `.mdc` and skills**, so that **FR11, FR15** are met.
+
+**Acceptance criteria:** Mapped from same canonical source as 2.7; **gap table** excerpt in generated docs (rules/tasks vs hooks).
+
+### Story 2.9: `AGENTS.md` + published mapping table
+
+As a **reader**, I want **`AGENTS.md`** (when selected) and a **normative mapping table**, so that **FR12, FR13, NFR-I2** are met for MVP hosts.
+
+**Acceptance criteria:** Optional `AGENTS.md` from **portable root context**; **docs/MATRIX.md** (or equivalent) with Claude + Cursor + **automation substitutes**; links to FR-MAP-01 concepts.
+
+### Story 2.10: Compatibility matrix artifact & golden CI
+
+As a **maintainer**, I want **versioned matrix + golden snapshots**, so that **FR22, NFR-R2, NFR-M2, NFR-I1** are met.
+
+**Acceptance criteria:** Matrix references pack + host versions; **CI fails** on golden drift; emitted **JSON** validated where `$schema` exists.
+
+### Story 2.11: Memory slice + optional SKILL pilot
+
+As a **team**, I want **memory files + rules** and **one SKILL bundle**, so that **FR-MEM-01/02, FR18–FR21, FR34, FR35** are met for MVP.
+
+**Acceptance criteria:** Claude memory hook or manual doc; **Cursor repo-local** memory pattern; **SKILL.md** pilot path without conflicting CLAUDE.md (documented coordination).
+
+### Story 2.12: Documentation, merge, offline, legal, contributor
+
+As a **team lead / adopter**, I want **merge rules, offline install, manual copy, provenance, security, legal disclaimers, contributor path**, so that **FR8, FR9, FR5, FR23, FR24, FR25, FR26, FR29, FR32, FR33** and remaining **NFR-S** are met.
+
+**Acceptance criteria:** Published merge vs replace; **`npm pack` / offline** path; manual copy path; checksum/signature story; security statements; **not legal advice** banners; SemVer **NFR-M3** documented.
+
+---
+
+## Epic 3: UI/UX design & implementation extension pack
+
+**Epic goal:** When **FR36** is selected, emit the **opinionated UI/UX slice** (Figma MCP, Storybook, Playwright/MCP, shadcn) with **host substitutes** and **matrix** notes (**FR41**), and satisfy **FR16** intent for non-text verification.
+
+**Dependency:** Epic **2.6** (flag wiring); content can draft against Epic **1** before 2 completes.
+
+### Story 3.1: Manifest & generator wiring for UI pack
+
+As a **maintainer**, I want **`include_ui_workflow_pack`** to compose slices, so that **FR36** is enforced end-to-end.
+
+**Acceptance criteria:** Conditional emission only when opted in; no forced files on minimal install.
+
+### Story 3.2: Figma MCP guidance (FR37)
+
+As a **installer user**, I want **Figma MCP workflow docs** in the pack, so that **FR37** is met.
+
+**Acceptance criteria:** Tokens/frames, parity, prerequisites, human sign-off; no false licensing claims.
+
+### Story 3.3: Storybook guidance (FR38)
+
+As a **installer user**, I want **Storybook workflow docs**, so that **FR38** is met.
+
+**Acceptance criteria:** CSF / interaction tests; hooks or manual gates; optional VRT pointers.
+
+### Story 3.4: Playwright & Playwright MCP guidance (FR39)
+
+As a **installer user**, I want **Playwright + MCP** setup and substitutes, so that **FR39** is met.
+
+**Acceptance criteria:** Screenshot/a11y tree; multi-viewport; Cursor substitutes documented.
+
+### Story 3.5: shadcn-oriented conventions (FR40)
+
+As a **installer user**, I want **shadcn/ui conventions**, so that **FR40** is met.
+
+**Acceptance criteria:** CLI patterns, primitives vs custom, theming, anti-“AI slop” alignment with research.
+
+### Story 3.6: UI verification DOD + matrix coordination (FR16, FR41)
+
+As a **reader**, I want **explicit non-text verification DOD** and **tooling version notes**, so that **FR16, FR41** are met.
+
+**Acceptance criteria:** Pack states verification path; matrix lists suggested tool versions **without vendor endorsement**.
+
+---
+
+## Epic 4: Growth host adapters
+
+**Epic goal:** After MVP, add **tested adapters** and matrix rows per **FR-MAP-02** and **FR30–FR31**, preserving **canonical → native** mapping (**one Codex row**; OMX covered in **documentation** only).
+
+**Dependency:** Epic **2** stable; Epic **1.6** stubs as starting point.
+
+### Story 4.1: Adapter registry & extension contract
+
+As a **maintainer**, I want a **documented adapter interface** and **manifest extension points**, so that **FR28** and **FR31** are supported.
+
+**Acceptance criteria:** `emit(canonicalSlice, hostId, answers)` contract doc; tests proving new adapter without rewriting core packs.
+
+### Story 4.2: Google Gemini CLI adapter
+
+As an **installer user**, I want **Gemini-native emissions**, so that **FR30/31** applies for Gemini.
+
+**Acceptance criteria:** `GEMINI.md` / `context.fileName` / `AGENTS.md` alignment per research; golden snapshot; matrix row **SHIPPED**.
+
+### Story 4.3: OpenAI Codex CLI adapter (+ optional OMX doc appendix)
+
+As an **installer user**, I want **Codex-oriented emissions** and clear guidance when using **oh-my-codex**, so that **FR-MAP-02** **Codex** row is **SHIPPED** without a second adapter.
+
+**Acceptance criteria:** **Single matrix row**; emit **`AGENTS.md`** (and linked markdown per template spec) from canonical source; cross-check **OpenAI Codex** docs for read paths; golden snapshot. **Pack README** (or `docs/`) includes optional **“Using with oh-my-codex (OMX)”** appendix: forge **supplements** OMX (repo guidance); OMX **supplements** runtime (`$…` workflows, **`.omx/`**); prerequisites (**Node 20+**, `omx setup`), **tmux/psmux** for team mode, link to [sdk451/oh-my-codex](https://github.com/sdk451/oh-my-codex)—**no** `codex_omx` manifest flag, **no** second matrix row.
+
+### Story 4.4: Cline adapter
+
+As an **installer user**, I want a **Cline** adapter, so that **FR-MAP-02** includes Cline when verified.
+
+**Acceptance criteria:** Matrix row + paths per BMAD taxonomy; golden or smoke test; **SHIPPED** when green.
+
+### Story 4.5: Windsurf & Copilot surfaces — backlog stubs to shipped
+
+As a **maintainer**, I want **GitHub Copilot**, **VS Code Copilot**, and **Windsurf** rows **promoted from DRAFT to SHIPPED** when tested.
+
+**Acceptance criteria:** Distinct rows where paths differ; FR31-level mapping completeness for each **shipped** host.
+
+---
+
+## Epic 5: Quality verification layer pack (post-MVP)
+
+### Story 5.1: FR42 placeholder — manifest & documentation only
+
+As a **product owner**, I want **`quality_verification_layer`** reserved **without implementation**, so that **FR42** is honored pre-OSS GA.
+
+**Acceptance criteria:** Manifest ID reserved; README states **blocked on external OSS**; no emission until dependency GA.
+
+---
+
+## Validation checklist (create-epics-and-stories)
+
+- [x] FR1–FR42 + FR-INST/MAP/MEM traced to at least one epic/story.
+- [x] NFRs traced to Epic 2 (and Epic 3 where P3 applies).
+- [x] MVP bounded: Epic 2 = Claude + Cursor only; growth = Epic 4.
+- [x] **Single Codex row + OMX as doc appendix** explicit in principles, FR map, Epic 4.3, PRD/architecture alignment.
+- [x] **Default canonical principles** distilled from domain research and multi-tool best practices.
+- [ ] **Execution:** Complete Epic 1 deliverable, then implement Epic 2 in story order.

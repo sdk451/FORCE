@@ -43,7 +43,7 @@ This section keeps **architecture** and **`epics.md`** consistent when the PRD c
 
 ### Growth hosts
 
-- **FR-MAP-02 (PRD):** **Cline**, **Windsurf**, **GitHub Copilot**, **VS Code Copilot**, **OpenAI Codex CLI**, **Google Gemini CLI** — BMAD MCP taxonomy; **distinct adapter rows** where Copilot surfaces differ materially.
+- **FR-MAP-02 (PRD):** **Cline**, **Windsurf**, **GitHub Copilot**, **VS Code Copilot**, **OpenAI Codex CLI**, **Google Gemini CLI** — BMAD MCP taxonomy; **distinct adapter rows** where Copilot surfaces differ materially. **Codex:** single row; **[oh-my-codex (OMX)](https://github.com/sdk451/oh-my-codex)** documented as **optional companion** in pack docs (supplements runtime; forge supplements **repo guidance** via `AGENTS.md`).
 - **Epics backlog:** `epics.md` **productOwnerNotes** may list hosts (e.g. Kimi Code, Microsoft Copilot) before full PRD rows exist; architecture treats them as **roadmap** until adapters are specified and tested.
 
 ### Post-MVP extension (blocked on external OSS)
@@ -78,7 +78,7 @@ flowchart LR
   canonical --> adapters
   adapters --> O1[".claude/, CLAUDE.md, AGENTS.md?"]
   adapters --> O2[".cursor/rules, skills"]
-  adapters --> O3["Cline / Copilot / Gemini / …"]
+  adapters --> O3["Cline / Copilot / Gemini / Codex …"]
 ```
 
 - **Portable root context:** Prefer emitting **[AGENTS.md](https://agents.md/)** when teams want **cross-tool** readability; always allow **host-optimized** parallel files (`CLAUDE.md`, `GEMINI.md`, etc.) from the **same** canonical body (FR-MAP-01).

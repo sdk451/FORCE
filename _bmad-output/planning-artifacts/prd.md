@@ -30,6 +30,10 @@ prdAmendments:
       Canonical interoperable artifact set + per-host adapter mapping (vibe coding agents);
       domain research doc linked; UI/UX workflow pack framed as named extension slice;
       post-MVP: Agent-agnostic configurable quality verification layer (separate OSS product) as future default pack—explicitly out of MVP.
+  - date: "2026-04-03"
+    note: >-
+      OpenAI Codex CLI: single FR-MAP-02 matrix row (AGENTS.md baseline); removed codex_omx manifest id.
+      oh-my-codex (OMX) documented as optional runtime companion in pack README only—not a second adapter row.
 classification:
   projectType: developer_tool
   domain: general
@@ -310,7 +314,7 @@ _Web scan April 2026. Treat citations as pointers for your own verification befo
 ### FR-INST-01 — CLI parity with BMAD init pattern
 
 - Implement a **Node.js (LTS) CLI** distributed via **npm** and invocable with **`npx`**, mirroring **`bmad_init.py` / BMAD installer semantics** (not implementation language): **`load`** (resolved install manifest for automation), **`check`** (what’s missing / what would change), **`resolve-defaults`** (merge keyed answers / defaults), interactive or JSON **`write`** from answers, **YAML-driven prompts**, and **merged config artifact** as in BMAD workflows.
-- **Pack manifest** (YAML or JSON) declares: **canonical artifact slices**, core vs optional pack IDs (incl. **`ui_ux_workflow`** per FR36–FR41; reserved ID for **`quality_verification_layer`** per FR42 when enabled), **target adapters** (`claude-code`, `cursor`, …), and **conditional** file emission based on answers (e.g. `include_ui_workflow_pack: true`).
+- **Pack manifest** (YAML or JSON) declares: **canonical artifact slices**, core vs optional pack IDs (incl. **`ui_ux_workflow`** per FR36–FR41; reserved ID for **`quality_verification_layer`** per FR42 when enabled), **target adapters** (`claude-code`, `cursor`, …), and **conditional** file emission based on answers (e.g. `include_ui_workflow_pack: true`). **OpenAI Codex CLI** uses the **same** adapter row as other hosts that consume **`AGENTS.md`**—**[oh-my-codex (OMX)](https://github.com/sdk451/oh-my-codex)** is documented as an **optional runtime companion** in pack README / docs, not a separate manifest pack ID.
 - Installer **creates directories** declared by the manifest (as BMAD does for `directories` in `module.yaml`).
 - **Idempotent:** re-run with same answers yields no destructive diff, or prompts before overwrite.
 - **Offline path:** document **`npm pack` / local tarball / project-local `node_modules`** invocation so **FR5** is satisfied without registry access when bundles are vendored.
@@ -342,8 +346,8 @@ The library **maintains normative definitions** for a **small set of canonical a
 
 ### FR-MAP-02 — Expand to other major vibe coding agents (explicit backlog)
 
-- **Minimum growth requirement:** support matrix and install adapters for **Cline**, **Windsurf**, **GitHub Copilot** (including chat/IDE surfaces where config paths differ), **VS Code Copilot**, **OpenAI Codex CLI**, **Google Gemini CLI**—using the same **taxonomy** as internal BMAD MCP docs (per-tool config paths and limitations). Treat **GitHub Copilot** vs **VS Code Copilot** as **distinct rows** when install surfaces or file locations differ materially.
-- Each adapter documents: **where context lives**, **whether skills exist**, **hook substitutes**, **memory substitute**, and **how portable root context** (`AGENTS.md` vs host file) is honored.
+- **Minimum growth requirement:** support matrix and install adapters for **Cline**, **Windsurf**, **GitHub Copilot** (including chat/IDE surfaces where config paths differ), **VS Code Copilot**, **OpenAI Codex CLI**, **Google Gemini CLI**—using the same **taxonomy** as internal BMAD MCP docs (per-tool config paths and limitations). Treat **GitHub Copilot** vs **VS Code Copilot** as **distinct rows** when install surfaces or file locations differ materially. **Codex:** **one** matrix row (typically **`AGENTS.md`** + confirm against OpenAI Codex docs); **[oh-my-codex (OMX)](https://github.com/sdk451/oh-my-codex)** is **not** a separate adapter—document coexistence (workflow runtime, **`.omx/`**, optional **tmux/psmux**) in **pack README / supplementary docs** for teams that use both forge output and OMX.
+- Each adapter documents: **where context lives**, **whether skills exist**, **hook substitutes** (or **documented non-hook substitutes** such as checklists, CI, or third-party workflow layers), **memory substitute**, and **how portable root context** (`AGENTS.md` vs host file) is honored.
 
 ### FR-MEM-01 — Project memory enhancement (Claude Code)
 
