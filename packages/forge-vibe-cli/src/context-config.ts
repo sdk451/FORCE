@@ -86,8 +86,16 @@ export function mergeContextAdvanced(partial?: Partial<ContextAdvancedMap>): Con
 
 export function normalizeOptionalSkills(ids: unknown): OptionalSkillId[] {
   if (!Array.isArray(ids)) return [];
-  const set = new Set(OPTIONAL_SKILL_IDS);
-  return ids.filter((x): x is OptionalSkillId => typeof x === "string" && set.has(x as OptionalSkillId));
+  const allowed = new Set(OPTIONAL_SKILL_IDS);
+  const out: OptionalSkillId[] = [];
+  const seen = new Set<string>();
+  for (const x of ids) {
+    if (typeof x !== "string" || !allowed.has(x as OptionalSkillId)) continue;
+    if (seen.has(x)) continue;
+    seen.add(x);
+    out.push(x as OptionalSkillId);
+  }
+  return out;
 }
 
 export function countEnabledCore(c: ContextCoreMap): number {

@@ -18,10 +18,12 @@ import {
   OPTIONAL_SKILL_TUI,
 } from "./context-config.js";
 import { assertAtLeastOneAgent, assertAtLeastOneCoreSection } from "./validate-targets.js";
+import { validateInstallAnswersPartialOrThrow } from "./validate-answers-json.js";
+import { makeStderrProgress } from "./progress-stderr.js";
 import { promptCheckbox, promptLine } from "./interactive/checkbox-prompt.js";
 
 function printHelp(): void {
-  console.log(`forge-vibe — forge-vibe-code-enhancement CLI (BMAD-style)
+  console.log(`forge-vibe — BMAD-style installer for versioned agent context packs
 
 Commands:
   load [--json] [--answers <file>]     Resolved manifest + planned paths (FR4)
@@ -31,8 +33,8 @@ Commands:
 
 Options:
   --project-root <dir>   Target repo (default: cwd)
-  --answers <file>       JSON partial/full answers; otherwise interactive (write) or defaults (load/check)
-  --json                 load: machine-readable stdout
+  --answers <file>       JSON partial/full answers; validated against the pack schema
+  --json                 load: single-line JSON (no indentation); default load is pretty-printed
   --dry-run              write: print actions only
   --force                write: overwrite differing files
   --yes                  write: non-interactive (use defaultAnswers when no --answers)
@@ -40,20 +42,53 @@ Options:
 Environment:
   No network is required for core commands (FR5 / NFR-S1).
 
-Answers JSON — targets (optional; at least one agent required):
-  targets.claude_code, targets.cursor (default true)
-  targets.cline, targets.gemini_cli, targets.openai_codex,
-  targets.github_copilot, targets.kimi_code (default false)
+Target agents (answers.targets.* — booleans; at least one must be true after merge):
 
-context_core — AGENTS.md §1.1 sections (default all true); at least one required.
-context_advanced — optional §1.2 sections (default all false).
-optional_skills — array of skill ids (see canonical-agents-md-research Part 2).
+  claude_code     Anthropic Claude Code — .claude/, CLAUDE.md, modular rules, optional hooks & skills
+  cursor          Cursor — .cursor/rules/*.mdc (globs), .cursor/skills/
+  cline           Cline (VS Code) — .clinerules/*.md (forge-core, forge-stack, optional advanced slices)
+  gemini_cli      Google Gemini CLI — GEMINI.md, .gemini/settings.json (context.fileName)
+  openai_codex    OpenAI Codex CLI — root AGENTS.md + docs/FORGE-CODEX.md; optional docs/forge-skills/codex/
+  github_copilot  GitHub Copilot — .github/copilot-instructions.md; optional .github/forge-skills/
+  kimi_code       Kimi Code — docs/FORGE-KIMI.md aligned with AGENTS.md; optional docs/forge-skills/kimi/
+
+Defaults: claude_code + cursor on; all other targets off.
+
+Context (portable AGENTS.md composition):
+  context_core       §1.1 sections — default all true; at least one required after merge
+  context_advanced   §1.2 optional add-ons — default all false (security, behavior, debugging, …)
+
+optional_skills — top-10 shortlist; each id emits SKILL.md under host-native paths where that target is on.
+  See schemas/install-answers.partial.schema.json for allowed ids.
+
+Schema:
+  packages/forge-vibe-cli/schemas/install-answers.partial.schema.json (draft-07; unknown keys rejected)
+
+Docs in-repo:
+  docs/FORGE-COMPATIBILITY-MATRIX.md — per-host paths and optional skills table (after write)
 `);
 }
 
 async function readAnswersFile(file: string): Promise<Partial<InstallAnswers>> {
-  const raw = await fs.readFile(file, "utf8");
-  return JSON.parse(raw) as Partial<InstallAnswers>;
+  let raw: string;
+  try {
+    raw = await fs.readFile(file, "utf8");
+  } catch (e) {
+    throw new Error(`Cannot read --answers file: ${file} — ${(e as Error).message}`);
+  }
+  let data: unknown;
+  try {
+    data = JSON.parse(raw);
+  } catch (e) {
+    throw new Error(`Invalid JSON in --answers file ${file}: ${(e as Error).message}`);
+  }
+  if (data === null || typeof data !== "object" || Array.isArray(data)) {
+    throw new Error(
+      `--answers file must contain a JSON object (got ${data === null ? "null" : Array.isArray(data) ? "array" : typeof data}).`,
+    );
+  }
+  validateInstallAnswersPartialOrThrow(data);
+  return data as Partial<InstallAnswers>;
 }
 
 async function promptInteractive(): Promise<InstallAnswers> {
@@ -261,11 +296,8 @@ async function main(): Promise<void> {
       optional_skills: answers.optional_skills,
       reserved: ["quality_verification_layer"],
     };
-    if (values.json) {
-      console.log(JSON.stringify(payload, null, 2));
-    } else {
-      console.log(JSON.stringify(payload, null, 2));
-    }
+    const text = values.json ? JSON.stringify(payload) : JSON.stringify(payload, null, 2);
+    console.log(text);
     return;
   }
 
@@ -276,7 +308,10 @@ async function main(): Promise<void> {
 
   if (cmd === "check") {
     const { manifest, files } = await buildPlannedFiles(answers);
-    const results = await checkFiles(root, files);
+    const prog = makeStderrProgress("check", files.length);
+    const results = await checkFiles(root, files, {
+      onProgress: (p) => prog(p.current, p.path),
+    });
     const missing = results.filter((r) => r.status === "missing");
     const diff = results.filter((r) => r.status === "diff");
     console.log(
@@ -302,10 +337,12 @@ async function main(): Promise<void> {
 
   if (cmd === "write") {
     const { files } = await buildPlannedFiles(answers);
+    const prog = makeStderrProgress("write", files.length);
     try {
       const results = await writePlannedFiles(root, files, {
         dryRun: values["dry-run"],
         force: values.force,
+        onProgress: (p) => prog(p.current, p.path),
       });
       for (const r of results) {
         console.log(`${r.action}\t${r.path}`);

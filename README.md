@@ -1,12 +1,26 @@
 # forge-vibe-code-enhancement
 
-Versioned **agent context packs** and a **BMAD-style CLI** (`load`, `check`, `resolve-defaults`, `write`) for **Claude Code** and **Cursor**, with optional UI workflow and memory slices. Planning artifacts live under `_bmad-output/planning-artifacts/`.
+Monorepo for **forge-vibe**: versioned **agent context packs** and a **BMAD-style CLI** that materializes portable **AGENTS.md**-centric context into **Claude Code**, **Cursor**, **Cline**, **Gemini CLI**, **OpenAI Codex CLI**, **GitHub Copilot**, and **Kimi Code** layouts. Planning and BMAD outputs live under **`_bmad-output/`**; product requirements and epics are in **`_bmad-output/planning-artifacts/`**.
+
+## Why this exists
+
+Teams want one **canonical** description of how AI coding agents should work in a repo (stack, commands, verification, security), then **host-specific** files so each tool can load the right shape (rules, skills, companion markdown). This project implements that split: a **normative pack** under `packages/forge-vibe-cli/packs/` and a **generator** that writes only the trees you select.
+
+## Repository layout
+
+| Path | Purpose |
+|------|---------|
+| **`packages/forge-vibe-cli`** | Publishable npm package (`forge-vibe-cli`): CLI binary `forge-vibe`, packs, JSON Schema for answers |
+| **`packages/forge-vibe-cli/packs/`** | Core templates, stack variants (TypeScript / Python), optional UI workflow pack, stub **optional skills** |
+| **`packages/forge-vibe-cli/schemas/`** | **`install-answers.partial.schema.json`** — validates `--answers` JSON (draft-07; unknown keys rejected) |
+| **`docs/`** | Research, growth adapter notes, FR42 placeholder |
+| **`_bmad-output/`** | PRD, epics, sprint status, implementation artifacts |
 
 ## Requirements
 
-- **Node.js 20+** (LTS recommended)
+- **Node.js 20+**
 
-## Development
+## Quick start (this repo)
 
 ```bash
 npm install
@@ -14,22 +28,53 @@ npm run build
 npm test
 ```
 
-Run the CLI from the repo (after `build`):
+CLI help (all targets and options):
 
 ```bash
 npm run forge-vibe -- --help
+```
+
+### Commands
+
+| Command | Purpose |
+|---------|---------|
+| **`load`** | Resolve manifest + full planned file list (and answers). Default output is **pretty JSON**; **`--json`** emits **single-line** JSON for piping. |
+| **`check`** | Compare planned files to an on-disk project; prints JSON summary; exit **1** if anything is missing or differs. Progress on **stderr** when more than **25** files are planned. |
+| **`write`** | Create/update files under `--project-root`. Use **`--dry-run`**, **`--force`**, or **`--yes`** for automation. Progress on **stderr** when more than **25** files are planned. |
+| **`resolve-defaults`** | Print fully merged **`InstallAnswers`** after defaults (and **`--answers`** if provided). |
+
+Non-interactive examples:
+
+```bash
 npm run forge-vibe -- load --json --yes
 npm run forge-vibe -- check --project-root .
 npm run forge-vibe -- write --dry-run --yes --project-root path/to/repo
-```
-
-### Non-interactive targets (Epic 4 hosts)
-
-```bash
 npm run forge-vibe -- write --yes --project-root . --answers answers.json
 ```
 
-Example `answers.json`:
+Interactive **`write`** (no `--yes` / `--answers`) walks through: project name → stack → **targets** (≥1) → **core AGENTS §1.1** (≥1) → **advanced §1.2** → **optional skills** → **hooks & packs**.
+
+## Target agents (summary)
+
+Each target is a boolean under **`targets`** in answers. **At least one** must be true. After **`write`**, see **`docs/FORGE-COMPATIBILITY-MATRIX.md`** in the target repo for the exact table.
+
+| Target key | Product / surface | Typical emitted paths |
+|------------|-------------------|------------------------|
+| **`claude_code`** | Anthropic Claude Code | `.claude/`, `CLAUDE.md`, modular rules, optional hooks & skills |
+| **`cursor`** | Cursor | `.cursor/rules/*.mdc`, `.cursor/skills/` |
+| **`cline`** | Cline (VS Code) | `.clinerules/*.md` (core, stack, memory, optional advanced slices) |
+| **`gemini_cli`** | Google Gemini CLI | `GEMINI.md`, `.gemini/settings.json` |
+| **`openai_codex`** | OpenAI Codex CLI | `AGENTS.md`, `docs/FORGE-CODEX.md`, optional `docs/forge-skills/codex/` |
+| **`github_copilot`** | GitHub Copilot | `.github/copilot-instructions.md`, optional `.github/forge-skills/` |
+| **`kimi_code`** | Kimi Code | `docs/FORGE-KIMI.md` + root `AGENTS.md`, optional `docs/forge-skills/kimi/` |
+
+**Optional skills** (installer checkbox / `optional_skills` array): the same stub **`SKILL.md`** body is written under each **enabled** host’s skill path. Allowed ids are fixed in **`schemas/install-answers.partial.schema.json`** (keep in sync with `OPTIONAL_SKILL_IDS` in code).
+
+## Answers JSON & validation
+
+Any **`--answers`** file is parsed as JSON, then validated against **`packages/forge-vibe-cli/schemas/install-answers.partial.schema.json`**. Invalid JSON, non-object roots, unknown properties, invalid **`stack`** (only **`typescript`** | **`python`**), or invalid skill ids are **rejected with a clear error** before merge.
+
+Example:
 
 ```json
 {
@@ -61,13 +106,16 @@ Example `answers.json`:
 }
 ```
 
-`npm run forge-vibe -- load --json --yes` includes **`adapters`**, **`context_core`**, **`context_advanced`**, and **`optional_skills`**.
+Duplicate skill ids in the array are **deduped** after validation.
 
-Interactive **`write`** (no `--yes` / `--answers`) follows **`canonical-agents-md-research-2026-04-03.md` Part 3**: project → stack → **target agents** (≥1) → **core AGENTS §1.1 sections** (≥1) → **advanced §1.2** → **optional skills (top 10)** → **hooks & packs**. **Space** toggles, **Enter** confirms, **↑/↓** or **j/k** moves.
+## Principles & constraints
 
-## Offline / vendored install
+- **No network** for core CLI commands (offline / vendored installs supported).
+- **Hooks** are opt-in and marked **high risk** in emitted docs.
+- **FR42** (*quality verification layer*) is **reserved**; no files until an external OSS product is wired.
+- **OpenAI Codex + oh-my-codex (OMX)**: single Codex row; OMX documented as a **companion** only (`docs/FORGE-OMX-COMPANION.md` after write).
 
-Per **FR5**, you can use a tarball without hitting the registry:
+## Offline / global install
 
 ```bash
 npm pack packages/forge-vibe-cli
@@ -75,16 +123,21 @@ npm install -g ./forge-vibe-cli-0.1.0.tgz
 forge-vibe --help
 ```
 
-Or run `node /path/to/forge-vibe-cli/dist/cli.js` with `node_modules` already installed.
+Published package name: **`forge-vibe-cli`** (this root `package.json` is a **private** workspace orchestrator).
 
-## Documentation
+## Documentation index
 
 | Topic | Location |
 |-------|----------|
-| Template spec & growth stubs (Epic 1) | [docs/agent-config-template-research.md](docs/agent-config-template-research.md) |
-| Growth adapter contract (Epic 4) | [docs/growth-adapters/README.md](docs/growth-adapters/README.md) |
+| Template & research (Epic 1) | [docs/agent-config-template-research.md](docs/agent-config-template-research.md) |
+| Growth adapters (Epic 4) | [docs/growth-adapters/README.md](docs/growth-adapters/README.md) |
 | FR42 reserved pack | [docs/FR42-quality-verification-layer.md](docs/FR42-quality-verification-layer.md) |
+| Sprint / epic tracking | `_bmad-output/implementation-artifacts/sprint-status.yml` |
 
-## Publishing
+## CI
 
-The publishable package is **`packages/forge-vibe-cli`** (`forge-vibe-cli` on npm when published). This root `package.json` is a **private** workspace orchestrator.
+GitHub Actions (`.github/workflows/ci.yml`): **`npm ci`**, **`npm run build`**, **`npm test`** on Node 20.
+
+## License
+
+See the repository **`LICENSE`** file if present; otherwise add one when open-sourcing.

@@ -99,7 +99,10 @@ export async function buildPlannedFiles(answers: InstallAnswers): Promise<{
     });
     files.push({
       path: ".claude/rules/forge-core.md",
-      content: applyTemplate(await readTpl("core/templates/claude-rules-core.md.tpl"), v),
+      content: applyTemplate(await readTpl("core/templates/claude-rules-core.md.tpl"), {
+        ...v,
+        FORGE_STACK_RULE_PATH: ".claude/rules/forge-stack.md",
+      }),
     });
     const stackRule =
       answers.stack === "typescript"
@@ -225,7 +228,10 @@ You enabled **allow_hooks**. The emitted \`.claude/settings.json\` contains **ex
   if (answers.targets.cline) {
     files.push({
       path: ".clinerules/forge-core.md",
-      content: applyTemplate(await readTpl("core/templates/claude-rules-core.md.tpl"), v),
+      content: applyTemplate(await readTpl("core/templates/claude-rules-core.md.tpl"), {
+        ...v,
+        FORGE_STACK_RULE_PATH: ".clinerules/forge-stack.md",
+      }),
     });
     const clineStack =
       answers.stack === "typescript"
@@ -235,6 +241,29 @@ You enabled **allow_hooks**. The emitted \`.claude/settings.json\` contains **ex
       path: ".clinerules/forge-stack.md",
       content: applyTemplate(await readTpl(clineStack), v),
     });
+
+    if (answers.context_advanced.agent_behavior) {
+      files.push({
+        path: ".clinerules/forge-behavior.md",
+        content: sectionAgentBehavior(cv),
+      });
+    }
+    if (answers.context_advanced.security) {
+      files.push({ path: ".clinerules/forge-security.md", content: sectionSecurity(cv) });
+    }
+    if (answers.context_advanced.debugging_protocol) {
+      files.push({
+        path: ".clinerules/forge-debugging.md",
+        content: sectionDebuggingProtocol(cv),
+      });
+    }
+    if (answers.context_advanced.forbidden_patterns) {
+      files.push({
+        path: ".clinerules/forge-forbidden.md",
+        content: sectionForbiddenPatterns(cv),
+      });
+    }
+
     if (answers.include_memory_enhanced) {
       files.push({
         path: ".clinerules/forge-memory.md",
@@ -324,7 +353,7 @@ function mergeGuide(): string {
 - **Codex**: primary instructions live in **AGENTS.md**; keep **docs/FORGE-CODEX.md** in sync with team Codex/OMX practices.
 - **GitHub Copilot**: merge **.github/copilot-instructions.md** with any existing Copilot instructions.
 - **Kimi Code**: keep **AGENTS.md** authoritative; align **docs/FORGE-KIMI.md** with team Kimi workflow.
-- **Optional rules:** \`forge-behavior\`, \`forge-security\`, \`forge-debugging\`, \`forge-forbidden\` — merge if you already use the same filenames.
+- **Optional rules:** \`forge-behavior\`, \`forge-security\`, \`forge-debugging\`, \`forge-forbidden\` — merge if you already use the same filenames (**Claude** \`.claude/rules\`, **Cursor** \`.mdc\`, **Cline** \`.clinerules\`).
 - **Optional skills (installer):** \`.claude/skills/<id>/\`, \`.cursor/skills/<id>/\`, \`.clinerules/skills/<id>/\`, \`.gemini/skills/<id>/\`, \`docs/forge-skills/codex/<id>/\`, \`.github/forge-skills/<id>/\`, \`docs/forge-skills/kimi/<id>/\` — same \`SKILL.md\` body per id where that host was selected.
 `;
 }
@@ -344,7 +373,7 @@ function buildMatrixDoc(a: InstallAnswers, packVersion: string): string {
 
 | Host | Native paths (when target enabled) |
 |------|-------------------------------------|
-| **Cline** | \`.clinerules/*.md\` — \`forge-core.md\`, \`forge-stack.md\`, optional \`forge-memory.md\` |
+| **Cline** | \`.clinerules/*.md\` — \`forge-core.md\`, \`forge-stack.md\`, optional \`forge-memory.md\`, optional advanced \`forge-behavior\` / \`forge-security\` / \`forge-debugging\` / \`forge-forbidden\` |
 | **Gemini CLI** | \`GEMINI.md\`, \`.gemini/settings.json\` (\`context.fileName\`: AGENTS.md, GEMINI.md) |
 | **OpenAI Codex CLI** | \`AGENTS.md\` + \`docs/FORGE-CODEX.md\` |
 | **GitHub Copilot** | \`.github/copilot-instructions.md\` |

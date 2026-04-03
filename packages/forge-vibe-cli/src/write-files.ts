@@ -7,13 +7,19 @@ export type WriteResult = {
   action: "created" | "updated" | "skipped" | "needs_force" | "dry_run_skip";
 };
 
+export type WriteProgress = { current: number; total: number; path: string };
+
 export async function writePlannedFiles(
   root: string,
   planned: PlannedFile[],
-  opts: { dryRun: boolean; force: boolean },
+  opts: { dryRun: boolean; force: boolean; onProgress?: (p: WriteProgress) => void },
 ): Promise<WriteResult[]> {
   const out: WriteResult[] = [];
+  const total = planned.length;
+  let i = 0;
   for (const f of planned) {
+    i += 1;
+    opts.onProgress?.({ current: i, total, path: f.path });
     const full = path.join(root, f.path);
     await fs.mkdir(path.dirname(full), { recursive: true });
     let existing: string | null = null;

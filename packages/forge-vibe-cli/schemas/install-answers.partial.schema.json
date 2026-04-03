@@ -1,0 +1,71 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://forge-vibe.local/schemas/install-answers.partial.schema.json",
+  "title": "Forge install answers (partial JSON for --answers)",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "project_name": { "type": "string", "minLength": 1 },
+    "stack": { "type": "string", "enum": ["typescript", "python"] },
+    "context_core": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "overview": { "type": "boolean" },
+        "tech_stack": { "type": "boolean" },
+        "commands": { "type": "boolean" },
+        "architecture": { "type": "boolean" },
+        "code_style": { "type": "boolean" },
+        "verification": { "type": "boolean" },
+        "git_pr": { "type": "boolean" }
+      }
+    },
+    "context_advanced": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "security": { "type": "boolean" },
+        "agent_behavior": { "type": "boolean" },
+        "context_compaction": { "type": "boolean" },
+        "memory_handoff": { "type": "boolean" },
+        "ui_ux_workflow_section": { "type": "boolean" },
+        "debugging_protocol": { "type": "boolean" },
+        "forbidden_patterns": { "type": "boolean" }
+      }
+    },
+    "optional_skills": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "frontend-design",
+          "superpowers",
+          "planning-with-files",
+          "systematic-debugging",
+          "tdd",
+          "code-review-expert",
+          "context-engineering",
+          "skill-creator",
+          "playwright-browser",
+          "remotion-best-practices"
+        ]
+      }
+    },
+    "targets": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "claude_code": { "type": "boolean" },
+        "cursor": { "type": "boolean" },
+        "cline": { "type": "boolean" },
+        "gemini_cli": { "type": "boolean" },
+        "openai_codex": { "type": "boolean" },
+        "github_copilot": { "type": "boolean" },
+        "kimi_code": { "type": "boolean" }
+      }
+    },
+    "include_ui_workflow_pack": { "type": "boolean" },
+    "include_memory_enhanced": { "type": "boolean" },
+    "allow_hooks": { "type": "boolean" }
+  }
+}
