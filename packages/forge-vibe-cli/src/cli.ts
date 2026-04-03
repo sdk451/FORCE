@@ -21,6 +21,7 @@ import { assertAtLeastOneAgent, assertAtLeastOneCoreSection } from "./validate-t
 import { validateInstallAnswersPartialOrThrow } from "./validate-answers-json.js";
 import { makeStderrProgress } from "./progress-stderr.js";
 import { promptCheckbox, promptLine } from "./interactive/checkbox-prompt.js";
+import { promptProjectName } from "./interactive/prompt-project-name.js";
 
 function printHelp(): void {
   console.log(`forge-vibe — BMAD-style installer for versioned agent context packs
@@ -51,15 +52,15 @@ Environment:
 
 Target agents (answers.targets.* — booleans; at least one must be true after merge):
 
-  claude_code     Anthropic Claude Code — .claude/, CLAUDE.md, modular rules, optional hooks & skills
-  cursor          Cursor — .cursor/rules/*.mdc (globs), .cursor/skills/
-  cline           Cline (VS Code) — .clinerules/*.md (forge-core, forge-stack, optional advanced slices)
-  gemini_cli      Google Gemini CLI — GEMINI.md, .gemini/settings.json (context.fileName)
-  openai_codex    OpenAI Codex CLI — root AGENTS.md + docs/FORGE-CODEX.md; optional docs/forge-skills/codex/
-  github_copilot  GitHub Copilot — .github/copilot-instructions.md; optional .github/forge-skills/
-  kimi_code       Kimi Code — docs/FORGE-KIMI.md aligned with AGENTS.md; optional docs/forge-skills/kimi/
+  claude_code     Claude Code — .claude/, CLAUDE.md, rules, optional hooks & skills
+  cursor          Cursor — .cursor/rules/*.mdc, .cursor/skills/
+  cline           Cline — .clinerules/*.md
+  gemini_cli      Gemini CLI — GEMINI.md, .gemini/settings.json
+  openai_codex    Codex CLI — AGENTS.md + docs/FORGE-CODEX.md
+  github_copilot  GitHub Copilot — .github/copilot-instructions.md
+  kimi_code       Kimi Code — docs/FORGE-KIMI.md + AGENTS.md
 
-Defaults: claude_code + cursor on; all other targets off.
+Defaults: claude_code + cursor on; other targets off unless toggled or set in answers.
 
 Context (portable AGENTS.md composition):
   context_core       §1.1 sections — default all true; at least one required after merge
@@ -98,15 +99,17 @@ async function readAnswersFile(file: string): Promise<Partial<InstallAnswers>> {
   return data as Partial<InstallAnswers>;
 }
 
-async function promptInteractive(): Promise<InstallAnswers> {
+async function promptInteractive(projectRoot: string): Promise<InstallAnswers> {
   if (!process.stdin.isTTY || !process.stdout.isTTY) {
     throw new Error(
       "Interactive mode requires a terminal (TTY). From a terminal run: npx forge-vibe install (or forge-vibe install). For CI/scripts use: forge-vibe write --answers <file> or --yes.",
     );
   }
 
-  const project_name =
-    (await promptLine(`Project name [${defaultAnswers.project_name}]: `)) || defaultAnswers.project_name;
+  const project_name = await promptProjectName({
+    projectRoot,
+    fallbackHint: defaultAnswers.project_name,
+  });
   const stackRaw =
     (await promptLine(`Stack (typescript|python) [${defaultAnswers.stack}]: `)) || defaultAnswers.stack;
   const stack = stackRaw === "python" ? "python" : "typescript";
@@ -114,9 +117,9 @@ async function promptInteractive(): Promise<InstallAnswers> {
   const agentMap = await promptCheckbox({
     title: "Target coding agents",
     subtitle:
-      "BMAD-style: [ ] / [x] blocks — Space toggles, Enter continues. At least one agent is required.",
+      "BMAD-style numbered list: type line number(s) to toggle [ ]/[x], empty line when done. At least one agent required.",
     minSelected: 1,
-    minSelectedMessage: "Select at least one agent (↑/↓ or j/k, Space toggles, Enter confirms).",
+    minSelectedMessage: "Select at least one agent: enter number(s) to toggle, then empty line to confirm.",
     items: [
       {
         id: "claude_code",
@@ -128,13 +131,13 @@ async function promptInteractive(): Promise<InstallAnswers> {
       { id: "cline", label: "Cline", hint: ".clinerules/", checked: defaultAnswers.targets.cline },
       {
         id: "gemini_cli",
-        label: "Google Gemini CLI",
+        label: "Gemini CLI",
         hint: "GEMINI.md, .gemini/",
         checked: defaultAnswers.targets.gemini_cli,
       },
       {
         id: "openai_codex",
-        label: "OpenAI Codex CLI",
+        label: "Codex CLI",
         hint: "AGENTS.md + FORGE-CODEX.md",
         checked: defaultAnswers.targets.openai_codex,
       },
@@ -297,7 +300,7 @@ async function main(): Promise<void> {
           `forge-vibe install → project root: ${root}\n(AGENTS.md, host rules/skills, and docs are written with paths relative to this directory.)\n`,
         );
       }
-      answers = await promptInteractive();
+      answers = await promptInteractive(root);
     } else {
       answers = resolveDefaults(partial);
     }

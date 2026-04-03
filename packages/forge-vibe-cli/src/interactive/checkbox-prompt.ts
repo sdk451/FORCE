@@ -3,7 +3,7 @@ import readline from "node:readline";
 export interface CheckboxItem {
   id: string;
   label: string;
-  /** Shown dimmed after label */
+  /** Shown after label */
   hint?: string;
   checked: boolean;
 }
@@ -12,39 +12,25 @@ export interface CheckboxPromptOptions {
   title: string;
   subtitle?: string;
   items: CheckboxItem[];
-  /** Refuse Enter until at least this many items are checked (default 0). */
+  /** Refuse finish until at least this many items are checked (default 0). */
   minSelected?: number;
-  /** Error line when Enter pressed below minSelected */
+  /** Error line when user tries to finish below minSelected */
   minSelectedMessage?: string;
   stdin?: NodeJS.ReadStream;
   stdout?: NodeJS.WriteStream;
 }
 
-function dim(s: string, stdout: NodeJS.WriteStream): string {
-  if (!stdout.isTTY) return s;
-  return `\u001b[2m${s}\u001b[0m`;
-}
-
-function focusPrefix(focused: boolean, stdout: NodeJS.WriteStream): string {
-  if (!stdout.isTTY) return "  ";
-  return focused ? "\u001b[1m›\u001b[0m " : "  ";
-}
-
 /**
- * BMAD-style terminal multiselect: `[ ]` / `[x]`, Space toggles, Enter confirms,
- * ↑/↓ (or j/k) moves. Requires a TTY stdin.
+ * BMAD-style multiselect: numbered list, plain line input (works on Windows PowerShell).
+ * Enter numbers separated by spaces or commas to toggle those rows; empty line finishes
+ * when minSelected is satisfied. No raw mode / arrow keys (avoids readline+TTY issues on Windows).
  */
 export function promptCheckbox(opts: CheckboxPromptOptions): Promise<Map<string, boolean>> {
   const stdin = opts.stdin ?? process.stdin;
   const stdout = opts.stdout ?? process.stdout;
   const minSel = opts.minSelected ?? 0;
   const minMsg =
-    opts.minSelectedMessage ?? `Select at least ${minSel} option(s). (Space toggles, Enter confirms.)`;
-
-  const state = opts.items.map((i) => ({ ...i }));
-  let focus = 0;
-  let errFlash = "";
-  let lineCount = 0;
+    opts.minSelectedMessage ?? `Keep at least ${minSel} option(s) selected. Enter numbers to toggle, then empty line to confirm.`;
 
   if (!stdin.isTTY) {
     return Promise.reject(
@@ -52,99 +38,81 @@ export function promptCheckbox(opts: CheckboxPromptOptions): Promise<Map<string,
     );
   }
 
-  const render = (): void => {
+  const state = opts.items.map((i) => ({ ...i }));
+
+  const selectedCount = (): number => state.filter((s) => s.checked).length;
+
+  const formatList = (): string => {
     const lines: string[] = [];
     lines.push("");
     lines.push(opts.title);
-    if (opts.subtitle) lines.push(dim(opts.subtitle, stdout));
+    if (opts.subtitle) lines.push(opts.subtitle);
     lines.push("");
     for (let i = 0; i < state.length; i++) {
       const it = state[i]!;
       const box = it.checked ? "[x]" : "[ ]";
-      const hintPart = it.hint ? ` ${dim(`(${it.hint})`, stdout)}` : "";
-      const rowText = `${focusPrefix(i === focus, stdout)}${box}  ${it.label}${hintPart}`;
-      lines.push(rowText);
+      const hintPart = it.hint ? ` (${it.hint})` : "";
+      lines.push(`  ${i + 1}. ${box}  ${it.label}${hintPart}`);
     }
     lines.push("");
-    lines.push(dim("Space toggle · Enter confirm · ↑/↓ or j/k move · Ctrl+C exit", stdout));
-    // Fixed-height footer so cursor rewind stays stable when error text toggles.
-    lines.push(errFlash ? dim(errFlash, stdout) : dim(" ", stdout));
-
-    if (lineCount > 0) {
-      stdout.write(`\u001b[${lineCount}A`);
-    }
-    for (const ln of lines) {
-      stdout.write("\u001b[2K\r" + ln + "\n");
-    }
-    lineCount = lines.length;
+    lines.push("Enter line number(s) to toggle (e.g. 3 or 2,4 or 1 5). Empty line = done.");
+    lines.push(`(Need at least ${minSel} selected. Type q + Enter to cancel.)`);
+    lines.push("");
+    return lines.join("\n");
   };
 
-  readline.emitKeypressEvents(stdin);
-  if (stdin.isTTY) stdin.setRawMode(true);
+  const rl = readline.createInterface({ input: stdin, output: stdout, terminal: true });
 
   return new Promise((resolve, reject) => {
-    const cleanup = (): void => {
-      if (stdin.isTTY) stdin.setRawMode(false);
-      stdin.removeListener("keypress", onKey);
-    };
-
     const finish = (): void => {
-      cleanup();
+      rl.close();
       const out = new Map<string, boolean>();
       for (const it of state) out.set(it.id, it.checked);
-      stdout.write("\n");
       resolve(out);
     };
 
     const fail = (e: Error): void => {
-      cleanup();
+      rl.close();
       reject(e);
     };
 
-    const selectedCount = (): number => state.filter((s) => s.checked).length;
-
-    const onKey = (_str: string | undefined, key: readline.Key): void => {
-      if (key.ctrl && key.name === "c") {
-        fail(new Error("Cancelled (Ctrl+C)"));
-        return;
-      }
-      errFlash = "";
-
-      if (key.name === "up" || key.name === "k") {
-        focus = (focus - 1 + state.length) % state.length;
-        render();
-        return;
-      }
-      if (key.name === "down" || key.name === "j") {
-        focus = (focus + 1) % state.length;
-        render();
-        return;
-      }
-      if (key.name === "space") {
-        state[focus]!.checked = !state[focus]!.checked;
-        render();
-        return;
-      }
-      if (key.name === "return" || key.name === "enter") {
-        if (selectedCount() < minSel) {
-          errFlash = minMsg;
-          render();
+    const ask = (): void => {
+      stdout.write(formatList());
+      rl.question("> ", (line) => {
+        const trimmed = line.trim().toLowerCase();
+        if (trimmed === "q" || trimmed === "quit") {
+          fail(new Error("Cancelled."));
           return;
         }
-        finish();
-        return;
-      }
+        if (trimmed === "") {
+          if (selectedCount() < minSel) {
+            stdout.write(`\n${minMsg}\n`);
+            ask();
+            return;
+          }
+          finish();
+          return;
+        }
+        const nums = trimmed
+          .split(/[\s,]+/)
+          .map((p) => parseInt(p, 10))
+          .filter((n) => Number.isInteger(n) && n >= 1 && n <= state.length);
+        for (const n of nums) {
+          const it = state[n - 1]!;
+          it.checked = !it.checked;
+        }
+        ask();
+      });
     };
 
-    stdin.on("keypress", onKey);
-    render();
+    ask();
   });
 }
 
 export function promptLine(question: string, stdin?: NodeJS.ReadStream, stdout?: NodeJS.WriteStream): Promise<string> {
   const input = stdin ?? process.stdin;
   const output = stdout ?? process.stdout;
-  const rl = readline.createInterface({ input, output });
+  const rl = readline.createInterface({ input, output, terminal: true });
   return new Promise((resolve) => {
     rl.question(question, (ans) => {
       rl.close();

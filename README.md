@@ -83,8 +83,8 @@ Each target is a boolean under **`targets`** in answers. **At least one** must b
 | **`claude_code`** | Anthropic Claude Code | `.claude/`, `CLAUDE.md`, modular rules, optional hooks & skills |
 | **`cursor`** | Cursor | `.cursor/rules/*.mdc`, `.cursor/skills/` |
 | **`cline`** | Cline (VS Code) | `.clinerules/*.md` (core, stack, memory, optional advanced slices) |
-| **`gemini_cli`** | Google Gemini CLI | `GEMINI.md`, `.gemini/settings.json` |
-| **`openai_codex`** | OpenAI Codex CLI | `AGENTS.md`, `docs/FORGE-CODEX.md`, optional `docs/forge-skills/codex/` |
+| **`gemini_cli`** | Gemini CLI | `GEMINI.md`, `.gemini/settings.json` |
+| **`openai_codex`** | Codex CLI | `AGENTS.md`, `docs/FORGE-CODEX.md`, optional `docs/forge-skills/codex/` |
 | **`github_copilot`** | GitHub Copilot | `.github/copilot-instructions.md`, optional `.github/forge-skills/` |
 | **`kimi_code`** | Kimi Code | `docs/FORGE-KIMI.md` + root `AGENTS.md`, optional `docs/forge-skills/kimi/` |
 

@@ -19,9 +19,9 @@ export interface InstallAnswers {
     cursor: boolean;
     /** Cline (VS Code): `.clinerules/` directory rules */
     cline: boolean;
-    /** Google Gemini CLI: `GEMINI.md` + `.gemini/settings.json` */
+    /** Gemini CLI: `GEMINI.md` + `.gemini/settings.json` */
     gemini_cli: boolean;
-    /** OpenAI Codex CLI: root `AGENTS.md` (+ `docs/FORGE-CODEX.md`) */
+    /** Codex CLI: root `AGENTS.md` (+ `docs/FORGE-CODEX.md`) */
     openai_codex: boolean;
     /** GitHub Copilot: `.github/copilot-instructions.md` */
     github_copilot: boolean;
