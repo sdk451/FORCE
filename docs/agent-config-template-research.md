@@ -88,16 +88,16 @@ The **BMAD** methodology in this repo uses `_bmad-output/`, `.cursor/skills/`, a
 - **Rules** → split by domain with globs (Cursor) and topic files (Claude).
 - **`_bmad` paths** may be gitignored in some clones; treat BMAD layout as **reference**, not a runtime dependency of the CLI.
 
-## Growth-host mapping (DRAFT — Epic 1.6, Epic 4)
+## Growth-host mapping (Epic 1.6 + Epic 4)
 
-All rows below are **DRAFT** until an adapter is implemented, tested, and the matrix row is marked **SHIPPED**. **FR-MAP-02** is the authority for the host set.
+**Shipped in CLI** (opt-in via `targets.*`): **Cline** (`.clinerules/*.md`), **Gemini CLI** (`GEMINI.md`, `.gemini/settings.json`), **OpenAI Codex CLI** (`AGENTS.md` + `docs/FORGE-CODEX.md`). Remaining FR-MAP-02 hosts stay **DRAFT** until implemented.
 
-| Host | Context path(s) (draft) | Skills | Automation substitute | Memory substitute | AGENTS.md strategy |
-|------|---------------------------|--------|----------------------|-------------------|-------------------|
-| **Google Gemini CLI** | `GEMINI.md`, `context.fileName`, optional `AGENTS.md` | Per Gemini / Agent Skills discovery | Commands + context; no Claude hooks | `/memory` + repo-local companion | Emit portable root to `AGENTS.md` and/or `GEMINI.md` from same canonical body |
-| **OpenAI Codex CLI** | **`AGENTS.md`** (primary) | TBD vs OpenAI docs | Checklists, rules, CI | Repo-local + rules | **Single matrix row** — portable root → `AGENTS.md` |
+| Host | Context path(s) | Skills | Automation substitute | Memory substitute | AGENTS.md strategy |
+|------|-----------------|--------|----------------------|-------------------|-------------------|
+| **Google Gemini CLI** | **SHIPPED:** `GEMINI.md`, `.gemini/settings.json` (`context.fileName`) | Per Gemini docs | Commands + context; no Claude hooks | `/memory` + repo-local companion | Always emit `AGENTS.md`; Gemini target adds `GEMINI.md` + settings |
+| **OpenAI Codex CLI** | **SHIPPED:** **`AGENTS.md`** + `docs/FORGE-CODEX.md` | TBD vs OpenAI docs | Checklists, rules, CI | Repo-local + rules | **Single matrix row** — portable root → `AGENTS.md` |
 | **oh-my-codex (OMX)** | *Not a host row* | N/A | Runtime companion ([sdk451/oh-my-codex](https://github.com/sdk451/oh-my-codex)) | N/A | Document coexistence only — see pack **FORGE-OMX-COMPANION.md** |
-| **Cline** | TBD verified | TBD | TBD | TBD | Prefer `AGENTS.md` + native file when verified |
+| **Cline** | **SHIPPED:** `.clinerules/forge-*.md` (merged with portable `AGENTS.md`) | N/A in pack v1 | Rules-only | `.clinerules/forge-memory.md` when memory slice on | Keep root `AGENTS.md` for cross-tool sharing |
 | **GitHub Copilot** | IDE / chat instruction surfaces | TBD | TBD | TBD | Portable where applicable |
 | **VS Code Copilot** | Distinct row if paths differ from GitHub Copilot | TBD | TBD | TBD | Same |
 | **Windsurf** | TBD verified | TBD | TBD | TBD | Same |

@@ -15,4 +15,7 @@ directories:
   - .claude/rules
   - .cursor/rules
   - .claude/skills/visual-verify
+  - .gemini
+  - .clinerules
+  - .github
   - docs

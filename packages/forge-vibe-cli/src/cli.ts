@@ -2,14 +2,15 @@
 import { parseArgs } from "node:util";
 import fs from "node:fs/promises";
 import path from "node:path";
-import readline from "node:readline";
 import { loadPackManifest } from "./manifest.js";
 import { resolveDefaults } from "./resolve-defaults.js";
 import type { InstallAnswers } from "./types.js";
-import { defaultAnswers } from "./types.js";
+import { activeAdapterIds, defaultAnswers } from "./types.js";
 import { buildPlannedFiles } from "./plan.js";
 import { checkFiles } from "./check.js";
 import { writePlannedFiles } from "./write-files.js";
+import { assertAtLeastOneAgent } from "./validate-targets.js";
+import { promptCheckbox, promptLine } from "./interactive/checkbox-prompt.js";
 
 function printHelp(): void {
   console.log(`forge-vibe — forge-vibe-code-enhancement CLI (BMAD-style)
@@ -30,6 +31,11 @@ Options:
 
 Environment:
   No network is required for core commands (FR5 / NFR-S1).
+
+Answers JSON — targets (optional; at least one agent required):
+  targets.claude_code, targets.cursor (default true)
+  targets.cline, targets.gemini_cli, targets.openai_codex,
+  targets.github_copilot, targets.kimi_code (default false)
 `);
 }
 
@@ -39,31 +45,100 @@ async function readAnswersFile(file: string): Promise<Partial<InstallAnswers>> {
 }
 
 async function promptInteractive(): Promise<InstallAnswers> {
-  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-  const q = (s: string) => new Promise<string>((res) => rl.question(s, res));
-  try {
-    const project_name = (await q(`Project name [${defaultAnswers.project_name}]: `)).trim() || defaultAnswers.project_name;
-    const stackRaw = (await q(`Stack (typescript|python) [${defaultAnswers.stack}]: `)).trim() || defaultAnswers.stack;
-    const stack = stackRaw === "python" ? "python" : "typescript";
-    const cc = (await q(`Target Claude Code? (y/n) [y]: `)).trim().toLowerCase();
-    const cu = (await q(`Target Cursor? (y/n) [y]: `)).trim().toLowerCase();
-    const ui = (await q(`Include UI workflow pack FR36-41? (y/n) [n]: `)).trim().toLowerCase();
-    const mem = (await q(`Include memory files? (y/n) [y]: `)).trim().toLowerCase();
-    const hooks = (await q(`Allow hook recipes in .claude/settings.json? (y/n) [n]: `)).trim().toLowerCase();
-    return resolveDefaults({
-      project_name,
-      stack,
-      targets: {
-        claude_code: cc !== "n" && cc !== "no",
-        cursor: cu !== "n" && cu !== "no",
-      },
-      include_ui_workflow_pack: ui === "y" || ui === "yes",
-      include_memory_enhanced: mem !== "n" && mem !== "no",
-      allow_hooks: hooks === "y" || hooks === "yes",
-    });
-  } finally {
-    rl.close();
+  if (!process.stdin.isTTY || !process.stdout.isTTY) {
+    throw new Error("Interactive write requires a terminal (TTY). Use --answers <file> or --yes.");
   }
+
+  const project_name =
+    (await promptLine(`Project name [${defaultAnswers.project_name}]: `)) || defaultAnswers.project_name;
+  const stackRaw =
+    (await promptLine(`Stack (typescript|python) [${defaultAnswers.stack}]: `)) || defaultAnswers.stack;
+  const stack = stackRaw === "python" ? "python" : "typescript";
+
+  const agentMap = await promptCheckbox({
+    title: "Target coding agents",
+    subtitle:
+      "BMAD-style: [ ] / [x] blocks — Space toggles, Enter continues. At least one agent is required.",
+    minSelected: 1,
+    minSelectedMessage: "Select at least one agent (↑/↓ or j/k, Space toggles, Enter confirms).",
+    items: [
+      {
+        id: "claude_code",
+        label: "Claude Code",
+        hint: ".claude/, CLAUDE.md",
+        checked: defaultAnswers.targets.claude_code,
+      },
+      { id: "cursor", label: "Cursor", hint: ".cursor/rules/*.mdc", checked: defaultAnswers.targets.cursor },
+      { id: "cline", label: "Cline", hint: ".clinerules/", checked: defaultAnswers.targets.cline },
+      {
+        id: "gemini_cli",
+        label: "Google Gemini CLI",
+        hint: "GEMINI.md, .gemini/",
+        checked: defaultAnswers.targets.gemini_cli,
+      },
+      {
+        id: "openai_codex",
+        label: "OpenAI Codex CLI",
+        hint: "AGENTS.md + FORGE-CODEX.md",
+        checked: defaultAnswers.targets.openai_codex,
+      },
+      {
+        id: "github_copilot",
+        label: "GitHub Copilot",
+        hint: ".github/copilot-instructions.md",
+        checked: defaultAnswers.targets.github_copilot,
+      },
+      {
+        id: "kimi_code",
+        label: "Kimi Code",
+        hint: "FORGE-KIMI.md + AGENTS.md",
+        checked: defaultAnswers.targets.kimi_code,
+      },
+    ],
+  });
+
+  const optMap = await promptCheckbox({
+    title: "Optional packs & settings",
+    subtitle: "Space toggles each line; Enter continues.",
+    minSelected: 0,
+    items: [
+      {
+        id: "ui_pack",
+        label: "UI workflow pack (FR36–41)",
+        hint: "Figma, Storybook, Playwright…",
+        checked: defaultAnswers.include_ui_workflow_pack,
+      },
+      {
+        id: "memory",
+        label: "Project memory files",
+        hint: "PROJECT_MEMORY.md",
+        checked: defaultAnswers.include_memory_enhanced,
+      },
+      {
+        id: "hooks",
+        label: "Claude hook recipes",
+        hint: "high risk — .claude/settings.json",
+        checked: defaultAnswers.allow_hooks,
+      },
+    ],
+  });
+
+  return resolveDefaults({
+    project_name,
+    stack,
+    targets: {
+      claude_code: agentMap.get("claude_code") ?? false,
+      cursor: agentMap.get("cursor") ?? false,
+      cline: agentMap.get("cline") ?? false,
+      gemini_cli: agentMap.get("gemini_cli") ?? false,
+      openai_codex: agentMap.get("openai_codex") ?? false,
+      github_copilot: agentMap.get("github_copilot") ?? false,
+      kimi_code: agentMap.get("kimi_code") ?? false,
+    },
+    include_ui_workflow_pack: optMap.get("ui_pack") ?? false,
+    include_memory_enhanced: optMap.get("memory") ?? false,
+    allow_hooks: optMap.get("hooks") ?? false,
+  });
 }
 
 async function main(): Promise<void> {
@@ -97,10 +172,17 @@ async function main(): Promise<void> {
     partial = {};
   }
 
-  const answers =
-    cmd === "write" && !values.answers && !values.yes
-      ? await promptInteractive()
-      : resolveDefaults(partial);
+  let answers: InstallAnswers;
+  try {
+    answers =
+      cmd === "write" && !values.answers && !values.yes
+        ? await promptInteractive()
+        : resolveDefaults(partial);
+    assertAtLeastOneAgent(answers.targets);
+  } catch (e) {
+    console.error((e as Error).message);
+    process.exit(1);
+  }
 
   if (cmd === "load") {
     const manifest = await loadPackManifest();
@@ -108,6 +190,7 @@ async function main(): Promise<void> {
     const payload = {
       manifest,
       answers,
+      adapters: activeAdapterIds(answers),
       planned_files: files.map((f) => f.path),
       planned_count: files.length,
       optional_packs_selected: {

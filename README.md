@@ -23,6 +23,37 @@ npm run forge-vibe -- check --project-root .
 npm run forge-vibe -- write --dry-run --yes --project-root path/to/repo
 ```
 
+### Non-interactive targets (Epic 4 hosts)
+
+```bash
+npm run forge-vibe -- write --yes --project-root . --answers answers.json
+```
+
+Example `answers.json`:
+
+```json
+{
+  "project_name": "my-app",
+  "stack": "typescript",
+  "targets": {
+    "claude_code": true,
+    "cursor": true,
+    "cline": true,
+    "gemini_cli": true,
+    "openai_codex": true,
+    "github_copilot": true,
+    "kimi_code": false
+  },
+  "include_ui_workflow_pack": false,
+  "include_memory_enhanced": true,
+  "allow_hooks": false
+}
+```
+
+`npm run forge-vibe -- load --json --yes` includes an **`adapters`** array listing enabled host IDs.
+
+Interactive **`write`** (no `--yes` / `--answers`) uses a **BMAD-style checkbox** UI: **`[ ]` / `[x]`** lines, **Space** toggles, **Enter** confirms, **↑/↓** or **j/k** moves. You must enable **at least one** coding agent.
+
 ## Offline / vendored install
 
 Per **FR5**, you can use a tarball without hitting the registry:

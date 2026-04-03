@@ -21,4 +21,46 @@ describe("buildPlannedFiles", () => {
     const { files } = await buildPlannedFiles(answers);
     expect(files.some((f) => f.path === "docs/UI-WORKFLOW-PACK.md")).toBe(true);
   });
+
+  it("emits Cline, Gemini CLI, and Codex paths when targets enabled (Epic 4)", async () => {
+    const answers = resolveDefaults({
+      targets: {
+        claude_code: false,
+        cursor: false,
+        cline: true,
+        gemini_cli: true,
+        openai_codex: true,
+      },
+      include_memory_enhanced: true,
+    });
+    const { files } = await buildPlannedFiles(answers);
+    const paths = new Set(files.map((f) => f.path));
+    expect(paths.has("AGENTS.md")).toBe(true);
+    expect(paths.has(".clinerules/forge-core.md")).toBe(true);
+    expect(paths.has(".clinerules/forge-stack.md")).toBe(true);
+    expect(paths.has(".clinerules/forge-memory.md")).toBe(true);
+    expect(paths.has("GEMINI.md")).toBe(true);
+    expect(paths.has(".gemini/settings.json")).toBe(true);
+    expect(paths.has("docs/FORGE-CODEX.md")).toBe(true);
+  });
+
+  it("emits GitHub Copilot and Kimi paths when targets enabled", async () => {
+    const answers = resolveDefaults({
+      targets: {
+        claude_code: false,
+        cursor: false,
+        cline: false,
+        gemini_cli: false,
+        openai_codex: false,
+        github_copilot: true,
+        kimi_code: true,
+      },
+      include_memory_enhanced: false,
+    });
+    const { files } = await buildPlannedFiles(answers);
+    const paths = new Set(files.map((f) => f.path));
+    expect(paths.has(".github/copilot-instructions.md")).toBe(true);
+    expect(paths.has("docs/FORGE-KIMI.md")).toBe(true);
+    expect(paths.has("AGENTS.md")).toBe(true);
+  });
 });

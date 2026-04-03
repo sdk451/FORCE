@@ -1,0 +1,53 @@
+# Sprint status — forge-vibe-code-enhancement (epic / FR rollup)
+#
+# Rollup level: **epic** with **FR focus** strings (see epics.md §FR coverage map).
+# Story-level rows are intentionally omitted; promote to per-story keys when you run
+# full BMAD sprint-planning.
+#
+# STATUS DEFINITIONS (this file)
+# -----------------------------
+# Epics use an **extended** status set for code-review gating:
+#   backlog           — not started / placeholder only
+#   in-progress       — active implementation
+#   ready-for-review  — deliverables landed in repo; **no formal code review** has been run yet
+#   done              — accepted (e.g. after code review + any fixes)
+#
+# Retrospectives (BMAD):
+#   optional | done
+#
+# BMAD sprint-status workflow (`bmad-sprint-status`) expects classic epic values
+# (backlog | in-progress | done). For automation, treat **ready-for-review** as
+# “review pending” (analogous to story status **review**). If a validator flags it,
+# map locally or split into story-level `sprint-status.yaml` later.
+
+generated: "2026-04-03"
+last_updated: "2026-04-03"
+project: forge-vibe-code-enhancement
+project_key: forge-vibe
+tracking_system: file-system
+story_location: "_bmad-output/planning-artifacts/epics.md"
+rollup_level: epic-fr
+
+# Primary FR / requirement focus per epic (authoritative detail in epics.md + prd.md)
+epic_fr_focus:
+  epic-1: "FR-MAP-01, FR12-13, FR14, FR17, FR-MEM-01/02, FR18-21, NFR-I1/I2 — template & research gate"
+  epic-2: "FR-INST-01, FR1-35 (MVP scope), FR34-35 memory/skill pilot, NFR-P/M/R/S/I — CLI + Claude/Cursor"
+  epic-3: "FR36-41, FR16 — UI/UX extension pack"
+  epic-4: "FR-MAP-02, FR28, FR30-31 — growth adapters (remaining Copilot/Windsurf rows = backlog)"
+  epic-5: "FR42 — quality_verification_layer reserved / blocked on external OSS"
+
+development_status:
+  epic-1: ready-for-review
+  epic-1-retrospective: optional
+
+  epic-2: ready-for-review
+  epic-2-retrospective: optional
+
+  epic-3: ready-for-review
+  epic-3-retrospective: optional
+
+  epic-4: ready-for-review
+  epic-4-retrospective: optional
+
+  epic-5: backlog
+  epic-5-retrospective: optional

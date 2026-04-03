@@ -105,6 +105,59 @@ You enabled **allow_hooks**. The emitted \`.claude/settings.json\` contains **ex
     });
   }
 
+  if (answers.targets.cline) {
+    files.push({
+      path: ".clinerules/forge-core.md",
+      content: applyTemplate(await readTpl("core/templates/claude-rules-core.md.tpl"), v),
+    });
+    const clineStack =
+      answers.stack === "typescript"
+        ? "stacks/typescript/claude-rule-stack.md.tpl"
+        : "stacks/python/claude-rule-stack.md.tpl";
+    files.push({
+      path: ".clinerules/forge-stack.md",
+      content: applyTemplate(await readTpl(clineStack), v),
+    });
+    if (answers.include_memory_enhanced) {
+      files.push({
+        path: ".clinerules/forge-memory.md",
+        content: applyTemplate(await readTpl("core/templates/cline-memory.md.tpl"), v),
+      });
+    }
+  }
+
+  if (answers.targets.gemini_cli) {
+    files.push({
+      path: "GEMINI.md",
+      content: applyTemplate(await readTpl("core/templates/GEMINI.md.tpl"), v),
+    });
+    files.push({
+      path: ".gemini/settings.json",
+      content: await readTpl("core/templates/gemini-settings.json"),
+    });
+  }
+
+  if (answers.targets.openai_codex) {
+    files.push({
+      path: "docs/FORGE-CODEX.md",
+      content: applyTemplate(await readTpl("core/templates/FORGE-CODEX.md.tpl"), v),
+    });
+  }
+
+  if (answers.targets.github_copilot) {
+    files.push({
+      path: ".github/copilot-instructions.md",
+      content: applyTemplate(await readTpl("core/templates/github-copilot-instructions.md.tpl"), v),
+    });
+  }
+
+  if (answers.targets.kimi_code) {
+    files.push({
+      path: "docs/FORGE-KIMI.md",
+      content: applyTemplate(await readTpl("core/templates/FORGE-KIMI.md.tpl"), v),
+    });
+  }
+
   if (answers.include_memory_enhanced) {
     files.push({
       path: "PROJECT_MEMORY.md",
@@ -145,36 +198,50 @@ You enabled **allow_hooks**. The emitted \`.claude/settings.json\` contains **ex
 function mergeGuide(): string {
   return `# Merge guide (FR8)
 
-- **AGENTS.md / CLAUDE.md**: merge sections; avoid contradictory MUST/NEVER lines.
-- **.claude/rules** / **.cursor/rules**: keep both trees; resolve duplicates by topic.
-- **settings.json**: merge hooks carefully; prefer team review for PostToolUse.
+- **AGENTS.md / CLAUDE.md / GEMINI.md**: merge sections; avoid contradictory MUST/NEVER lines.
+- **.claude/rules** / **.cursor/rules** / **.clinerules**: keep each tree; resolve duplicates by topic.
+- **.gemini/settings.json**: merge \`context.fileName\` with any local keys; confirm against [Gemini CLI configuration](https://google-gemini.github.io/gemini-cli/docs/get-started/configuration.html).
+- **.claude/settings.json**: merge hooks carefully; prefer team review for PostToolUse.
+- **Codex**: primary instructions live in **AGENTS.md**; keep **docs/FORGE-CODEX.md** in sync with team Codex/OMX practices.
+- **GitHub Copilot**: merge **.github/copilot-instructions.md** with any existing Copilot instructions.
+- **Kimi Code**: keep **AGENTS.md** authoritative; align **docs/FORGE-KIMI.md** with team Kimi workflow.
 `;
+}
+
+function cell(on: boolean): string {
+  return on ? "emitted" : "—";
 }
 
 function buildMatrixDoc(a: InstallAnswers, packVersion: string): string {
   return `# Forge compatibility matrix (draft)
 
-| Library / pack | Version | Claude Code | Cursor | Notes |
-|----------------|---------|-------------|--------|-------|
-| forge-mvp-core | ${packVersion} | ${a.targets.claude_code ? "emitted" : "—"} | ${a.targets.cursor ? "emitted" : "—"} | Update when hosts ship breaking hook/schema changes (FR22, NFR-I2). |
+| Library / pack | Version | Claude | Cursor | Cline | Gemini | Codex | Copilot | Kimi | Notes |
+|----------------|---------|--------|--------|-------|--------|-------|---------|------|-------|
+| forge-mvp-core | ${packVersion} | ${cell(a.targets.claude_code)} | ${cell(a.targets.cursor)} | ${cell(a.targets.cline)} | ${cell(a.targets.gemini_cli)} | ${cell(a.targets.openai_codex)} | ${cell(a.targets.github_copilot)} | ${cell(a.targets.kimi_code)} | **AGENTS.md** always emitted. Host-specific paths as selected. |
 
-## Growth hosts (DRAFT — Epic 4)
+## Shipped adapters (this CLI)
 
-Normative stubs live in the **forge-vibe-code-enhancement** repository under \`docs/growth-adapters/\` and \`docs/agent-config-template-research.md\`.
-
-| Host | Status | Portable root (\`AGENTS.md\`) | Native context / rules | Skills | Automation substitute | Memory substitute |
-|------|--------|------------------------------|-------------------------|--------|----------------------|-------------------|
-| Google Gemini CLI | **DRAFT** | Yes (recommended interchange) | \`GEMINI.md\`, \`context.fileName\` | TBD per host docs | Context + commands; no Claude hook parity | \`/memory\` + repo-local file per research |
-| OpenAI Codex CLI | **DRAFT** | **Yes** (primary row) | Confirm vs OpenAI Codex docs | TBD | Rules/checklists/CI | Repo-local + rules |
-| Cline | **DRAFT** | Yes | TBD verified paths | TBD | TBD | TBD |
-| GitHub Copilot | **DRAFT** | Yes where applicable | IDE/chat instruction surfaces | TBD | TBD | TBD |
-| VS Code Copilot | **DRAFT** | Yes where applicable | Distinct from GitHub Copilot if paths differ | TBD | TBD | TBD |
-| Windsurf | **DRAFT** | Yes | TBD verified paths | TBD | TBD | TBD |
+| Host | Native paths (when target enabled) |
+|------|-------------------------------------|
+| **Cline** | \`.clinerules/*.md\` — \`forge-core.md\`, \`forge-stack.md\`, optional \`forge-memory.md\` |
+| **Gemini CLI** | \`GEMINI.md\`, \`.gemini/settings.json\` (\`context.fileName\`: AGENTS.md, GEMINI.md) |
+| **OpenAI Codex CLI** | \`AGENTS.md\` + \`docs/FORGE-CODEX.md\` |
+| **GitHub Copilot** | \`.github/copilot-instructions.md\` |
+| **Kimi Code** | \`docs/FORGE-KIMI.md\` + root \`AGENTS.md\` |
 
 ### OpenAI Codex CLI + optional OMX
 
-- **Single shipped matrix row** for Codex: **\`AGENTS.md\`** (and linked markdown) from canonical **portable root context**.
-- **[oh-my-codex (OMX)](https://github.com/sdk451/oh-my-codex)** is **not** a second adapter or \`codex_omx\` flag — see **docs/FORGE-OMX-COMPANION.md**.
+- **Single matrix row** for Codex — no \`codex_omx\` flag.
+- **[oh-my-codex (OMX)](https://github.com/sdk451/oh-my-codex)** — see **docs/FORGE-OMX-COMPANION.md**.
+
+## Growth backlog (not yet adapted)
+
+| Host | Status |
+|------|--------|
+| VS Code Copilot | DRAFT — distinct row from GitHub Copilot when paths differ |
+| Windsurf | DRAFT — verify paths |
+
+Repository stubs: **forge-vibe-code-enhancement** \`docs/growth-adapters/\`, \`docs/agent-config-template-research.md\`.
 
 ## Reserved
 

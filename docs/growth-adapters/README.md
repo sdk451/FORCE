@@ -32,7 +32,11 @@ Source of truth for stub columns and citations: [../agent-config-template-resear
 |------|----------------|
 | claude_code | Shipped (Epic 2) |
 | cursor | Shipped (Epic 2) |
-| gemini_cli | Not shipped |
-| codex_cli | Not shipped (docs: OMX companion only) |
-| cline | Not shipped |
-| github_copilot / vscode_copilot / windsurf | Not shipped |
+| cline | Shipped (Epic 4) — `.clinerules/*.md` |
+| gemini_cli | Shipped (Epic 4) — `GEMINI.md`, `.gemini/settings.json` |
+| openai_codex | Shipped (Epic 4) — `AGENTS.md` + `docs/FORGE-CODEX.md` (OMX remains docs-only) |
+| github_copilot | Shipped — `.github/copilot-instructions.md` |
+| kimi_code | Shipped — `docs/FORGE-KIMI.md` + root `AGENTS.md` |
+| vscode_copilot / windsurf | Not shipped |
+
+Enable hosts via **`targets`** in the answers JSON or interactive **`write`** (checkbox multiselect for all shipped agents).
