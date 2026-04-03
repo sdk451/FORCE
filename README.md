@@ -1,4 +1,4 @@
-# forge-vibe-code-enhancement
+# BMADder - the forge-vibe-code-enhancement
 
 Monorepo for **forge-vibe**: versioned **agent context packs** and a **BMAD-style CLI** that materializes portable **AGENTS.md**-centric context into **Claude Code**, **Cursor**, **Cline**, **Gemini CLI**, **OpenAI Codex CLI**, **GitHub Copilot**, and **Kimi Code** layouts. Planning and BMAD outputs live under **`_bmad-output/`**; product requirements and epics are in **`_bmad-output/planning-artifacts/`**.
 
