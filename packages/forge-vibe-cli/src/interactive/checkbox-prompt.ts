@@ -69,6 +69,8 @@ export async function promptStack(opts: {
   stdin?: NodeJS.ReadStream;
   stdout?: NodeJS.WriteStream;
   initial: StackId;
+  /** Shown above the options when the repo scan found a likely stack. */
+  detectionHint?: string;
 }): Promise<StackId> {
   const stdin = opts.stdin ?? process.stdin;
   const stdout = opts.stdout ?? process.stdout;
@@ -76,9 +78,12 @@ export async function promptStack(opts: {
     throw new Error("Stack prompt requires an interactive terminal (TTY). Use --answers or --yes.");
   }
 
+  const lines = [
+    "Primary language stack for **AGENTS.md** (stack line) and **forge-stack** rule templates.",
+    opts.detectionHint,
+  ].filter((x): x is string => Boolean(x && x.trim()));
   const result = await select<StackId>({
-    message:
-      "Primary language stack for generated rules and snippets\nTemplates and stack-specific hints follow this choice.",
+    message: lines.join("\n"),
     options: [
       {
         value: "typescript",

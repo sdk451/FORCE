@@ -8,7 +8,7 @@
 
 | Host | Native paths (when target enabled) |
 |------|-------------------------------------|
-| **Cline** | `.clinerules/*.md` — `forge-core.md`, `forge-stack.md`, optional `forge-memory.md`, optional advanced `forge-behavior` / `forge-security` / `forge-debugging` / `forge-forbidden` |
+| **Cline** | `.clinerules/*.md` — `forge-core.md`, `forge-stack.md`, optional `forge-memory.md`, optional advanced slices + `docs/FORGE-CLINE.md` |
 | **Gemini CLI** | `GEMINI.md` (`@AGENTS.md`), `.gemini/settings.json` (`context.fileName`: GEMINI.md only) |
 | **OpenAI Codex CLI** | `AGENTS.md` + `docs/FORGE-CODEX.md` |
 | **GitHub Copilot** | `.github/copilot-instructions.md` |
@@ -16,7 +16,7 @@
 
 ### Optional skills (when `optional_skills` is non-empty)
 
-Answer id `tdd` installs under folder **`forge-tdd`** (always `forge-` + id). Each folder includes **`SKILL.md`** and **`workflow.md`**.
+Skill id `tdd` → install folder `forge-tdd` (always `forge-` prefix). Each folder contains `SKILL.md` and `workflow.md`.
 
 | Host | Path pattern |
 |------|----------------|

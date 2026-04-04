@@ -13,7 +13,7 @@ export function suggestedProjectNameFromRoot(projectRoot: string, fallback: stri
 
 /**
  * BMAD-method–style project name prompt (see bmad-code-org/BMAD-METHOD `tools/installer/prompts.js` `text()`):
- * gray ◆ title, gray │ + dim suggested on the next line, then a line to accept (Enter) or override.
+ * gray ◆ title, gray │ + dim suggested on the next line, then Enter to accept or type to override (BMAD-style).
  * Uses readline only (no raw mode) so it behaves on Windows PowerShell.
  */
 export async function promptProjectName(opts: {
@@ -45,7 +45,6 @@ export async function promptProjectName(opts: {
   output.write("\n");
   output.write(`${gray("◆")} ${message}\n`);
   output.write(`${gray("│")} ${dim(suggested)}\n`);
-  output.write(`${gray("│")} ${dim("Empty line = accept · type to replace")}\n`);
 
   const rl = readline.createInterface({ input, output, terminal: true });
   return new Promise((resolve) => {

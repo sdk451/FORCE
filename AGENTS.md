@@ -14,13 +14,13 @@ Keep files **short**; **verify** don’t just describe; **reference** example fi
 
 **forge-vibe-code-enhancement** — describe in one paragraph what this repo is, what it is **not**, and whether it is a monorepo or single app. Agents calibrate from this block first.
 
-- **Primary stack (summary):** TypeScript / Node
+- **Primary stack (summary):** Python
 
 ## Tech stack declaration
 
 List **languages, frameworks, and major libraries with versions** (e.g. TypeScript 5.x, React 19, …). Keeps agents from mixing paradigms (ESM vs CJS, wrong router, etc.).
 
-- **Declared stack:** TypeScript / Node — replace with exact versions and packages for this repo.
+- **Declared stack:** Python — replace with exact versions and packages for this repo.
 
 ## Commands (build, test, lint, deploy)
 
@@ -53,7 +53,7 @@ Summarize **where features live**, important directories, and **boundaries** (wh
 
 Point to **Prettier / ESLint / Ruff** configs. Prefer **negative rules with alternatives** (e.g. “NEVER use `any` — use `unknown` and narrow”).
 
-- **Stack:** TypeScript / Node — align with team formatter and linter.
+- **Stack:** Python — align with team formatter and linter.
 
 ## Verification & definition of done
 

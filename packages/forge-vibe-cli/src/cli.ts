@@ -21,6 +21,7 @@ import {
 import { assertAtLeastOneAgent, assertAtLeastOneCoreSection } from "./validate-targets.js";
 import { validateInstallAnswersPartialOrThrow } from "./validate-answers-json.js";
 import { makeStderrProgress } from "./progress-stderr.js";
+import { inferStackFromRepo } from "./infer-stack-from-repo.js";
 import { promptCheckbox, promptStack } from "./interactive/checkbox-prompt.js";
 import { promptProjectName } from "./interactive/prompt-project-name.js";
 
@@ -114,7 +115,18 @@ async function promptInteractive(projectRoot: string): Promise<InstallAnswers> {
     projectRoot,
     fallbackHint: defaultAnswers.project_name,
   });
-  const stack = await promptStack({ initial: defaultAnswers.stack });
+  const inferredStack = await inferStackFromRepo(projectRoot);
+  const stackInitial = inferredStack ?? defaultAnswers.stack;
+  const detectionHint =
+    inferredStack === "typescript"
+      ? "Repository scan: JS/TS markers at project root (e.g. package.json / tsconfig). Pre-selected — change if wrong."
+      : inferredStack === "python"
+        ? "Repository scan: Python markers at project root (e.g. pyproject.toml / requirements.txt). Pre-selected — change if wrong."
+        : undefined;
+  const stack = await promptStack({
+    initial: stackInitial,
+    detectionHint,
+  });
 
   const agentMap = await promptCheckbox({
     title: "Target coding agents",
