@@ -1,5 +1,5 @@
 ---
-name: visual-verify
+name: forge-visual-verify
 description: Run non-text verification for UI changes (Playwright screenshot or story smoke) before marking done.
 ---
 

@@ -14,7 +14,7 @@ reserved_pack_ids:
 directories:
   - .claude/rules
   - .cursor/rules
-  - .claude/skills/visual-verify
+  - .claude/skills/forge-visual-verify
   - .gemini
   - .gemini/skills
   - .clinerules

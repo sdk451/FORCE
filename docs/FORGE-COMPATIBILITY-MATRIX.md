@@ -9,7 +9,7 @@
 | Host | Native paths (when target enabled) |
 |------|-------------------------------------|
 | **Cline** | `.clinerules/*.md` — `forge-core.md`, `forge-stack.md`, optional `forge-memory.md`, optional advanced `forge-behavior` / `forge-security` / `forge-debugging` / `forge-forbidden` |
-| **Gemini CLI** | `GEMINI.md`, `.gemini/settings.json` (`context.fileName`: AGENTS.md, GEMINI.md) |
+| **Gemini CLI** | `GEMINI.md` (`@AGENTS.md`), `.gemini/settings.json` (`context.fileName`: GEMINI.md only) |
 | **OpenAI Codex CLI** | `AGENTS.md` + `docs/FORGE-CODEX.md` |
 | **GitHub Copilot** | `.github/copilot-instructions.md` |
 | **Kimi Code** | `docs/FORGE-KIMI.md` + root `AGENTS.md` |

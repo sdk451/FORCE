@@ -1,5 +1,30 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`buildPlannedFiles > emits stable PROJECT_MEMORY.md and wires it in CLAUDE.md for default MVP answers 1`] = `
+"# Project memory — golden-fixture
+
+Durable repo knowledge (FR-MEM pattern). **Decisions vs scratch** — move stable decisions here; prune stale notes.
+
+## Decisions
+
+- (Add architecture and constraint decisions.)
+
+## Scratch / session bullets
+
+- (Compact after each session; prefer deterministic bullets over long prose.)
+
+## Compaction rules
+
+1. After a session, roll bullets into **Decisions** or delete if obsolete.
+2. Cap sections; archive old decisions to \`docs/\` if needed.
+3. Optional LLM assist must use a **fixed template** (bounded), not free rewrite of full history.
+
+## Memory & session handoff
+
+Use **PROJECT_MEMORY.md** (or host memory) for **decisions vs scratch**; keep summaries **decision-faithful** — do not drop error signatures, URLs, or rationale.
+"
+`;
+
 exports[`buildPlannedFiles > emits stable path set for default MVP answers 1`] = `
 [
   ".claude/rules/forge-behavior.md",
@@ -9,7 +34,7 @@ exports[`buildPlannedFiles > emits stable path set for default MVP answers 1`] =
   ".claude/rules/forge-security.md",
   ".claude/rules/forge-stack.md",
   ".claude/settings.json",
-  ".claude/skills/visual-verify/SKILL.md",
+  ".claude/skills/forge-visual-verify/SKILL.md",
   ".cursor/rules/forge-behavior.mdc",
   ".cursor/rules/forge-core.mdc",
   ".cursor/rules/forge-debugging.mdc",

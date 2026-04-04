@@ -423,6 +423,14 @@ As an **installer user**, I want a **checkbox step** for optional skills, so tha
 
 ---
 
+## Epic 7 — Automatic host context wiring (supplemental)
+
+**Doc:** [_bmad-output/planning-artifacts/epic-auto-host-context-wiring.md](./epic-auto-host-context-wiring.md) (**implemented**).
+
+Post–adversarial-review work: **`@AGENTS.md`** in **CLAUDE.md** / **GEMINI.md**, **`@PROJECT_MEMORY.md`** for Claude when memory pack on, **AGENTS** imports for Codex/Kimi companion docs, **full portable body** in **GitHub Copilot** instructions, **Gemini** `context.fileName` slimming, **Cursor** debugging rule parity, **SessionEnd** hook + **forge-visual-verify** rename, **FORGE-CLINE.md**.
+
+---
+
 ## Validation checklist (create-epics-and-stories)
 
 - [x] FR1–FR42 + FR-INST/MAP/MEM traced to at least one epic/story.

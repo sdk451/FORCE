@@ -1,6 +1,8 @@
 # Merge guide (FR8)
 
-- **AGENTS.md / CLAUDE.md / GEMINI.md**: merge sections; avoid contradictory MUST/NEVER lines.
+- **AGENTS.md**: merge portable sections; preserve `@docs/FORGE-CODEX.md` / `@docs/FORGE-KIMI.md` imports when those adapters are on.
+- **CLAUDE.md**: merge; keep `@AGENTS.md` (and `@PROJECT_MEMORY.md` if used) at the top.
+- **GEMINI.md**: merge; keep `@AGENTS.md` — portable body lives in **AGENTS.md**.
 - **.claude/rules** / **.cursor/rules** / **.clinerules**: keep each tree; resolve duplicates by topic.
 - **.gemini/settings.json**: merge `context.fileName` with any local keys; confirm against [Gemini CLI configuration](https://google-gemini.github.io/gemini-cli/docs/get-started/configuration.html).
 - **.claude/settings.json**: merge hooks carefully; prefer team review for PostToolUse.

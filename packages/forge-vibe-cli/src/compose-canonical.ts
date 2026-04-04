@@ -193,14 +193,15 @@ Root **AGENTS.md** is the cross-tool interchange; pair with **CLAUDE.md** / **GE
 
 Keep files **short**; **verify** don’t just describe; **reference** example files instead of pasting them; use **hooks** for must-always enforcement and markdown for guidance. *Research:* \`canonical-agents-md-research-2026-04-03.md\` (planning artifacts).`;
 
-export function buildAgentsMd(a: InstallAnswers, v: CanonicalVars): string {
+/** Portable sections shared by AGENTS.md, Copilot instructions, and (via @import) GEMINI/CLAUDE. */
+export function buildPortableMarkdownSections(a: InstallAnswers, v: CanonicalVars): string {
+  const parts: string[] = [];
   const core = assembleCore(a.context_core, v);
   const adv = assembleAdvanced(a.context_advanced, v);
-  const extra: string[] = [agentsPreamble(v)];
-  if (core) extra.push(core);
-  if (adv) extra.push(adv);
+  if (core) parts.push(core);
+  if (adv) parts.push(adv);
   if (a.include_ui_workflow_pack) {
-    extra.push(
+    parts.push(
       block(
         "UI workflow pack",
         "This repo opted into the **UI workflow pack** — see **docs/UI-WORKFLOW-PACK.md** for Figma / Storybook / Playwright / shadcn-oriented guidance.",
@@ -208,38 +209,73 @@ export function buildAgentsMd(a: InstallAnswers, v: CanonicalVars): string {
     );
   }
   if (a.include_memory_enhanced) {
-    extra.push(
+    parts.push(
       block(
         "Project memory",
         "Maintain **PROJECT_MEMORY.md** per compaction rules; separate **decisions** from **scratch**.",
       ),
     );
   }
-  extra.push(
+  parts.push(
     block(
       "Security & legal (baseline)",
       "- No secrets in repo. No unexpected outbound calls from install scripts without explicit opt-in.\n- Base packs are **not** legal or compliance advice.",
     ),
   );
-  return extra.join("\n\n") + "\n";
+  return parts.join("\n\n");
+}
+
+function buildAgentsMdHostImports(a: InstallAnswers): string {
+  const chunks: string[] = [];
+  if (a.targets.openai_codex) {
+    chunks.push("", "@docs/FORGE-CODEX.md", "");
+  }
+  if (a.targets.kimi_code) {
+    chunks.push("", "@docs/FORGE-KIMI.md", "");
+  }
+  return chunks.join("\n");
+}
+
+export function buildAgentsMd(a: InstallAnswers, v: CanonicalVars): string {
+  return `${agentsPreamble(v)}\n\n${buildPortableMarkdownSections(a, v)}${buildAgentsMdHostImports(a)}\n`;
+}
+
+function optionalSkillsMarkdownBlock(a: InstallAnswers): string {
+  if (a.optional_skills.length === 0) return "";
+  return `\n\n${block(
+    "Optional skills (forge)",
+    `Bundles under host paths (see **docs/FORGE-COMPATIBILITY-MATRIX.md**) for: ${a.optional_skills.map((id) => `\`${forgeSkillInstallDir(id)}\``).join(", ")}.`,
+  )}`;
+}
+
+export function buildCopilotInstructionsMd(a: InstallAnswers, v: CanonicalVars): string {
+  return `# GitHub Copilot — ${v.PROJECT_NAME}
+
+Repository instructions for [GitHub Copilot](https://docs.github.com/copilot/customizing-copilot/adding-custom-instructions-for-github-copilot).
+
+**Portable context:** This file repeats the same guidance as root **AGENTS.md** (also emitted) so Copilot applies full project rules without relying on \`AGENTS.md\` discovery in the IDE.${optionalSkillsMarkdownBlock(a)}
+
+${buildPortableMarkdownSections(a, v)}
+`;
 }
 
 export function buildClaudeMd(a: InstallAnswers, v: CanonicalVars, hooksBlock: string): string {
-  const compaction = a.context_advanced.context_compaction ? `\n\n${sectionContextCompaction(v)}` : "";
+  const memImport = a.include_memory_enhanced ? "\n@PROJECT_MEMORY.md\n" : "";
   return `# CLAUDE.md — ${v.PROJECT_NAME}
 
-Host-optimized **Claude Code** layer. **Authoritative portable sections:** **AGENTS.md** (same repo; forge composes core §1–7 and optional §8–14 there).
+<!-- forge: Claude Code loads CLAUDE.md at session start. @ imports include portable context. First run may prompt to approve file imports. -->
 
+@AGENTS.md
+${memImport}
 ## Claude-specific execution
 
 - Prefer **Plan** mode for ambiguous or large refactors.
-- **Modular rules:** \`.claude/rules/\` — scoped policies beyond root context.
-- **Skills:** \`.claude/skills/\` — lean \`SKILL.md\` per [agentskills.io](https://agentskills.io/).
+- **Modular rules:** \`.claude/rules/\` — scoped policies (loaded at launch when pathless).
+- **Skills:** \`.claude/skills/\` — \`SKILL.md\` per [agentskills.io](https://agentskills.io/); loaded when invoked or when Claude selects them as relevant.
 
 ## Verification
 
-Follow **AGENTS.md** verification / DOD; use hooks only where team has reviewed them.
-${compaction}
+Follow **AGENTS.md** verification / DOD; use hooks only where the team has reviewed them.
 
 ## Hooks & automation
 
@@ -248,37 +284,25 @@ ${hooksBlock}
 }
 
 export function buildGeminiMd(a: InstallAnswers, v: CanonicalVars): string {
-  const parts = [
-    `# GEMINI — ${v.PROJECT_NAME}`,
-    "",
-    "Project context for [Gemini CLI](https://github.com/google-gemini/gemini-cli). Loaded with **AGENTS.md** when `.gemini/settings.json` lists both under `context.fileName`.",
-    "",
-    assembleCore(a.context_core, v),
-  ];
-  const adv = assembleAdvanced(a.context_advanced, v);
-  if (adv) parts.push("", adv);
-  if (a.include_ui_workflow_pack) {
-    parts.push("", sectionUiUxWorkflow(v));
-  }
-  if (a.optional_skills.length > 0) {
-    parts.push(
-      "",
-      block(
-        "Optional skills (forge)",
-        `Skill bundles under **\`.gemini/skills/forge-<id>/\`** (\`SKILL.md\` + \`workflow.md\`) for: ${a.optional_skills.map((id) => `\`${forgeSkillInstallDir(id)}\``).join(", ")}. Pull into context with \`@.gemini/skills/...\` or nested \`GEMINI.md\` per [Gemini CLI docs](https://google-gemini.github.io/gemini-cli/docs/cli/gemini-md.html).`,
-      ),
-    );
-  }
-  parts.push(
-    "",
-    "Use **`/memory show`** / **`/memory refresh`** to inspect hierarchical context.",
-    "",
-    block(
-      "Security & legal (baseline)",
-      "No secrets in repo. No unexpected outbound calls without explicit opt-in. Not legal advice.",
-    ),
-  );
-  return parts.join("\n\n") + "\n";
+  const skillLines =
+    a.optional_skills.length > 0
+      ? `\n\n${block(
+          "Optional skills (forge)",
+          `Workspace skill folders: **\`.gemini/skills/forge-<id>/\`** with \`SKILL.md\` (+ \`workflow.md\`). Use **\`/skills list\`** / **\`/skills reload\`** for Agent Skills discovery. To **inline** a skill or asset into context, use **\`@\` file imports** in this file (see [GEMINI.md / context](https://google-gemini.github.io/gemini-cli/docs/cli/gemini-md.html)). Installed: ${a.optional_skills.map((id) => `\`${forgeSkillInstallDir(id)}\``).join(", ")}.`,
+        )}`
+      : "";
+
+  return `# GEMINI — ${v.PROJECT_NAME}
+
+@AGENTS.md
+
+## Gemini CLI (host)
+
+Portable sections come from **AGENTS.md** above (single source of truth). This file adds **Gemini-only** notes.
+
+- **Context:** \`.gemini/settings.json\` sets \`context.fileName\` to **\`["GEMINI.md"]\`** so the CLI loads this file, which imports **AGENTS.md** (see [context files](https://google-gemini.github.io/gemini-cli/docs/cli/gemini-md.html)).
+- Use **\`/memory show\`** / **\`/memory refresh\`** to inspect the concatenated instructional context.${skillLines}
+`;
 }
 
 export function buildProjectMemoryMd(a: InstallAnswers, v: CanonicalVars): string {

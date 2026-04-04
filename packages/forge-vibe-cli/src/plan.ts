@@ -4,6 +4,7 @@ import type { InstallAnswers, PackManifest, PlannedFile } from "./types.js";
 import {
   buildAgentsMd,
   buildClaudeMd,
+  buildCopilotInstructionsMd,
   buildGeminiMd,
   buildProjectMemoryMd,
   sectionAgentBehavior,
@@ -146,13 +147,20 @@ export async function buildPlannedFiles(answers: InstallAnswers): Promise<{
     });
 
     if (answers.allow_hooks) {
+      const hookScript = await readTpl("core/scripts/session-end-memory-hint.mjs");
+      files.push({
+        path: "scripts/forge-claude/session-end-memory-hint.mjs",
+        content: hookScript,
+        riskTier: "high",
+      });
       files.push({
         path: "docs/FORGE-HOOK-OPTIN.md",
         content: `# Hook opt-in (FR17, NFR-S3)
 
 You enabled **allow_hooks**. The emitted \`.claude/settings.json\` contains **example** hook entries.
 
-- **Replace** command strings with your real format/lint/test commands.
+- **PostToolUse** (example): replace the \`echo\` with your format/lint/test commands.
+- **SessionEnd**: runs \`node scripts/forge-claude/session-end-memory-hint.mjs\` — prints a **stderr reminder** to update **PROJECT_MEMORY.md** when that file exists (no automatic edits).
 - **High risk**: hooks run shell commands. Review with your team before committing.
 `,
         riskTier: "high",
@@ -161,7 +169,7 @@ You enabled **allow_hooks**. The emitted \`.claude/settings.json\` contains **ex
 
     if (answers.context_core.verification) {
       files.push({
-        path: ".claude/skills/visual-verify/SKILL.md",
+        path: ".claude/skills/forge-visual-verify/SKILL.md",
         content: applyTemplate(await readTpl("core/templates/SKILL-visual-verify.md.tpl"), v),
       });
     }
@@ -231,7 +239,7 @@ You enabled **allow_hooks**. The emitted \`.claude/settings.json\` contains **ex
         content: wrapCursorMdc({
           description: `Debugging protocol — ${answers.project_name}`,
           globs: "**/*",
-          alwaysApply: false,
+          alwaysApply: true,
           body: sectionDebuggingProtocol(cv),
         }),
       });
@@ -294,6 +302,11 @@ You enabled **allow_hooks**. The emitted \`.claude/settings.json\` contains **ex
         content: applyTemplate(await readTpl("core/templates/cline-memory.md.tpl"), v),
       });
     }
+
+    files.push({
+      path: "docs/FORGE-CLINE.md",
+      content: applyTemplate(await readTpl("core/templates/FORGE-CLINE.md.tpl"), v),
+    });
   }
 
   if (answers.targets.gemini_cli) {
@@ -317,7 +330,7 @@ You enabled **allow_hooks**. The emitted \`.claude/settings.json\` contains **ex
   if (answers.targets.github_copilot) {
     files.push({
       path: ".github/copilot-instructions.md",
-      content: applyTemplate(await readTpl("core/templates/github-copilot-instructions.md.tpl"), v),
+      content: buildCopilotInstructionsMd(answers, cv),
     });
   }
 
@@ -370,9 +383,11 @@ You enabled **allow_hooks**. The emitted \`.claude/settings.json\` contains **ex
 function mergeGuide(): string {
   return `# Merge guide (FR8)
 
-- **AGENTS.md / CLAUDE.md / GEMINI.md**: merge sections; avoid contradictory MUST/NEVER lines.
+- **AGENTS.md**: merge portable sections; when Codex/Kimi adapters are on, preserve trailing \`@docs/FORGE-*.md\` imports.
+- **CLAUDE.md**: merge; keep \`@AGENTS.md\` (and \`@PROJECT_MEMORY.md\` if present) at the top for Claude Code.
+- **GEMINI.md**: merge; keep \`@AGENTS.md\` — portable body lives in **AGENTS.md**.
 - **.claude/rules** / **.cursor/rules** / **.clinerules**: keep each tree; resolve duplicates by topic.
-- **.gemini/settings.json**: merge \`context.fileName\` with any local keys; confirm against [Gemini CLI configuration](https://google-gemini.github.io/gemini-cli/docs/get-started/configuration.html).
+- **.gemini/settings.json**: forge ships \`context.fileName: ["GEMINI.md"]\`; **GEMINI.md** uses \`@AGENTS.md\` — merge carefully with any local keys; confirm against [Gemini CLI configuration](https://google-gemini.github.io/gemini-cli/docs/get-started/configuration.html).
 - **.claude/settings.json**: merge hooks carefully; prefer team review for PostToolUse.
 - **Codex**: primary instructions live in **AGENTS.md**; keep **docs/FORGE-CODEX.md** in sync with team Codex/OMX practices.
 - **GitHub Copilot**: merge **.github/copilot-instructions.md** with any existing Copilot instructions.
@@ -397,8 +412,8 @@ function buildMatrixDoc(a: InstallAnswers, packVersion: string): string {
 
 | Host | Native paths (when target enabled) |
 |------|-------------------------------------|
-| **Cline** | \`.clinerules/*.md\` — \`forge-core.md\`, \`forge-stack.md\`, optional \`forge-memory.md\`, optional advanced \`forge-behavior\` / \`forge-security\` / \`forge-debugging\` / \`forge-forbidden\` |
-| **Gemini CLI** | \`GEMINI.md\`, \`.gemini/settings.json\` (\`context.fileName\`: AGENTS.md, GEMINI.md) |
+| **Cline** | \`.clinerules/*.md\` — \`forge-core.md\`, \`forge-stack.md\`, optional \`forge-memory.md\`, optional advanced slices + \`docs/FORGE-CLINE.md\` |
+| **Gemini CLI** | \`GEMINI.md\` (\`@AGENTS.md\`), \`.gemini/settings.json\` (\`context.fileName\`: GEMINI.md only) |
 | **OpenAI Codex CLI** | \`AGENTS.md\` + \`docs/FORGE-CODEX.md\` |
 | **GitHub Copilot** | \`.github/copilot-instructions.md\` |
 | **Kimi Code** | \`docs/FORGE-KIMI.md\` + root \`AGENTS.md\` |
