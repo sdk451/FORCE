@@ -1,7 +1,7 @@
 import type { ContextAdvancedMap, ContextCoreMap, InstallAnswers } from "./types.js";
 import { CONTEXT_ADVANCED_IDS, CONTEXT_CORE_IDS } from "./context-config.js";
 import { DOMAIN_H2_TITLE, DOMAIN_IDS, DOMAIN_SECTIONS, type DomainId } from "./domain-config.js";
-import { forgeSkillInstallDir } from "./forge-skill-path.js";
+import { buildForgeInstallBundlesSection } from "./forge-install-bundles-md.js";
 
 export interface CanonicalVars {
   PROJECT_NAME: string;
@@ -194,21 +194,9 @@ export function buildPortableMarkdownSections(a: InstallAnswers, v: CanonicalVar
     const chunk = assembleDomainChunk(d, a, v);
     if (chunk) parts.push(chunk);
   }
-  if (a.include_ui_workflow_pack) {
-    parts.push(
-      block(
-        "UI workflow pack",
-        "This repo opted into the **UI workflow pack** — see **docs/UI-WORKFLOW-PACK.md** for Figma / Storybook / Playwright / shadcn-oriented guidance.",
-      ),
-    );
-  }
-  if (a.include_memory_enhanced) {
-    parts.push(
-      block(
-        "Project memory",
-        "Maintain **PROJECT_MEMORY.md** per compaction rules; separate **decisions** from **scratch**.",
-      ),
-    );
+  const bundles = buildForgeInstallBundlesSection(a);
+  if (bundles.trim() !== "") {
+    parts.push(bundles.trimEnd());
   }
   parts.push(
     block(
@@ -234,20 +222,12 @@ export function buildAgentsMd(a: InstallAnswers, v: CanonicalVars): string {
   return `${agentsPreamble(v)}\n\n${buildPortableMarkdownSections(a, v)}${buildAgentsMdHostImports(a)}\n`;
 }
 
-function optionalSkillsMarkdownBlock(a: InstallAnswers): string {
-  if (a.optional_skills.length === 0) return "";
-  return `\n\n${block(
-    "Optional skills (forge)",
-    `Bundles under host paths (see **docs/FORGE-COMPATIBILITY-MATRIX.md**) for: ${a.optional_skills.map((id) => `\`${forgeSkillInstallDir(id)}\``).join(", ")}.`,
-  )}`;
-}
-
 export function buildCopilotInstructionsMd(a: InstallAnswers, v: CanonicalVars): string {
   return `# GitHub Copilot — ${v.PROJECT_NAME}
 
 Repository instructions for [GitHub Copilot](https://docs.github.com/copilot/customizing-copilot/adding-custom-instructions-for-github-copilot).
 
-**Portable context:** This file repeats the same guidance as root **AGENTS.md** (also emitted) so Copilot applies full project rules without relying on \`AGENTS.md\` discovery in the IDE.${optionalSkillsMarkdownBlock(a)}
+**Portable context:** This file repeats the same guidance as root **AGENTS.md** (also emitted) so Copilot applies full project rules without relying on \`AGENTS.md\` discovery in the IDE.
 
 ${buildPortableMarkdownSections(a, v)}
 `;
@@ -278,12 +258,9 @@ ${hooksBlock}
 }
 
 export function buildGeminiMd(a: InstallAnswers, v: CanonicalVars): string {
-  const skillLines =
+  const skillPointer =
     a.optional_skills.length > 0
-      ? `\n\n${block(
-          "Optional skills (forge)",
-          `Workspace skill folders: **\`.gemini/skills/forge-<id>/\`** with \`SKILL.md\` (+ \`workflow.md\`). Use **\`/skills list\`** / **\`/skills reload\`** for Agent Skills discovery. To **inline** a skill or asset into context, use **\`@\` file imports** in this file (see [GEMINI.md / context](https://google-gemini.github.io/gemini-cli/docs/cli/gemini-md.html)). Installed: ${a.optional_skills.map((id) => `\`${forgeSkillInstallDir(id)}\``).join(", ")}.`,
-        )}`
+      ? `\n- **Optional skills:** Listed in **AGENTS.md** (**Forge-installed skills & packs**). On Gemini, bundles live under **\`.gemini/skills/forge-<id>/\`** — use **\`/skills list\`** / **\`/skills reload\`** and **\`@\` imports** as needed ([GEMINI.md / context](https://google-gemini.github.io/gemini-cli/docs/cli/gemini-md.html)).`
       : "";
 
   return `# GEMINI — ${v.PROJECT_NAME}
@@ -295,7 +272,7 @@ export function buildGeminiMd(a: InstallAnswers, v: CanonicalVars): string {
 Portable sections come from **AGENTS.md** above (single source of truth). This file adds **Gemini-only** notes.
 
 - **Context:** \`.gemini/settings.json\` sets \`context.fileName\` to **\`["GEMINI.md"]\`** so the CLI loads this file, which imports **AGENTS.md** (see [context files](https://google-gemini.github.io/gemini-cli/docs/cli/gemini-md.html)).
-- Use **\`/memory show\`** / **\`/memory refresh\`** to inspect the concatenated instructional context.${skillLines}
+- Use **\`/memory show\`** / **\`/memory refresh\`** to inspect the concatenated instructional context.${skillPointer}
 `;
 }
 

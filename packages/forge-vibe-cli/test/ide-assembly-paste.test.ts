@@ -17,4 +17,19 @@ describe("buildIdeAssemblyChatPaste", () => {
     expect(text).toMatch(/Cleanup:/i);
     expect(text).toMatch(/delete the temporary assembly workspace/i);
   });
+
+  it("adds monorepo tip when suggestedMonorepoRootAbs is set", () => {
+    const root = path.resolve("/tmp/ws/packages/cli-pkg");
+    const mono = path.resolve("/tmp/ws");
+    const workDir = path.join(root, "fake-temp-workspace");
+    const text = buildIdeAssemblyChatPaste({
+      projectRootAbs: root,
+      assemblyWorkDirAbs: workDir,
+      suggestedMonorepoRootAbs: mono,
+    });
+    expect(text).toMatch(/Monorepo tip/);
+    expect(text).toContain(mono);
+    expect(text).toContain(root);
+    expect(text).toMatch(/Forge project root/);
+  });
 });

@@ -93,8 +93,11 @@ function varsFor(a: InstallAnswers): Record<string, string> {
       ? "Hooks **opt-in** is enabled — see **docs/FORGE-HOOK-OPTIN.md** and review `.claude/settings.json`."
       : "Hooks **disabled** in emitted `.claude/settings.json` (safe default). Enable via installer with `allow_hooks: true` plus review.";
   const optionalSkillsNote =
-    a.optional_skills.length > 0
-      ? `\n- **Optional skills (forge):** **${a.optional_skills.map((id) => forgeSkillInstallDir(id)).join(", ")}** — each bundle is \`SKILL.md\` + \`workflow.md\`; paths per host in **docs/FORGE-COMPATIBILITY-MATRIX.md**.\n`
+    a.optional_skills.length > 0 ||
+    a.include_ui_workflow_pack ||
+    a.include_memory_enhanced ||
+    a.allow_hooks
+      ? `\n- **Forge-installed bundles:** Follow root **AGENTS.md**, section **Forge-installed skills & packs**, for selected **optional skills** (\`${a.optional_skills.map((id) => forgeSkillInstallDir(id)).join("`, `") || "(none)"}\`), **UI workflow pack**, **PROJECT_MEMORY.md**, and **Claude hooks** as applicable — each \`forge-*\` folder is \`SKILL.md\` + \`workflow.md\` per **docs/FORGE-COMPATIBILITY-MATRIX.md**.\n`
       : "";
   return {
     PROJECT_NAME: a.project_name,
@@ -412,6 +415,7 @@ ${elementMenuBody}`,
 function mergeGuide(): string {
   return `# Merge guide (FR8)
 
+- **Emit root:** forge writes \`AGENTS.md\`, \`CLAUDE.md\`, \`GEMINI.md\`, and host trees relative to the **emit root** (default git top-level; \`--project-root\` overrides). Match the directory each coding agent opens as the workspace root.
 - **AGENTS.md**: merge portable sections; when Codex/Kimi adapters are on, preserve trailing \`@docs/FORGE-*.md\` imports.
 - **CLAUDE.md**: merge; keep \`@AGENTS.md\` (and \`@PROJECT_MEMORY.md\` if present) at the top for Claude Code.
 - **GEMINI.md**: merge; keep \`@AGENTS.md\` — portable body lives in **AGENTS.md**.
@@ -440,11 +444,15 @@ function buildMatrixDoc(a: InstallAnswers, packVersion: string): string {
 
 ## Shipped adapters (this CLI)
 
+All paths are **relative to the forge emit root** (default: \`git rev-parse --show-toplevel\` from cwd; override with \`--project-root\`).
+
 | Host | Native paths (when target enabled) |
 |------|-------------------------------------|
+| **Claude Code** | Root \`CLAUDE.md\` (\`@AGENTS.md\`), \`.claude/rules/*.md\`, \`.claude/settings.json\`, \`.claude/skills/\` |
+| **Cursor** | Root \`AGENTS.md\` (agents.md convention) + \`.cursor/rules/*.mdc\`, \`.cursor/skills/\` |
 | **Cline** | \`.clinerules/*.md\` — \`forge-core.md\`, \`forge-stack.md\`, optional \`forge-memory.md\`, optional advanced slices + \`docs/FORGE-CLINE.md\` |
-| **Gemini CLI** | \`GEMINI.md\` (\`@AGENTS.md\`), \`.gemini/settings.json\` (\`context.fileName\`: GEMINI.md only) |
-| **OpenAI Codex CLI** | \`AGENTS.md\` + \`docs/FORGE-CODEX.md\` |
+| **Gemini CLI** | Root \`GEMINI.md\` (\`@AGENTS.md\`), \`.gemini/settings.json\` (\`context.fileName\`: GEMINI.md) |
+| **OpenAI Codex CLI** | Root \`AGENTS.md\` + \`docs/FORGE-CODEX.md\` |
 | **GitHub Copilot** | \`.github/copilot-instructions.md\` |
 | **Kimi Code** | \`docs/FORGE-KIMI.md\` + root \`AGENTS.md\` |
 

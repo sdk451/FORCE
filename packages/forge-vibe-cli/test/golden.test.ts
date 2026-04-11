@@ -143,6 +143,9 @@ describe("buildPlannedFiles", () => {
       targets: { claude_code: true, cursor: true },
     });
     const { files } = await buildPlannedFiles(answers);
+    const agents = files.find((f) => f.path === "AGENTS.md");
+    expect(agents?.content).toMatch(/Forge-installed skills & packs/);
+    expect(agents?.content).toMatch(/forge-tdd/);
     const paths = new Set(files.map((f) => f.path));
     expect(paths.has(".claude/skills/forge-tdd/SKILL.md")).toBe(true);
     expect(paths.has(".claude/skills/forge-tdd/workflow.md")).toBe(true);
@@ -164,9 +167,9 @@ describe("buildPlannedFiles", () => {
     const gemini = files.find((f) => f.path === "GEMINI.md");
     expect(gemini).toBeDefined();
     expect(gemini!.content).toContain("@AGENTS.md");
-    expect(gemini!.content).toContain("## Optional skills (forge)");
+    expect(gemini!.content).toContain("Forge-installed skills & packs");
     expect(gemini!.content).toContain("/skills list");
-    expect(gemini!.content).toContain("`forge-tdd`");
+    expect(gemini!.content).toMatch(/forge-<id>|forge-tdd/);
   });
 
   it("emits optional skills for Cline, Gemini, Codex, Copilot, and Kimi targets", async () => {

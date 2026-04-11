@@ -20,6 +20,7 @@ Use this checklist **after** `forge-vibe` has written baseline files (`AGENTS.md
 > Rewrite **AGENTS.md** into a **concise runbook** (~150–300 lines): cover roughly **15–20** element themes that matter here, aligned with the eight **domains** and any optional **`domain_requirements`** notes.  
 > **Remove** What/Why/generic examples — only **this repo’s** commands, versions, paths, and boundaries. **Infer** from the codebase and CI, then reconcile with the profile.  
 > Respect **selected targets**: align host-specific files; keep portable **AGENTS.md** as the source of truth.  
+> If the profile lists **optional skills** or optional packs, keep **Forge-installed skills & packs** guidance in **AGENTS.md** (per-skill **`SKILL.md`** triggers, **UI-WORKFLOW-PACK**, **PROJECT_MEMORY**, hooks) — tightened, not removed.  
 > After **AGENTS.md**, propose minimal **always-on** rule updates under **.cursor/rules/** or **.claude/rules/** only where hooks or deterministic checks require it.  
 > Move depth to linked docs (e.g. `docs/architecture.md`, ADRs) instead of bloating **AGENTS.md**.
 
@@ -29,7 +30,8 @@ Use this checklist **after** `forge-vibe` has written baseline files (`AGENTS.md
 - [ ] Roughly **15–20** high-value element themes addressed, mapped to enabled domains / `domain_requirements`.  
 - [ ] Real install / test / lint commands and stack versions (from repo + profile).  
 - [ ] **Foundation** names entry points and refactor boundaries; **Safety** has Always / Ask / Never.  
-- [ ] **Execution** matches CI or documents divergence; optional **skills** paths match **docs/FORGE-COMPATIBILITY-MATRIX.md**.
+- [ ] **Execution** matches CI or documents divergence; optional **skills** paths match **docs/FORGE-COMPATIBILITY-MATRIX.md**.  
+- [ ] Every **`optional_skills`** entry and selected pack (**UI**, **memory**, **hooks**) still has **actionable** instructions in **AGENTS.md** (when to load **`SKILL.md`** / which doc to follow).
 
 ## Not legal or compliance advice
 

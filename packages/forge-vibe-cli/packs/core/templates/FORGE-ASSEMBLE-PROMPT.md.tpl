@@ -4,10 +4,12 @@
 
 ## Repository (authoritative paths)
 
-- **Repository root (absolute):** `{{PROJECT_ROOT_ABS}}`
-- **Shell cwd:** `forge-vibe assemble` sets the coding agent’s working directory to this root. All relative paths below are from here (including in monorepos: this is the directory where the user ran install/assemble, not necessarily the monorepo parent).
+- **Forge project root (absolute):** `{{PROJECT_ROOT_ABS}}` — the **emit root** where **`AGENTS.md`**, **`CLAUDE.md`**, **`GEMINI.md`**, and host trees are written. By default the CLI uses **`git rev-parse --show-toplevel`** from cwd (override with **`--project-root`**). This should match the **workspace root** your coding agent opens so session context loads correctly.
+- **Shell cwd:** `forge-vibe assemble` sets the coding agent’s working directory to this root. If you intentionally used **`--project-root`** to a subdirectory (e.g. a single package), all edits belong there — do not switch to the git parent unless the profile was installed there.
 - **Root AGENTS.md to rewrite (absolute):** `{{AGENTS_MD_ABS}}`
-- **Install profile (relative to root):** `docs/FORGE-INSTALL-PROFILE.json` — authoritative for `targets`, `domains`, and `domain_requirements`.
+- **Install profile (relative to root):** `docs/FORGE-INSTALL-PROFILE.json` — authoritative for `targets`, `domains`, `domain_requirements`, **`optional_skills`**, **`include_ui_workflow_pack`**, **`include_memory_enhanced`**, **`allow_hooks`**.
+
+{{INSTALL_BUNDLES_SECTION}}
 
 ## Temporary assembly workspace
 
@@ -29,7 +31,7 @@ The file **`{{AGENTS_MD_ABS}}`** (also shown as root **`AGENTS.md`**) is the **f
 - Read **`docs/FORGE-AGENTS-ELEMENT-MENU.md`** in the repo **or** the copy **`FORGE-AGENTS-ELEMENT-MENU.md`** in **`{{ASSEMBLY_WORK_DIR_ABS}}`** — forge **element-type menu** (from pack `agents.md.tpl`). Use it only to **choose** which kinds of rules to include (stack, structure, commands, boundaries, …).
 - Deliver a **short, concrete** root **`AGENTS.md`**: aim **15–20 element types** worth of *content*, not 60+. Map choices to the profile’s enabled **domains** and any **`domain_requirements`** text.
 - **Strip** pedagogical noise from your output: no **What:** / **Why:** labels, no generic tutorial examples, no long prose explaining concepts the agent already knows. **Replace** every illustrative example in the menu with **this repository’s** commands, paths, versions, and boundaries.
-- **Infer** aggressively: inspect **`package.json`**, **`pyproject.toml`**, **`uv.lock`**, **`pnpm-lock.yaml`**, **`.github/workflows/`**, **`Dockerfile`**, **`README`**, **`AGENTS.md`** (current scaffold), **`docs/`**, and source layout — then reconcile with **`docs/FORGE-INSTALL-PROFILE.json`** (TUI: `project_name`, `stack`, `targets`, `domains`, `domain_requirements`, optional skills, flags).
+- **Infer** aggressively: inspect **`package.json`**, **`pyproject.toml`**, **`uv.lock`**, **`pnpm-lock.yaml`**, **`.github/workflows/`**, **`Dockerfile`**, **`README`**, **`AGENTS.md`** (current scaffold — including **Forge-installed skills & packs** if present), **`docs/`**, and source layout — then reconcile with **`docs/FORGE-INSTALL-PROFILE.json`** (TUI: `project_name`, `stack`, `targets`, `domains`, `domain_requirements`, **`optional_skills`**, pack flags).
 
 ## Element catalog
 
@@ -48,9 +50,10 @@ The file **`{{AGENTS_MD_ABS}}`** (also shown as root **`AGENTS.md`**) is the **f
 1. Confirm you are operating in **`{{PROJECT_ROOT_ABS}}`** and that **`{{AGENTS_MD_ABS}}`** is the `AGENTS.md` you will overwrite. Read `docs/FORGE-INSTALL-PROFILE.json`, `docs/FORGE-AGENTS-ELEMENT-MENU.md`, **`{{AGENTS_MD_ABS}}`**, and `docs/FORGE-AGENTIC-ASSEMBLY.md`.
 2. {{ELEMENTS_STEP}}
 3. **Rewrite** **`{{AGENTS_MD_ABS}}`** (root `AGENTS.md`) into a **dense** spec: keep the **eight-domain** headings the installer emitted; under each, only bullets and short sentences with **real** commands, paths, tool names, and Always / Ask / Never boundaries. **Delete** scaffold filler and any duplicated “why this matters” text. **Save** the file — a verbal summary is not sufficient.
-4. **Same session:** for each **enabled** host in `targets`, update the matching instruction files on disk (see `docs/FORGE-COMPATIBILITY-MATRIX.md`) so they stay consistent with the new `AGENTS.md` — not optional follow-up. Examples: **`CLAUDE.md`** + **`.claude/rules/*.md`** when `claude_code` is true; **`.cursor/rules/*.mdc`** when `cursor` is true; **`GEMINI.md`**, **`docs/FORGE-CODEX.md`**, **`.github/copilot-instructions.md`**, **`.clinerules/`**, **`docs/FORGE-KIMI.md`** for their respective targets. Create or overwrite as needed.
-5. Do **not** remove `docs/FORGE-INSTALL-PROFILE.json`, `docs/FORGE-AGENTS-ELEMENT-MENU.md`, or other forge metadata unless the user explicitly asked.
+4. **Preserve installed skills & packs:** if **`optional_skills`** is non-empty or UI/memory/hooks flags are true in the profile (and the scaffold has **Forge-installed skills & packs**), the tuned **`AGENTS.md` must still** (a) name each **`forge-<skill-id>`** bundle and when to open **`SKILL.md`**, (b) reference **docs/UI-WORKFLOW-PACK.md** / **PROJECT_MEMORY.md** / **.claude/settings.json** hooks as selected, with **repo-specific** triggers — merged into the right domains, not deleted as “boilerplate”.
+5. **Same session:** for each **enabled** host in `targets`, update the matching instruction files on disk (see `docs/FORGE-COMPATIBILITY-MATRIX.md`) so they stay consistent with the new `AGENTS.md` — not optional follow-up. Examples: **`CLAUDE.md`** + **`.claude/rules/*.md`** when `claude_code` is true; **`.cursor/rules/*.mdc`** when `cursor` is true; **`GEMINI.md`**, **`docs/FORGE-CODEX.md`**, **`.github/copilot-instructions.md`**, **`.clinerules/`**, **`docs/FORGE-KIMI.md`** for their respective targets. Create or overwrite as needed.
+6. Do **not** remove `docs/FORGE-INSTALL-PROFILE.json`, `docs/FORGE-AGENTS-ELEMENT-MENU.md`, or other forge metadata unless the user explicitly asked.
 
 ## Definition of done
 
-Match `docs/FORGE-AGENTIC-ASSEMBLY.md`, and confirm **`{{AGENTS_MD_ABS}}`** on disk reads like a **project runbook** (top **15–20** element themes addressed, no menu-style What/Why/Example blocks). Re-open the file locally to verify placeholders are gone.
+Match `docs/FORGE-AGENTIC-ASSEMBLY.md`, and confirm **`{{AGENTS_MD_ABS}}`** on disk reads like a **project runbook** (top **15–20** element themes addressed, no menu-style What/Why/Example blocks). If the profile lists **optional skills** or optional packs, confirm the runbook still **instructs the agent to use** those **`SKILL.md`** paths and docs. Re-open the file locally to verify placeholders are gone.

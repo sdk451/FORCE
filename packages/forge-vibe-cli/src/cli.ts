@@ -22,6 +22,8 @@ import { defaultDomains, type DomainMap } from "./domain-config.js";
 import { promptDomainRequirements } from "./interactive/prompt-domain-requirements.js";
 import { buildBlueprintDocument } from "./blueprint.js";
 import { runAssemble } from "./assemble.js";
+import { suggestMonorepoRootIfNestedPackage } from "./project-root-hint.js";
+import { resolveForgeEmitRoot } from "./resolve-emit-root.js";
 import type { AssembleInvokerId } from "./invoke-coding-agent.js";
 
 function parseAssembleAgent(s: string | undefined): "auto" | AssembleInvokerId {
@@ -45,6 +47,7 @@ function printHelp(): void {
 
 Primary flow (interactive TUI, like BMAD npx installers):
   install [--project-root <dir>] [--dry-run] [--force]
+      (omit --project-root → emit root = git rev-parse --show-toplevel from cwd, else cwd if not a repo)
       Run prompts: target agents → stack → optional per-domain notes (all eight foundations always
       included) → optional skills → packs; then write AGENTS.md (canonical scaffold + placeholders), host
       rules/skills, profile JSON, assembly guide, and docs. AGENTS.md is tuned by a follow-up
@@ -76,7 +79,9 @@ Other commands:
   resolve-defaults [--answers <file>]  Merge partial answers with defaults (stdout JSON)
 
 Options:
-  --project-root <dir>   Target repo root (default: cwd). All emitted paths are relative to this.
+  --project-root <dir>   Emit root for AGENTS.md, CLAUDE.md, GEMINI.md, host rules, docs/. Omit it to
+                         use the git repository root (git rev-parse --show-toplevel from cwd), or cwd
+                         when not in a git repo. Hosts read those files relative to this directory.
   --answers <file>       JSON partial/full answers; validated against the pack schema (not install)
   --json                 load: single-line JSON (no indentation); default load is pretty-printed
   --dry-run              install/write: print actions only; assemble: print plan only
@@ -285,13 +290,25 @@ function printPostWriteAssemblyBanner(projectRoot: string): void {
   console.error("");
   console.error(line);
   console.error("forge-vibe: AGENTS.md is a canonical scaffold (structure + placeholders), not final tuned context.");
-  console.error("Next — customize for this repo:");
+  console.error("Next — customize for this repo (same forge project root as install):");
   console.error(`  cd ${projectRoot}`);
   console.error("  forge-vibe assemble");
   console.error("Paste-only if no vendor CLI on PATH:");
   console.error("  forge-vibe assemble --no-invoke");
   console.error("Guides: docs/FORGE-AGENTIC-ASSEMBLY.md · docs/FORGE-ASSEMBLE.md");
   console.error(line);
+  console.error("");
+}
+
+async function printMonorepoPackageRootHintIfApplicable(projectRoot: string): Promise<void> {
+  const mono = await suggestMonorepoRootIfNestedPackage(projectRoot);
+  if (mono === undefined) return;
+  const pkg = path.resolve(projectRoot);
+  console.error("forge-vibe: Monorepo — install ran under packages/<pkg>/ .");
+  console.error(`  AGENTS.md, CLAUDE.md, and docs/ were written only under: ${pkg}`);
+  console.error(`  If they should live at the workspace root instead, reinstall and assemble with:`);
+  console.error(`    forge-vibe install --project-root ${mono}`);
+  console.error(`    forge-vibe assemble --project-root ${mono}`);
   console.error("");
 }
 
@@ -347,7 +364,15 @@ async function main(): Promise<void> {
     allowPositionals: false,
   });
 
-  const root = path.resolve(values["project-root"] ?? process.cwd());
+  const cwd = process.cwd();
+  const { root, source } = resolveForgeEmitRoot(values["project-root"], cwd);
+  if (values["project-root"] === undefined) {
+    if (source === "git" && path.resolve(cwd) !== root) {
+      console.error(`[forge-vibe] File emit root = git repository top-level: ${root}`);
+      console.error(`  (cwd was ${path.resolve(cwd)}.) AGENTS.md / CLAUDE.md / GEMINI.md / host paths are written here.`);
+      console.error(`  Override: --project-root <dir>`);
+    }
+  }
 
   if (cmd === "assemble") {
     try {
@@ -394,12 +419,12 @@ async function main(): Promise<void> {
     if (ranInteractiveTui) {
       if (cmd === "install") {
         console.error(
-          `forge-vibe install → project root: ${root}\n(AGENTS.md, host rules/skills, and docs are written with paths relative to this directory.)\n`,
+          `forge-vibe install → file emit root: ${root}\n(AGENTS.md, CLAUDE.md / GEMINI.md / host rules, docs — paths match each agent’s expected repo-relative locations under this root.)\n`,
         );
       }
       if (cmd === "blueprint") {
         console.error(
-          `forge-vibe blueprint → project root: ${root}\n(printing JSON only — no files written.)\n`,
+          `forge-vibe blueprint → emit root: ${root}\n(printing JSON only — no files written.)\n`,
         );
       }
       answers = await promptInteractive(root);
@@ -506,6 +531,7 @@ async function main(): Promise<void> {
       }
       if (!values["dry-run"]) {
         printPostWriteAssemblyBanner(root);
+        await printMonorepoPackageRootHintIfApplicable(root);
         if (
           ranInteractiveTui &&
           process.stdin.isTTY &&

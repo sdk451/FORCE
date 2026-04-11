@@ -17,6 +17,8 @@ import {
   type AssembleInvokerId,
 } from "./invoke-coding-agent.js";
 import { agentsMdStillCanonicalScaffold } from "./assemble-scaffold-check.js";
+import { buildForgeInstallBundlesSection } from "./forge-install-bundles-md.js";
+import { suggestMonorepoRootIfNestedPackage } from "./project-root-hint.js";
 
 export { ASSEMBLY_PROMPT_BASENAME } from "./assembly-constants.js";
 
@@ -124,6 +126,7 @@ export async function buildAssemblePromptMarkdown(
   const blueprint = await buildBlueprintDocument(answers, rootAbs);
   const tpl = await readTpl("core/templates/FORGE-ASSEMBLE-PROMPT.md.tpl");
   const agentsMdAbs = path.join(rootAbs, "AGENTS.md");
+  const installBundlesSection = buildForgeInstallBundlesSection(answers);
   const markdown = applyTemplate(tpl, {
     PROJECT_NAME: answers.project_name,
     PROJECT_ROOT_ABS: rootAbs,
@@ -134,6 +137,9 @@ export async function buildAssemblePromptMarkdown(
     TARGETS_MD: formatTargetsMarkdown(answers),
     AGENTIC_PROMPT: blueprint.agentic_prompt,
     ELEMENTS_STEP: elementsStep,
+    INSTALL_BUNDLES_SECTION: installBundlesSection.trim()
+      ? `${installBundlesSection.trimEnd()}\n\n---\n\n`
+      : "",
   });
   return { markdown, elementsPresent };
 }
@@ -156,8 +162,13 @@ function writeIdeAssemblyPaste(
   projectRootAbs: string,
   assemblyWorkDirAbs: string,
   dest: "stdout" | "stderr",
+  suggestedMonorepoRootAbs?: string,
 ): void {
-  const text = buildIdeAssemblyChatPaste({ projectRootAbs, assemblyWorkDirAbs });
+  const text = buildIdeAssemblyChatPaste({
+    projectRootAbs,
+    assemblyWorkDirAbs,
+    ...(suggestedMonorepoRootAbs !== undefined ? { suggestedMonorepoRootAbs } : {}),
+  });
   if (dest === "stderr") process.stderr.write(text);
   else process.stdout.write(text);
 }
@@ -216,6 +227,7 @@ export async function runAssemble(opts: AssembleRunOptions): Promise<number> {
   const workDirAbs = await fs.mkdtemp(path.join(os.tmpdir(), "forge-vibe-assemble-"));
   const promptAbs = path.join(workDirAbs, ASSEMBLY_PROMPT_BASENAME);
   const assembly: AssemblyWorkspacePaths = { workDirAbs, promptAbs };
+  const suggestedMonorepoRootAbs = await suggestMonorepoRootIfNestedPackage(root);
 
   try {
     const { markdown } = await buildAssemblePromptMarkdown(answers, root, assembly);
@@ -224,8 +236,13 @@ export async function runAssemble(opts: AssembleRunOptions): Promise<number> {
     await fs.writeFile(path.join(workDirAbs, "README-ASSEMBLY-WORKSPACE.md"), buildAssemblyReadme(root, workDirAbs), "utf8");
 
     console.error(`[forge-vibe assemble] Assembly workspace (WIP): ${workDirAbs}`);
-    console.error(`[forge-vibe assemble] Repository root: ${root}`);
-    console.error(`[forge-vibe assemble] Rewrite target (root AGENTS.md): ${path.join(root, "AGENTS.md")}`);
+    console.error(`[forge-vibe assemble] Forge project root (all edits apply here): ${root}`);
+    console.error(`[forge-vibe assemble] Rewrite target (AGENTS.md): ${path.join(root, "AGENTS.md")}`);
+    if (suggestedMonorepoRootAbs !== undefined) {
+      console.error(
+        `[forge-vibe assemble] Monorepo: likely workspace root is ${suggestedMonorepoRootAbs} — use --project-root there if AGENTS.md should live at the repo root, not under packages/.`,
+      );
+    }
 
     if (opts.noInvoke) {
       console.error(
@@ -240,7 +257,7 @@ export async function runAssemble(opts: AssembleRunOptions): Promise<number> {
           "[forge-vibe assemble] Copy the block printed on stdout into your IDE agent chat.",
         );
       }
-      writeIdeAssemblyPaste(root, workDirAbs, pasteDest);
+      writeIdeAssemblyPaste(root, workDirAbs, pasteDest, suggestedMonorepoRootAbs);
       return 0;
     }
 
@@ -265,7 +282,7 @@ export async function runAssemble(opts: AssembleRunOptions): Promise<number> {
           "[forge-vibe assemble] No agent was invoked. Copy the chat block on stdout into your IDE.",
         );
       }
-      writeIdeAssemblyPaste(root, workDirAbs, pasteDest);
+      writeIdeAssemblyPaste(root, workDirAbs, pasteDest, suggestedMonorepoRootAbs);
       return 0;
     }
 
@@ -284,7 +301,7 @@ export async function runAssemble(opts: AssembleRunOptions): Promise<number> {
       console.error(
         "[forge-vibe assemble] Assembly workspace kept for IDE follow-up. Copy the block below, then delete the folder when done.",
       );
-      writeIdeAssemblyPaste(root, workDirAbs, pasteDest);
+      writeIdeAssemblyPaste(root, workDirAbs, pasteDest, suggestedMonorepoRootAbs);
       return 1;
     }
     if (status === 0) {
@@ -305,7 +322,7 @@ export async function runAssemble(opts: AssembleRunOptions): Promise<number> {
         console.error(
           "[forge-vibe assemble] Assembly workspace kept. Use the IDE paste block to run assembly in your editor, then delete the temp folder when AGENTS.md is actually rewritten.",
         );
-        writeIdeAssemblyPaste(root, workDirAbs, pasteDest);
+        writeIdeAssemblyPaste(root, workDirAbs, pasteDest, suggestedMonorepoRootAbs);
         return 1;
       }
       await removeAssemblyWorkspace(workDirAbs);
@@ -321,7 +338,7 @@ export async function runAssemble(opts: AssembleRunOptions): Promise<number> {
     console.error(
       "[forge-vibe assemble] Copy the block below into your IDE to continue, then delete the temp workspace when assembly succeeds.",
     );
-    writeIdeAssemblyPaste(root, workDirAbs, pasteDest);
+    writeIdeAssemblyPaste(root, workDirAbs, pasteDest, suggestedMonorepoRootAbs);
     return status ?? 1;
   } catch (e) {
     try {
