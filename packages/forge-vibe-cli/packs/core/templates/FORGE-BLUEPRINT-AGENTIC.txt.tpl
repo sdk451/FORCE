@@ -4,7 +4,7 @@ Read **docs/FORGE-INSTALL-PROFILE.json**, **docs/FORGE-AGENTS-ELEMENT-MENU.md** 
 
 Rewrite **AGENTS.md** into a **concise runbook** (~150–300 lines): cover roughly **15–20** element themes that fit this repo, guided by enabled **domains** and **`domain_requirements`**. **Do not** copy What/Why/generic examples from the menu — only **repo-specific** facts. **Infer** from manifests, CI, README, and the tree, then reconcile with the profile.
 
-**Installed skills & packs:** If **docs/FORGE-INSTALL-PROFILE.json** lists **`optional_skills`** and/or **`include_ui_workflow_pack`** / **`include_memory_enhanced`** / **`allow_hooks`**, the scaffold **AGENTS.md** includes **Forge-installed skills & packs**. You **must** keep those commitments in the tuned file: name each **`forge-<skill-id>`** and when to open **`SKILL.md`**; reference **docs/UI-WORKFLOW-PACK.md**, **PROJECT_MEMORY.md**, or **Claude hooks** as selected — with concrete repo triggers, folded into the right domains (not dropped).
+**Installed skills & packs:** If **docs/FORGE-INSTALL-PROFILE.json** lists **`optional_skills`** and/or pack flags, the scaffold **AGENTS.md** has **Optional skills & packs** (name + short “when to use” from the installer). In the tuned file, keep **only** that end-user shape: **display name** and **when to use** (repo-specific). Drop **`forge-*` ids**, **`SKILL.md`** paths, matrix text, and any paragraph copied from the assembly prompt. Put host paths in **CLAUDE.md** / **GEMINI.md** / rules as needed.
 
 Respect **selected targets** (Claude, Cursor, Copilot, …): align duplicated rules where those hosts read separate files; do not remove portable **AGENTS.md** content without cause.
 

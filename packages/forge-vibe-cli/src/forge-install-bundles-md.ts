@@ -12,52 +12,104 @@ export function hasForgeInstallBundles(a: InstallAnswers): boolean {
   );
 }
 
-/**
- * Markdown block for **AGENTS.md** and assembly prompts: lists selected skills/packs so agents
- * use installed **SKILL.md** bundles and docs on every relevant session.
- */
-export function buildForgeInstallBundlesSection(a: InstallAnswers): string {
-  if (!hasForgeInstallBundles(a)) return "";
+export type ForgeInstallBundlesAudience = "agents_portable" | "assembly_prompt";
 
+const PORTABLE_SECTION_TITLE = "## Optional skills & packs\n\n";
+
+/** Short “when to use” line for AGENTS.md — installer catalog hints only; assembly may tighten. */
+function skillWhenLine(id: string): string {
+  const row = OPTIONAL_SKILL_TUI.find((r) => r.id === id);
+  if (row?.hint?.trim()) return row.hint.trim();
+  return "when the task matches this workflow.";
+}
+
+function portableBundlesBody(a: InstallAnswers): string {
+  const lines: string[] = [];
+  for (const id of a.optional_skills) {
+    const row = OPTIONAL_SKILL_TUI.find((r) => r.id === id);
+    const label = row?.label ?? id;
+    lines.push(`- **${label}** — ${skillWhenLine(id)}`);
+  }
+  if (a.include_ui_workflow_pack) {
+    lines.push(
+      "- **UI workflow pack** — When building or verifying UI (components, stories, visual checks, design-system work).",
+    );
+  }
+  if (a.include_memory_enhanced) {
+    lines.push(
+      "- **Project memory** — When handing off sessions or recording durable decisions vs ephemeral scratch notes.",
+    );
+  }
+  if (a.allow_hooks) {
+    lines.push(
+      "- **Claude hooks** — When repo automation or hook-backed guardrails apply; follow team policy for those checks.",
+    );
+  }
+  if (lines.length === 0) return "";
+  return `${lines.join("\n")}\n\n`;
+}
+
+function assemblyPromptBundlesBody(a: InstallAnswers): string {
   const parts: string[] = [];
-  parts.push(`## Forge-installed skills & packs\n\n`);
   parts.push(
-    "The installer recorded these in **docs/FORGE-INSTALL-PROFILE.json** (`optional_skills`, `include_ui_workflow_pack`, `include_memory_enhanced`, `allow_hooks`). **Keep them in tuned AGENTS.md** — fold into the right domain with **repo-specific** triggers (e.g. skills under **Knowledge** / **Orchestration**; hooks under **Safety** / **Execution**). **Do not drop** these references after `forge-vibe assemble`.\n\n",
+    "Authoritative selection lives in **`docs/FORGE-INSTALL-PROFILE.json`** (`optional_skills`, `include_ui_workflow_pack`, `include_memory_enhanced`, `allow_hooks`).\n\n",
+  );
+  parts.push(
+    "**After assembly,** root **`AGENTS.md`** must carry **only** end-user guidance: each selected skill/pack’s **display name** and **when to use it** (repo-specific triggers). **Remove** installer prose, **`forge-*` ids**, paths to **`SKILL.md`**, and compatibility-matrix / host-discovery instructions from **`AGENTS.md`** — those belong in rules or host files, not the portable runbook.\n\n",
   );
 
   if (a.optional_skills.length > 0) {
-    parts.push(`### Optional skills (invoke when relevant)\n\n`);
+    parts.push("### Optional skills (install ids → open `SKILL.md` under each host)\n\n");
     for (const id of a.optional_skills) {
       const row = OPTIONAL_SKILL_TUI.find((r) => r.id === id);
       const label = row?.label ?? id;
       const hint = row?.hint ? ` *${row.hint}*` : "";
       parts.push(
-        `- **${label}** (\`${forgeSkillInstallDir(id)}\`)${hint} — installed under each enabled host’s skills tree (see **docs/FORGE-COMPATIBILITY-MATRIX.md**). Open **\`SKILL.md\`** (and **\`workflow.md\`**) when the task matches; use the host’s skill discovery (Claude / Cursor / Gemini \`/skills\`, etc.).\n`,
+        `- **${label}** (\`${forgeSkillInstallDir(id)}\`)${hint} — on-disk under each enabled host’s skills tree (**docs/FORGE-COMPATIBILITY-MATRIX.md**).\n`,
       );
     }
     parts.push("\n");
   }
 
   if (a.include_ui_workflow_pack) {
-    parts.push(`### UI workflow pack\n\n`);
+    parts.push("### UI workflow pack\n\n");
     parts.push(
-      "This repo includes **docs/UI-WORKFLOW-PACK.md** — use it for Figma / Storybook / Playwright / shadcn-oriented UI work; tie verification to **this repo’s** story and E2E commands.\n\n",
+      "Shipped as **docs/UI-WORKFLOW-PACK.md** — assembly should fold **when to follow it** into **`AGENTS.md`** without pasting this assembly block.\n\n",
     );
   }
 
   if (a.include_memory_enhanced) {
-    parts.push(`### Project memory file\n\n`);
+    parts.push("### Project memory file\n\n");
     parts.push(
-      "Maintain **PROJECT_MEMORY.md** per compaction rules (**decisions** vs **scratch**); align with the Knowledge domain.\n\n",
+      "**PROJECT_MEMORY.md** — assembly: keep a short **when to use** line in **`AGENTS.md`**; no installer-only boilerplate.\n\n",
     );
   }
 
   if (a.allow_hooks) {
-    parts.push(`### Claude hooks\n\n`);
+    parts.push("### Claude hooks\n\n");
     parts.push(
-      "**Hooks** were enabled at install — **.claude/settings.json** may reference hook scripts. Treat as **high impact**; document team review policy and link **docs/FORGE-HOOK-OPTIN.md** where appropriate.\n\n",
+      "Hooks may be enabled — **.claude/settings.json**. Assembly: one-line **when hooks matter** + team review policy if needed; not long forge-install copy.\n\n",
     );
   }
 
   return parts.join("");
+}
+
+/**
+ * - **agents_portable** — `AGENTS.md` / Copilot / portable body: skill **name** + **when to use** only.
+ * - **assembly_prompt** — full install reference for the temp assembly prompt only.
+ */
+export function buildForgeInstallBundlesSection(
+  a: InstallAnswers,
+  audience: ForgeInstallBundlesAudience = "agents_portable",
+): string {
+  if (!hasForgeInstallBundles(a)) return "";
+
+  if (audience === "agents_portable") {
+    const body = portableBundlesBody(a);
+    if (!body.trim()) return "";
+    return `${PORTABLE_SECTION_TITLE}${body}`;
+  }
+
+  return `## Installer-selected skills & packs (assembly reference only)\n\n${assemblyPromptBundlesBody(a)}`;
 }

@@ -2,21 +2,27 @@
 
 | Library / pack | Version | Claude | Cursor | Cline | Gemini | Codex | Copilot | Kimi | Notes |
 |----------------|---------|--------|--------|-------|--------|-------|---------|------|-------|
-| forge-mvp-core | 0.1.0 | — | emitted | — | — | — | — | — | **AGENTS.md** always emitted. Host-specific paths as selected. |
+| forge-mvp-core | 0.1.0 | emitted | emitted | — | — | — | — | — | **AGENTS.md** always emitted. Host-specific paths as selected. |
 
 ## Shipped adapters (this CLI)
 
+All paths are **relative to the forge emit root** (default: `git rev-parse --show-toplevel` from cwd; override with `--project-root`).
+
 | Host | Native paths (when target enabled) |
 |------|-------------------------------------|
+| **Claude Code** | Root `CLAUDE.md` (`@AGENTS.md`), `.claude/rules/*.md`, `.claude/settings.json`, `.claude/skills/` |
+| **Cursor** | Root `AGENTS.md` (agents.md convention) + `.cursor/rules/*.mdc`, `.cursor/skills/` |
 | **Cline** | `.clinerules/*.md` — `forge-core.md`, `forge-stack.md`, optional `forge-memory.md`, optional advanced slices + `docs/FORGE-CLINE.md` |
-| **Gemini CLI** | `GEMINI.md` (`@AGENTS.md`), `.gemini/settings.json` (`context.fileName`: GEMINI.md only) |
-| **OpenAI Codex CLI** | `AGENTS.md` + `docs/FORGE-CODEX.md` |
+| **Gemini CLI** | Root `GEMINI.md` (`@AGENTS.md`), `.gemini/settings.json` (`context.fileName`: GEMINI.md) |
+| **OpenAI Codex CLI** | Root `AGENTS.md` + `docs/FORGE-CODEX.md` |
 | **GitHub Copilot** | `.github/copilot-instructions.md` |
 | **Kimi Code** | `docs/FORGE-KIMI.md` + root `AGENTS.md` |
 
 ### Optional skills (when `optional_skills` is non-empty)
 
 Skill id `tdd` → install folder `forge-tdd` (always `forge-` prefix). Each folder contains `SKILL.md` and `workflow.md`.
+
+**Domain hints (CODING_AGENT_INSTRUCTION_ELEMENTS.md):** *frontend-design* → Standards / Knowledge; *playwright-browser* → Execution / Quality; *systematic-debugging* → Architecture; *tdd*, *code-review-expert* → Quality; *planning-with-files*, *context-engineering*, *skill-creator* → Orchestration / Knowledge; *superpowers* → Orchestration; *remotion-best-practices* → exemplar domain pack.
 
 | Host | Path pattern |
 |------|----------------|

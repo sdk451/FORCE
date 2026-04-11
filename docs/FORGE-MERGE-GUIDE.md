@@ -1,5 +1,6 @@
 # Merge guide (FR8)
 
+- **Emit root:** forge writes `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, and host trees relative to the **emit root** (default git top-level; `--project-root` overrides). Match the directory each coding agent opens as the workspace root.
 - **AGENTS.md**: merge portable sections; when Codex/Kimi adapters are on, preserve trailing `@docs/FORGE-*.md` imports.
 - **CLAUDE.md**: merge; keep `@AGENTS.md` (and `@PROJECT_MEMORY.md` if present) at the top for Claude Code.
 - **GEMINI.md**: merge; keep `@AGENTS.md` — portable body lives in **AGENTS.md**.
@@ -11,3 +12,4 @@
 - **Kimi Code**: keep **AGENTS.md** authoritative; align **docs/FORGE-KIMI.md** with team Kimi workflow.
 - **Optional rules:** `forge-behavior`, `forge-security`, `forge-debugging`, `forge-forbidden` — merge if you already use the same filenames (**Claude** `.claude/rules`, **Cursor** `.mdc`, **Cline** `.clinerules`).
 - **Optional skills (installer):** under each host tree, directories `forge-<skill-id>/` with `SKILL.md` + `workflow.md` (e.g. `.cursor/skills/forge-tdd/`). Same bundle per skill where that host was selected.
+- **docs/FORGE-AGENTS-ELEMENT-MENU.md:** assembly **menu** (pack `agents.md.tpl`) — keep when merging; do not treat as final **AGENTS.md** content.

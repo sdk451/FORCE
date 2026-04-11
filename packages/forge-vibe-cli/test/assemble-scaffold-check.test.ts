@@ -7,10 +7,18 @@ describe("agentsMdStillCanonicalScaffold", () => {
     expect(agentsMdStillCanonicalScaffold("  \n")).toBe(true);
   });
 
-  it("is true when canonical scaffold heading remains", () => {
+  it("is true when installer structure-template banner remains", () => {
     expect(
-      agentsMdStillCanonicalScaffold("# X\n\n### Canonical scaffold (forge install)\n"),
+      agentsMdStillCanonicalScaffold(
+        "# X\n\n### Canonical scaffold (forge install)\n\nUntil assemble, this file is the **structure template** from the installer.\n",
+      ),
     ).toBe(true);
+  });
+
+  it("is false when only Canonical scaffold heading remains (banner paragraph removed)", () => {
+    expect(
+      agentsMdStillCanonicalScaffold("# X\n\n### Canonical scaffold (forge install)\n\nCustom intro.\n"),
+    ).toBe(false);
   });
 
   it("is true when overview placeholder line remains", () => {

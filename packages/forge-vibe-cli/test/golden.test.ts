@@ -34,7 +34,7 @@ describe("buildPlannedFiles", () => {
     expect(agents).toBeDefined();
     expect(memory!.content).toMatchSnapshot();
     expect(claude!.content).toContain("@PROJECT_MEMORY.md");
-    expect(agents!.content).toContain("## Project memory");
+    expect(agents!.content).toMatch(/\*\*Project memory\*\*/);
     expect(agents!.content).toContain("PROJECT_MEMORY.md");
   });
 
@@ -144,8 +144,10 @@ describe("buildPlannedFiles", () => {
     });
     const { files } = await buildPlannedFiles(answers);
     const agents = files.find((f) => f.path === "AGENTS.md");
-    expect(agents?.content).toMatch(/Forge-installed skills & packs/);
-    expect(agents?.content).toMatch(/forge-tdd/);
+    expect(agents?.content).toMatch(/## Optional skills & packs/);
+    expect(agents?.content).toMatch(/TDD/);
+    expect(agents?.content).toMatch(/Systematic debugging/);
+    expect(agents?.content).not.toMatch(/forge-tdd/);
     const paths = new Set(files.map((f) => f.path));
     expect(paths.has(".claude/skills/forge-tdd/SKILL.md")).toBe(true);
     expect(paths.has(".claude/skills/forge-tdd/workflow.md")).toBe(true);
@@ -167,7 +169,7 @@ describe("buildPlannedFiles", () => {
     const gemini = files.find((f) => f.path === "GEMINI.md");
     expect(gemini).toBeDefined();
     expect(gemini!.content).toContain("@AGENTS.md");
-    expect(gemini!.content).toContain("Forge-installed skills & packs");
+    expect(gemini!.content).toContain("Optional skills & packs");
     expect(gemini!.content).toContain("/skills list");
     expect(gemini!.content).toMatch(/forge-<id>|forge-tdd/);
   });

@@ -126,7 +126,7 @@ export async function buildAssemblePromptMarkdown(
   const blueprint = await buildBlueprintDocument(answers, rootAbs);
   const tpl = await readTpl("core/templates/FORGE-ASSEMBLE-PROMPT.md.tpl");
   const agentsMdAbs = path.join(rootAbs, "AGENTS.md");
-  const installBundlesSection = buildForgeInstallBundlesSection(answers);
+  const installBundlesSection = buildForgeInstallBundlesSection(answers, "assembly_prompt");
   const markdown = applyTemplate(tpl, {
     PROJECT_NAME: answers.project_name,
     PROJECT_ROOT_ABS: rootAbs,
@@ -314,7 +314,7 @@ export async function runAssemble(opts: AssembleRunOptions): Promise<number> {
       }
       if (agentsMdStillCanonicalScaffold(agentsText)) {
         console.error(
-          `[forge-vibe assemble] ${invokerDisplayName(picked)} exited 0, but this file still looks like the forge scaffold (Canonical scaffold section or overview placeholder): ${agentsAbs}`,
+          `[forge-vibe assemble] ${invokerDisplayName(picked)} exited 0, but this file still looks like the forge scaffold (installer banner or overview placeholder): ${agentsAbs}`,
         );
         console.error(
           "[forge-vibe assemble] If you edited a different AGENTS.md (e.g. monorepo root vs package), re-run with --project-root pointing at the same directory you are verifying.",

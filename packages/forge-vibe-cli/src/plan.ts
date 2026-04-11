@@ -97,7 +97,7 @@ function varsFor(a: InstallAnswers): Record<string, string> {
     a.include_ui_workflow_pack ||
     a.include_memory_enhanced ||
     a.allow_hooks
-      ? `\n- **Forge-installed bundles:** Follow root **AGENTS.md**, section **Forge-installed skills & packs**, for selected **optional skills** (\`${a.optional_skills.map((id) => forgeSkillInstallDir(id)).join("`, `") || "(none)"}\`), **UI workflow pack**, **PROJECT_MEMORY.md**, and **Claude hooks** as applicable — each \`forge-*\` folder is \`SKILL.md\` + \`workflow.md\` per **docs/FORGE-COMPATIBILITY-MATRIX.md**.\n`
+      ? `\n- **Optional skills & packs:** Root **AGENTS.md** lists **when to use** each selected bundle (**Optional skills & packs**). On-disk skill folders: \`${a.optional_skills.map((id) => forgeSkillInstallDir(id)).join("`, `") || "(none)"}\` (\`SKILL.md\` + \`workflow.md\` per **docs/FORGE-COMPATIBILITY-MATRIX.md**); also **UI workflow pack**, **PROJECT_MEMORY.md**, and **Claude hooks** when enabled.\n`
       : "";
   return {
     PROJECT_NAME: a.project_name,

@@ -260,7 +260,7 @@ ${hooksBlock}
 export function buildGeminiMd(a: InstallAnswers, v: CanonicalVars): string {
   const skillPointer =
     a.optional_skills.length > 0
-      ? `\n- **Optional skills:** Listed in **AGENTS.md** (**Forge-installed skills & packs**). On Gemini, bundles live under **\`.gemini/skills/forge-<id>/\`** — use **\`/skills list\`** / **\`/skills reload\`** and **\`@\` imports** as needed ([GEMINI.md / context](https://google-gemini.github.io/gemini-cli/docs/cli/gemini-md.html)).`
+      ? `\n- **Optional skills:** Summarized in **AGENTS.md** (**Optional skills & packs**). Bundles on disk: **\`.gemini/skills/forge-<id>/\`** — use **\`/skills list\`** / **\`/skills reload\`** and **\`@\` imports** as needed ([GEMINI.md / context](https://google-gemini.github.io/gemini-cli/docs/cli/gemini-md.html)).`
       : "";
 
   return `# GEMINI — ${v.PROJECT_NAME}

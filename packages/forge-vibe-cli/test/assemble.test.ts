@@ -91,7 +91,7 @@ describe("runAssemble integration-ish", () => {
     await fs.writeFile(path.join(tmp, "docs/FORGE-INSTALL-PROFILE.json"), buildInstallProfileJson(answers), "utf8");
     await fs.writeFile(
       path.join(tmp, "AGENTS.md"),
-      "### Canonical scaffold (forge install)\n\nplaceholder\n",
+      "### Canonical scaffold (forge install)\n\nUntil you run assemble, this file is the **structure template** from the installer.\n",
       "utf8",
     );
 
