@@ -17,7 +17,7 @@ export async function promptDomainRequirements(opts?: {
   const out: Partial<Record<DomainId, string>> = {};
   for (const row of DOMAIN_TUI) {
     const raw = await text({
-      message: `${row.label}\n${row.hint}\n\nOptional: paste file paths, globs, or short notes for this domain. All eight domains stay in AGENTS.md — Enter continues with no extra notes here.`,
+      message: `${row.label}\n${row.hint}\n\nOptional: paste file paths, globs, or short notes to specify instructions for this domain.`,
       placeholder: "Paths or notes (optional)",
       input: stdin,
       output: stdout,

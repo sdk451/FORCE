@@ -70,6 +70,8 @@ Other commands:
       GitHub Copilot CLI (copilot), Gemini, Codex. If none match or --no-invoke, prints a copy-paste IDE chat block on stdout (stderr when
       launched from the post-install prompt) for Cline, Kimi, VS Code chat, etc.
       Requires network/auth for the chosen vendor CLI.
+      Temp workspace: OS temp dir (e.g. %TEMP% on Windows, /tmp on macOS/Linux) + folder
+      forge-vibe-assemble-<random>; stderr prints the full path as "Assembly workspace (WIP):".
   check [--project-root <dir>] [--answers <file>]
   resolve-defaults [--answers <file>]  Merge partial answers with defaults (stdout JSON)
 
@@ -210,8 +212,7 @@ async function promptInteractive(projectRoot: string): Promise<InstallAnswers> {
 
   log.message(
     "Step 2 — Eight foundations (portable AGENTS.md)\n" +
-      "All eight instruction domains (Foundation → Orchestration) are always included. " +
-      "Next: optional extra context per domain only — Enter leaves that domain without added notes.",
+      "All eight domains are always included. At each prompt: optional paste file paths, globs, or short notes to specify instructions for that domain.",
   );
 
   const domains: DomainMap = { ...defaultDomains };
