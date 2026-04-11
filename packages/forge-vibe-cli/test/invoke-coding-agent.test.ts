@@ -14,6 +14,7 @@ describe("buildAssemblerOneShotPrompt", () => {
     expect(text).toMatch(/write\/edit files|Primary deliverable/i);
     expect(text).toContain(path.join(root, ASSEMBLY_DONE_MARKER_BASENAME));
     expect(text).toMatch(/CRITICAL|exits 1/i);
+    expect(text).toMatch(/BMAD|Phase P3|P0/i);
   });
 
   it("reminds to align CLAUDE.md when claude_code target is enabled", () => {

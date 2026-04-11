@@ -4,7 +4,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { ASSEMBLY_PROMPT_BASENAME } from "../src/assembly-constants.js";
+import { ASSEMBLY_PROMPT_BASENAME, ASSEMBLY_REPO_STAGING_DIRNAME } from "../src/assembly-constants.js";
 import { buildAssemblePromptMarkdown, runAssemble } from "../src/assemble.js";
 import { canonicalAgentsMdTemplate } from "../src/plan.js";
 import * as invokeCodingAgent from "../src/invoke-coding-agent.js";
@@ -36,6 +36,9 @@ describe("buildAssemblePromptMarkdown", () => {
     expect(markdown).toContain("FORGE-INSTALL-PROFILE");
     expect(markdown).toContain("FORGE-AGENTS-ELEMENT-MENU");
     expect(markdown).toContain("15–20");
+    expect(markdown).toContain(
+      path.join(path.resolve(tmp), ASSEMBLY_REPO_STAGING_DIRNAME, ASSEMBLY_PROMPT_BASENAME),
+    );
   });
 });
 
@@ -72,9 +75,13 @@ describe("runAssemble integration-ish", () => {
     expect(content).toContain("What you are editing");
     expect(content).toContain("forge canonical scaffold");
     expect(content).toContain("FORGE-AGENTS-ELEMENT-MENU");
+    expect(content).toMatch(/Phase P3|Parent process gates/i);
     await expect(fs.stat(path.join(tmp, "docs", ASSEMBLY_PROMPT_BASENAME))).rejects.toMatchObject({
       code: "ENOENT",
     });
+    const stagingPrompt = path.join(tmp, ASSEMBLY_REPO_STAGING_DIRNAME, ASSEMBLY_PROMPT_BASENAME);
+    await expect(fs.readFile(stagingPrompt, "utf8")).resolves.toContain("prompt-body");
+    await fs.rm(path.join(tmp, ASSEMBLY_REPO_STAGING_DIRNAME), { recursive: true, force: true });
   });
 
   it("returns 1 and keeps workspace when invoker exits 0 but AGENTS.md is still scaffold", async () => {
@@ -108,6 +115,9 @@ describe("runAssemble integration-ish", () => {
       expect(code).toBe(1);
       expect(pickSpy).toHaveBeenCalled();
       expect(spawnSpy).toHaveBeenCalled();
+      const invokerPromptArg = spawnSpy.mock.calls[0]![2] as string;
+      expect(invokerPromptArg).toContain(ASSEMBLY_REPO_STAGING_DIRNAME);
+      expect(invokerPromptArg).toContain(ASSEMBLY_PROMPT_BASENAME);
       const outText = stdoutChunks.join("");
       const m = outText.match(/Temporary assembly workspace[^\r\n]*\r?\n\s+(\S[^\r\n]*)/);
       expect(m).toBeTruthy();
@@ -121,6 +131,9 @@ describe("runAssemble integration-ish", () => {
       if (assemblyWorkDir) {
         await fs.rm(assemblyWorkDir, { recursive: true, force: true }).catch(() => undefined);
       }
+      await fs.rm(path.join(tmp, ASSEMBLY_REPO_STAGING_DIRNAME), { recursive: true, force: true }).catch(
+        () => undefined,
+      );
     }
   });
 

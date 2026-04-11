@@ -60,7 +60,7 @@ export const defaultAnswers: InstallAnswers = {
     github_copilot: false,
     kimi_code: false,
   },
-  include_ui_workflow_pack: false,
+  include_ui_workflow_pack: true,
   include_memory_enhanced: true,
   allow_hooks: false,
 };

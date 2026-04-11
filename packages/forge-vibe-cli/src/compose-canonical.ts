@@ -177,21 +177,11 @@ function assembleDomainChunk(domain: DomainId, a: InstallAnswers, v: CanonicalVa
   return `## ${DOMAIN_H2_TITLE[domain]}\n\n${chunks.join("\n\n")}`;
 }
 
-const agentsPreamble = (v: CanonicalVars) => `# AGENTS — ${v.PROJECT_NAME}
-
-Portable agent context ([agents.md](https://agents.md/) convention). **Closest file wins** in nested repos; explicit user/chat overrides beat files.
-
-### Precedence
-
-Root **AGENTS.md** is the cross-tool interchange; pair with **CLAUDE.md** / **GEMINI.md** when those hosts are in use.
+const agentsPreamble = (_v: CanonicalVars) => `# AGENTS.md — coding instructions
 
 ### Canonical scaffold (forge install)
 
-Until you run **\`forge-vibe assemble\`**, this file is the **structure template** from the installer: section headings and **placeholder** guidance (e.g. “describe in one paragraph”, commented sample commands). **Replace** that boilerplate with **repository-specific** facts using the **assembly prompt** (forge writes it under a **temporary folder** — see assemble stderr / IDE paste for the path), plus **\`docs/FORGE-INSTALL-PROFILE.json\`**, **\`docs/FORGE-AGENTS-ELEMENT-MENU.md\`** (element-type shortlist from pack **\`agents.md.tpl\`**), optional **\`CODING_AGENT_INSTRUCTION_ELEMENTS.md\`**, and **\`docs/FORGE-AGENTIC-ASSEMBLY.md\`**. Do not treat placeholder text as the team’s final policy.
-
-### Design principles (forge)
-
-Keep files **short** (aim **150–300** lines of instruction for best follow quality); **verify** don’t just describe; **reference** example files instead of pasting them; use **hooks** for must-always enforcement and markdown for guidance. Portable body below is grouped into **eight domains** aligned with **CODING_AGENT_INSTRUCTION_ELEMENTS.md** (Foundation → Orchestration). *Also see:* \`canonical-agents-md-research-2026-04-03.md\` (planning artifacts).`;
+Until you run **\`forge-vibe assemble\`**, this file is the **structure template** from the installer: section headings and **placeholder** guidance (e.g. "describe in one paragraph", commented sample commands). **Replace** that boilerplate with **repository-specific** facts using the **assembly prompt** (forge writes it under a **temporary folder** — see assemble stderr / IDE paste for the path), plus **\`docs/FORGE-INSTALL-PROFILE.json\`**, **\`docs/FORGE-AGENTS-ELEMENT-MENU.md\`** (element-type shortlist from pack **\`agents.md.tpl\`**), optional **\`CODING_AGENT_INSTRUCTION_ELEMENTS.md\`**, and **\`docs/FORGE-AGENTIC-ASSEMBLY.md\`**. Do not treat placeholder text as the team's final policy.`;
 
 /** Portable sections shared by AGENTS.md, Copilot instructions, and (via @import) GEMINI/CLAUDE. */
 export function buildPortableMarkdownSections(a: InstallAnswers, v: CanonicalVars): string {
@@ -332,3 +322,4 @@ Durable repo knowledge (FR-MEM pattern). **Decisions vs scratch** — move stabl
   if (!a.context_advanced.memory_handoff) return base + "\n";
   return `${base}\n${sectionMemoryHandoff(v)}\n`;
 }
+

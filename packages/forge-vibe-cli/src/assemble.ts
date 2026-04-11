@@ -7,7 +7,11 @@ import { applyTemplate } from "./template.js";
 import { packsDir } from "./pack-root.js";
 import type { InstallAnswers } from "./types.js";
 import { activeAdapterIds } from "./types.js";
-import { ASSEMBLY_DONE_MARKER_BASENAME, ASSEMBLY_PROMPT_BASENAME } from "./assembly-constants.js";
+import {
+  ASSEMBLY_DONE_MARKER_BASENAME,
+  ASSEMBLY_PROMPT_BASENAME,
+  ASSEMBLY_REPO_STAGING_DIRNAME,
+} from "./assembly-constants.js";
 import { buildIdeAssemblyChatPaste } from "./ide-assembly-paste.js";
 import {
   invokerBinary,
@@ -24,7 +28,11 @@ import { buildForgeInstallBundlesSection } from "./forge-install-bundles-md.js";
 import { canonicalAgentsMdTemplate } from "./plan.js";
 import { suggestMonorepoRootIfNestedPackage } from "./project-root-hint.js";
 
-export { ASSEMBLY_DONE_MARKER_BASENAME, ASSEMBLY_PROMPT_BASENAME } from "./assembly-constants.js";
+export {
+  ASSEMBLY_DONE_MARKER_BASENAME,
+  ASSEMBLY_PROMPT_BASENAME,
+  ASSEMBLY_REPO_STAGING_DIRNAME,
+} from "./assembly-constants.js";
 
 async function readTpl(rel: string): Promise<string> {
   return fs.readFile(path.join(packsDir(), rel), "utf8");
@@ -63,8 +71,8 @@ export interface AssemblyWorkspacePaths {
   promptAbs: string;
 }
 
-/** Copy forge docs from the repo into the assembly workspace for IDE/offline convenience. */
-async function populateAssemblyWorkspace(repoRoot: string, workDirAbs: string): Promise<void> {
+/** Copy forge docs from the repo into a directory (temp workspace or in-repo staging). */
+async function populateAssemblyWorkspace(repoRoot: string, destDirAbs: string): Promise<void> {
   const copies: [string, string][] = [
     ["docs/FORGE-INSTALL-PROFILE.json", "FORGE-INSTALL-PROFILE.json"],
     ["docs/FORGE-AGENTS-ELEMENT-MENU.md", "FORGE-AGENTS-ELEMENT-MENU.md"],
@@ -72,7 +80,7 @@ async function populateAssemblyWorkspace(repoRoot: string, workDirAbs: string): 
   ];
   for (const [rel, destName] of copies) {
     const src = path.join(repoRoot, rel);
-    const dest = path.join(workDirAbs, destName);
+    const dest = path.join(destDirAbs, destName);
     try {
       await fs.copyFile(src, dest);
     } catch {
@@ -80,6 +88,27 @@ async function populateAssemblyWorkspace(repoRoot: string, workDirAbs: string): 
         throw new Error(`Missing required file: ${src}`);
       }
     }
+  }
+}
+
+/**
+ * Mirror prompt + doc copies under the project root so sandboxed CLIs (e.g. Cursor) can read them.
+ * @returns Absolute path to `FORGE-ASSEMBLE-PROMPT.md` under the staging dir.
+ */
+async function writeRepoAssemblyStaging(repoRoot: string, markdown: string): Promise<string> {
+  const dir = path.join(repoRoot, ASSEMBLY_REPO_STAGING_DIRNAME);
+  await fs.mkdir(dir, { recursive: true });
+  const promptInRepo = path.join(dir, ASSEMBLY_PROMPT_BASENAME);
+  await fs.writeFile(promptInRepo, markdown, "utf8");
+  await populateAssemblyWorkspace(repoRoot, dir);
+  return promptInRepo;
+}
+
+async function removeRepoAssemblyStaging(repoRoot: string): Promise<void> {
+  try {
+    await fs.rm(path.join(repoRoot, ASSEMBLY_REPO_STAGING_DIRNAME), { recursive: true, force: true });
+  } catch {
+    /* ignore */
   }
 }
 
@@ -115,8 +144,9 @@ export async function buildAssemblePromptMarkdown(
     elementsPresent = false;
   }
 
+  const repoStagingAbs = path.join(rootAbs, ASSEMBLY_REPO_STAGING_DIRNAME);
   const elementsNote = [
-    `Copies of **FORGE-INSTALL-PROFILE.json** / **FORGE-AGENTS-ELEMENT-MENU.md** (when installed) sit in **${assembly.workDirAbs}**; authoritative sources remain under **docs/** in the repo.`,
+    `Copies of **FORGE-INSTALL-PROFILE.json** / **FORGE-AGENTS-ELEMENT-MENU.md** (when installed) sit in **${assembly.workDirAbs}** and are **mirrored under \`${repoStagingAbs}\`** for sandboxed CLIs; authoritative sources remain under **docs/** in the repo.`,
     "**`docs/FORGE-AGENTS-ELEMENT-MENU.md`** — shortlist **~15–20** element types from it (or the copy in this workspace); final **AGENTS.md** must **not** mirror What/Why/Example pedagogy.",
     elementsPresent
       ? "**`CODING_AGENT_INSTRUCTION_ELEMENTS.md`** is at the repository root — optional **60+** catalog for gaps."
@@ -137,6 +167,9 @@ export async function buildAssemblePromptMarkdown(
     AGENTS_MD_ABS: agentsMdAbs,
     ASSEMBLY_WORK_DIR_ABS: assembly.workDirAbs,
     FORGE_ASSEMBLE_PROMPT_ABS: assembly.promptAbs,
+    REPO_ASSEMBLY_STAGING_ABS: repoStagingAbs,
+    REPO_ASSEMBLY_PROMPT_ABS: path.join(repoStagingAbs, ASSEMBLY_PROMPT_BASENAME),
+    REPO_STAGING_DIRNAME: ASSEMBLY_REPO_STAGING_DIRNAME,
     ELEMENTS_NOTE: elementsNote,
     TARGETS_MD: formatTargetsMarkdown(answers),
     AGENTIC_PROMPT: blueprint.agentic_prompt,
@@ -167,11 +200,13 @@ function writeIdeAssemblyPaste(
   assemblyWorkDirAbs: string,
   dest: "stdout" | "stderr",
   suggestedMonorepoRootAbs?: string,
+  repoStagingPromptAbs?: string,
 ): void {
   const text = buildIdeAssemblyChatPaste({
     projectRootAbs,
     assemblyWorkDirAbs,
     ...(suggestedMonorepoRootAbs !== undefined ? { suggestedMonorepoRootAbs } : {}),
+    ...(repoStagingPromptAbs !== undefined ? { repoStagingPromptAbs } : {}),
   });
   if (dest === "stderr") process.stderr.write(text);
   else process.stdout.write(text);
@@ -238,6 +273,9 @@ export async function runAssemble(opts: AssembleRunOptions): Promise<number> {
               "Non–dry-run creates a unique folder under os.tmpdir(); copies profile/menu docs there; removes it after CLI exit 0.",
           },
           would_write_prompt_bytes: Buffer.byteLength(markdown, "utf8"),
+          repo_assembly_staging_dir: path.join(root, ASSEMBLY_REPO_STAGING_DIRNAME),
+          note_repo_mirror:
+            "Non–dry-run also mirrors the prompt + doc copies under this directory inside the project root for sandboxed CLIs.",
         },
         null,
         2,
@@ -256,6 +294,22 @@ export async function runAssemble(opts: AssembleRunOptions): Promise<number> {
     await fs.writeFile(promptAbs, markdown, "utf8");
     await populateAssemblyWorkspace(root, workDirAbs);
     await fs.writeFile(path.join(workDirAbs, "README-ASSEMBLY-WORKSPACE.md"), buildAssemblyReadme(root, workDirAbs), "utf8");
+
+    let invokerPromptAbs = promptAbs;
+    let repoStagingPromptAbs: string | undefined;
+    try {
+      invokerPromptAbs = await writeRepoAssemblyStaging(root, markdown);
+      repoStagingPromptAbs = invokerPromptAbs;
+      console.error(
+        `[forge-vibe assemble] Workspace-local assembly mirror (for sandboxes; optional .gitignore: ${ASSEMBLY_REPO_STAGING_DIRNAME}/): ${invokerPromptAbs}`,
+      );
+    } catch (e) {
+      console.error(
+        `[forge-vibe assemble] Could not mirror assembly prompt under project root (${String(
+          e,
+        )}); invoker references OS-temp path only.`,
+      );
+    }
 
     console.error(`[forge-vibe assemble] Assembly workspace (WIP): ${workDirAbs}`);
     console.error(`[forge-vibe assemble] Forge project root (all edits apply here): ${root}`);
@@ -279,7 +333,7 @@ export async function runAssemble(opts: AssembleRunOptions): Promise<number> {
           "[forge-vibe assemble] Copy the block printed on stdout into your IDE agent chat.",
         );
       }
-      writeIdeAssemblyPaste(root, workDirAbs, pasteDest, suggestedMonorepoRootAbs);
+      writeIdeAssemblyPaste(root, workDirAbs, pasteDest, suggestedMonorepoRootAbs, repoStagingPromptAbs);
       return 0;
     }
 
@@ -304,7 +358,7 @@ export async function runAssemble(opts: AssembleRunOptions): Promise<number> {
           "[forge-vibe assemble] No agent was invoked. Copy the chat block on stdout into your IDE.",
         );
       }
-      writeIdeAssemblyPaste(root, workDirAbs, pasteDest, suggestedMonorepoRootAbs);
+      writeIdeAssemblyPaste(root, workDirAbs, pasteDest, suggestedMonorepoRootAbs, repoStagingPromptAbs);
       return 0;
     }
 
@@ -328,13 +382,13 @@ export async function runAssemble(opts: AssembleRunOptions): Promise<number> {
     console.error(
       `[forge-vibe assemble] Invoking ${invokerDisplayName(picked)} for assembly (cwd=${root})…`,
     );
-    const { status, error } = spawnAssemblerInvoker(picked, root, promptAbs, answers.targets);
+    const { status, error } = spawnAssemblerInvoker(picked, root, invokerPromptAbs, answers.targets);
     if (error) {
       console.error(`[forge-vibe assemble] Failed to start ${invokerDisplayName(picked)}: ${String(error)}`);
       console.error(
         "[forge-vibe assemble] Assembly workspace kept for IDE follow-up. Copy the block below, then delete the folder when done.",
       );
-      writeIdeAssemblyPaste(root, workDirAbs, pasteDest, suggestedMonorepoRootAbs);
+      writeIdeAssemblyPaste(root, workDirAbs, pasteDest, suggestedMonorepoRootAbs, repoStagingPromptAbs);
       return 1;
     }
     if (status === 0) {
@@ -355,14 +409,15 @@ export async function runAssemble(opts: AssembleRunOptions): Promise<number> {
           `[forge-vibe assemble] ${invokerDisplayName(picked)} exited 0, but assembly did not complete: missing **${ASSEMBLY_DONE_MARKER_BASENAME}** at ${root} and ${agentsAbs} is still the install scaffold unchanged this run.`,
         );
         console.error(
-          `[forge-vibe assemble] Create **${path.join(root, ASSEMBLY_DONE_MARKER_BASENAME)}** immediately after saving **AGENTS.md** (see FORGE-ASSEMBLE-PROMPT **Critical** + step 4; the agent CLI one-shot also repeats this path). Rewrite **AGENTS.md** off the install scaffold. Use --project-root if edits went to a different tree.`,
+          `[forge-vibe assemble] Create **${path.join(root, ASSEMBLY_DONE_MARKER_BASENAME)}** immediately after saving **AGENTS.md** (see FORGE-ASSEMBLE-PROMPT **Phase P3** after **P2**; parent gates G1∧G2; the agent CLI one-shot repeats this path). Rewrite **AGENTS.md** off the install scaffold. Use --project-root if edits went to a different tree.`,
         );
         console.error(
           "[forge-vibe assemble] Assembly workspace kept. Use the IDE paste block if needed, then delete the temp folder when done.",
         );
-        writeIdeAssemblyPaste(root, workDirAbs, pasteDest, suggestedMonorepoRootAbs);
+        writeIdeAssemblyPaste(root, workDirAbs, pasteDest, suggestedMonorepoRootAbs, repoStagingPromptAbs);
         return 1;
       }
+      await removeRepoAssemblyStaging(root);
       await removeAssemblyWorkspace(workDirAbs);
       const templateNorm = normalizeAgentsMarkdownForCompare(canonicalAgentsMdTemplate(answers));
       const afterNorm = normalizeAgentsMarkdownForCompare(agentsText);
@@ -384,7 +439,7 @@ export async function runAssemble(opts: AssembleRunOptions): Promise<number> {
     console.error(
       "[forge-vibe assemble] Copy the block below into your IDE to continue, then delete the temp workspace when assembly succeeds.",
     );
-    writeIdeAssemblyPaste(root, workDirAbs, pasteDest, suggestedMonorepoRootAbs);
+    writeIdeAssemblyPaste(root, workDirAbs, pasteDest, suggestedMonorepoRootAbs, repoStagingPromptAbs);
     return status ?? 1;
   } catch (e) {
     try {

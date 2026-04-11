@@ -5,15 +5,9 @@ import { ASSEMBLY_DONE_MARKER_BASENAME } from "./assembly-constants.js";
 import type { InstallAnswers } from "./types.js";
 
 /** Windows: PATH often resolves `claude` → `claude.cmd`; spawn without a shell yields ENOENT. */
-function assemblerSpawnOptions(
-  cwd: string,
-  stdinMode: "inherit" | "ignore" = "inherit",
-): SpawnSyncOptions {
-  const stdio: SpawnSyncOptions["stdio"] =
-    stdinMode === "ignore" ? (["ignore", "inherit", "inherit"] as const) : "inherit";
+function baseSpawnOptions(cwd: string): SpawnSyncOptions {
   return {
     cwd,
-    stdio,
     env: process.env,
     windowsHide: true,
     ...(process.platform === "win32" ? { shell: true } : {}),
@@ -131,11 +125,12 @@ export function buildAssemblerOneShotPrompt(
     "Do not ask the user what to work on or wait for replies. Do not end with a question. Read the prompt file, use your file-edit tools, complete all steps, then finish.",
     `Repository root (your cwd must be): ${root}`,
     `Open and follow every step in this file: ${promptAbs}`,
+    "BMAD-style workflow in that file: execute phases P0→P6 in order. Minimum for a reliable parent exit 0: complete P2 (AGENTS.md saved off scaffold) then P3 (marker). Do not start P5 (host files) until P3 exit criteria pass.",
     `Primary deliverable: rewrite the root AGENTS file on disk: ${agentsAbs}`,
     "Infer concrete facts from this repo (package.json, CI, README, src layout) and from FORGE-INSTALL-PROFILE.json (repo docs/ or copy next to the prompt); replace all scaffold placeholders.",
     "You must write/edit files — especially AGENTS.md — not reply with only a plan or summary.",
     `CRITICAL — parent CLI exit code: immediately after you save ${agentsAbs}, you MUST use your write tool to create this exact file (may be empty): ${markerAbs}`,
-    "If that file is missing when you stop, forge-vibe assemble exits 1 even if you wrote a plan in chat. Create the marker before spending time on CLAUDE.md, Cursor rules, or other hosts — you can align those after the marker exists.",
+    "If that file is missing when you stop, forge-vibe assemble exits 1 when AGENTS.md is still unchanged (see prompt gates G1∧G2). Create the marker before spending time on CLAUDE.md, Cursor rules, or other hosts.",
   ];
   const host = hostAlignmentReminder(targets);
   if (host) lines.push(host);
@@ -153,43 +148,48 @@ export function spawnAssemblerInvoker(
   targets?: InstallAnswers["targets"],
 ): { status: number | null; error?: Error } {
   const body = buildAssemblerOneShotPrompt(projectRoot, promptPath, targets);
+  const base = baseSpawnOptions(projectRoot);
+
   switch (id) {
     case "claude_code": {
-      // --bare + --no-session-persistence reduce interactive/session drift; stdin ignored so -p stays headless (see Claude Code print-mode docs).
+      // Pipe prompt via stdin — avoids Windows cmd.exe mangling special chars (|, &, ∧, parentheses…) in long arg strings.
       const r = spawnSync(
         "claude",
-        [
-          "-p",
-          body,
-          "--permission-mode",
-          "acceptEdits",
-          "--bare",
-          "--no-session-persistence",
-        ],
-        assemblerSpawnOptions(projectRoot, "ignore"),
+        ["-p", "--permission-mode", "acceptEdits", "--no-session-persistence"],
+        { ...base, input: body, stdio: ["pipe", "inherit", "inherit"] },
       );
       return { status: r.status, error: r.error };
     }
     case "cursor": {
-      // Headless agent with file edits: `cursor agent -p "…" --force` (Cursor CLI; beta).
-      const r = spawnSync("cursor", ["agent", "-p", body, "--force"], assemblerSpawnOptions(projectRoot));
+      const r = spawnSync(
+        "cursor",
+        ["agent", "--print", "--yolo"],
+        { ...base, input: body, stdio: ["pipe", "inherit", "inherit"] },
+      );
       return { status: r.status, error: r.error };
     }
     case "github_copilot": {
-      // GitHub Copilot CLI programmatic mode — see GitHub docs: copilot -p, -s, --no-ask-user, permissions.
       const r = spawnSync(
         "copilot",
-        ["-p", body, "-s", "--no-ask-user", "--allow-all"],
-        assemblerSpawnOptions(projectRoot),
+        ["-p", "-s", "--no-ask-user", "--allow-all"],
+        { ...base, input: body, stdio: ["pipe", "inherit", "inherit"] },
       );
       return { status: r.status, error: r.error };
     }
     case "gemini_cli": {
-      const r = spawnSync("gemini", ["-p", body, "--approval-mode", "auto_edit"], assemblerSpawnOptions(projectRoot));
+      const r = spawnSync(
+        "gemini",
+        ["-p", "--approval-mode", "auto_edit"],
+        { ...base, input: body, stdio: ["pipe", "inherit", "inherit"] },
+      );
       return { status: r.status, error: r.error };
     }
     case "openai_codex": {
-      const r = spawnSync("codex", ["exec", "--sandbox", "workspace-write", body], assemblerSpawnOptions(projectRoot));
+      const r = spawnSync(
+        "codex",
+        ["exec", "--sandbox", "workspace-write"],
+        { ...base, input: body, stdio: ["pipe", "inherit", "inherit"] },
+      );
       return { status: r.status, error: r.error };
     }
   }

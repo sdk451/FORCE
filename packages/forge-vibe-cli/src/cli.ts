@@ -279,9 +279,9 @@ async function promptInteractive(projectRoot: string): Promise<InstallAnswers> {
       github_copilot: agentMap.get("github_copilot") ?? false,
       kimi_code: agentMap.get("kimi_code") ?? false,
     },
-    include_ui_workflow_pack: optMap.get("ui_pack") ?? false,
-    include_memory_enhanced: optMap.get("memory") ?? false,
-    allow_hooks: optMap.get("hooks") ?? false,
+    include_ui_workflow_pack: optMap.get("ui_pack") ?? defaultAnswers.include_ui_workflow_pack,
+    include_memory_enhanced: optMap.get("memory") ?? defaultAnswers.include_memory_enhanced,
+    allow_hooks: optMap.get("hooks") ?? defaultAnswers.allow_hooks,
   });
 }
 
@@ -316,7 +316,7 @@ async function maybeOfferAssembleAfterInteractiveWrite(projectRoot: string): Pro
   const runNow = await confirm({
     message:
       "Run `forge-vibe assemble` now? Uses a coding agent CLI on PATH if available; otherwise prints copy-paste text for your IDE (stderr).",
-    initialValue: false,
+    initialValue: true,
   });
 
   if (isCancel(runNow) || !runNow) {

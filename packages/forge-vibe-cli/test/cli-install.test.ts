@@ -4,6 +4,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { ASSEMBLY_PROMPT_BASENAME, ASSEMBLY_REPO_STAGING_DIRNAME } from "../src/assembly-constants.js";
 import { buildInstallProfileJson } from "../src/install-profile.js";
 import { resolveDefaults } from "../src/resolve-defaults.js";
 
@@ -45,6 +46,7 @@ describe("assemble command", () => {
     expect(r.status).toBe(0);
     expect(r.stdout).toMatch(/dry_run/);
     expect(r.stdout).toMatch(/assembly_workspace/);
+    expect(r.stdout).toMatch(/repo_assembly_staging_dir/);
   });
 
   it("writes prompt and prints IDE paste on stdout with --no-invoke", async () => {
@@ -59,6 +61,9 @@ describe("assemble command", () => {
     expect(r.stdout).toMatch(/forge-vibe — copy into your IDE agent chat/);
     expect(r.stdout).toMatch(/FORGE-ASSEMBLE-PROMPT\.md/);
     expect(r.stdout).toMatch(/Temporary assembly workspace/);
+    expect(r.stdout).toMatch(/Primary — assembly prompt inside your workspace/);
+    const stagingPrompt = path.join(tmp, ASSEMBLY_REPO_STAGING_DIRNAME, ASSEMBLY_PROMPT_BASENAME);
+    await expect(fs.readFile(stagingPrompt, "utf8")).resolves.toContain("cli-ni");
     const m = r.stderr.match(/Assembly workspace \(WIP\): (.+)/);
     expect(m).toBeTruthy();
     const workDir = m![1].trim();

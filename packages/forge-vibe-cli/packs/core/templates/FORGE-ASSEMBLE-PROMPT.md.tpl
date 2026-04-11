@@ -2,16 +2,6 @@
 
 > **Security:** When launched via `forge-vibe assemble`, your CLI may use auto-approve / workspace-write modes. Only run in repositories you trust.
 
-## Critical — required for `forge-vibe assemble` to succeed
-
-The **parent process** checks the disk **after** this run. You **fail** the install pipeline if **both** are true: (1) **`forge_vibe_agent_instructions_done.txt`** is missing at **`{{PROJECT_ROOT_ABS}}`**, and (2) **`AGENTS.md`** is still the unchanged forge install scaffold.
-
-1. **Save** **`{{AGENTS_MD_ABS}}`** (rewritten runbook — remove `### Canonical scaffold (forge install)` block, replace placeholders).
-2. **Immediately** create **`{{PROJECT_ROOT_ABS}}/forge_vibe_agent_instructions_done.txt`** (empty file or one line). Do this **before** heavy work on **`CLAUDE.md`**, **`.cursor/`**, or other hosts so the CLI sees progress even if you run out of steps later.
-3. Then align host files per **Steps** below.
-
-The **CLI one-shot message** you received also states the marker path — follow it exactly.
-
 ## Repository (authoritative paths)
 
 - **Forge project root (absolute):** `{{PROJECT_ROOT_ABS}}` — the **emit root** where **`AGENTS.md`**, **`CLAUDE.md`**, **`GEMINI.md`**, and host trees are written. By default the CLI uses **`git rev-parse --show-toplevel`** from cwd (override with **`--project-root`**). This should match the **workspace root** your coding agent opens so session context loads correctly.
@@ -21,6 +11,13 @@ The **CLI one-shot message** you received also states the marker path — follow
 
 {{INSTALL_BUNDLES_SECTION}}
 
+## Workspace-visible mirror (**read this path first** if your CLI sandboxes file access)
+
+- **Path:** `{{REPO_ASSEMBLY_PROMPT_ABS}}` (directory: **`{{REPO_ASSEMBLY_STAGING_ABS}}`** / `{{REPO_STAGING_DIRNAME}}/`)
+- **Contents:** same **`FORGE-ASSEMBLE-PROMPT.md`** bytes as the OS-temp copy, plus the same **`FORGE-INSTALL-PROFILE.json`**, **`FORGE-AGENTS-ELEMENT-MENU.md`**, and **`FORGE-AGENTIC-ASSEMBLY.md`** copies **next to it** under **`{{REPO_ASSEMBLY_STAGING_ABS}}`**.
+- **Why:** Many coding-agent CLIs only allow reading files **inside the git workspace**. They **cannot** open `{{ASSEMBLY_WORK_DIR_ABS}}` under OS temp — they would only see the short `-p` summary and may fail to rewrite **`AGENTS.md`**. The **`forge-vibe`** invoker points at **`{{REPO_ASSEMBLY_PROMPT_ABS}}`** when mirroring succeeds.
+- **Cleanup:** after **`forge-vibe assemble`** exits **0**, this folder is **removed** automatically. If assemble **fails**, delete **`{{REPO_ASSEMBLY_STAGING_ABS}}`** when you are done, or add **`{{REPO_STAGING_DIRNAME}}/`** to **`.gitignore`**.
+
 ## Temporary assembly workspace
 
 - **Path:** `{{ASSEMBLY_WORK_DIR_ABS}}` (under your OS temp directory — **not** committed to git).
@@ -28,9 +25,97 @@ The **CLI one-shot message** you received also states the marker path — follow
 - **Edits:** apply all changes to **`AGENTS.md`** and host instruction files under **`{{PROJECT_ROOT_ABS}}`** only — not inside the temp folder (except updating this prompt if you must, but prefer editing the repo).
 - **Cleanup:** when `forge-vibe assemble` runs a CLI and it exits **0**, forge **deletes** `{{ASSEMBLY_WORK_DIR_ABS}}` automatically. If you used IDE paste, `--no-invoke`, no CLI on PATH, or the CLI failed, **delete `{{ASSEMBLY_WORK_DIR_ABS}}` yourself** after assembly succeeds (recursive delete).
 
-## If AGENTS.md still looks generic after this run
+## Parent process gates (`forge-vibe assemble` after the agent CLI exits 0)
 
-The **forge-vibe** CLI **never** auto-rewrites `AGENTS.md` after install — it only writes a **scaffold**. **Tailoring happens only when you execute this document and save edits** to `{{AGENTS_MD_ABS}}`. If the CLI spawn failed, you used `--no-invoke`, or the session stopped after a plan-only reply, the scaffold will be unchanged.
+The **parent** re-reads disk. It returns **exit 1** only when **all** of the following are true:
+
+| # | Gate | Fails when |
+|---|------|------------|
+| G1 | **AGENTS.md unchanged this run** | On-disk **`{{AGENTS_MD_ABS}}`** is still the **exact** forge install template for this profile **and** its normalized text is **identical** to what it was **immediately before** this agent run. |
+| G2 | **No completion marker** | **`{{PROJECT_ROOT_ABS}}/forge_vibe_agent_instructions_done.txt`** does not exist. |
+
+**Pass (parent exit 0):** **NOT (G1 AND G2)** — i.e. you may pass with **only** a new marker if **AGENTS.md** already left the install template in a prior run (**idempotent** re-assemble), or with **only** a real **AGENTS.md** rewrite if the marker step is skipped but the file **actually** changed off the template. **Preferred and most reliable:** satisfy **both** a saved non-scaffold **AGENTS.md** **and** the marker (**Phase P2 + P3** below).
+
+**CLI one-shot message:** repeats the marker path — use that absolute path verbatim.
+
+---
+
+## Assembly workflow — BMAD-style (phases & exit criteria)
+
+**Rule:** Run phases **in numeric order**. **Do not** enter **P5** until **P3 exit criteria** are **all** satisfied (marker on disk). **Do not** end the session in a “plan only” message — disk artifacts are the deliverable.
+
+### Phase P0 — Preconditions
+
+| | |
+|--|--|
+| **Objective** | Confirm you are editing the **forge project root**, not the temp folder or the wrong monorepo package. |
+| **Inputs** | Paths above; **prefer** opening **`{{REPO_ASSEMBLY_PROMPT_ABS}}`** (workspace mirror). Fallback: **`{{FORGE_ASSEMBLE_PROMPT_ABS}}`** under OS temp + `README-ASSEMBLY-WORKSPACE.md`. |
+| **Actions** | 1. Treat **shell cwd** as **`{{PROJECT_ROOT_ABS}}`**. 2. Read this prompt from **`{{REPO_ASSEMBLY_PROMPT_ABS}}`** if accessible; otherwise from **`{{FORGE_ASSEMBLE_PROMPT_ABS}}`**. 3. Note **`{{AGENTS_MD_ABS}}`** and **`{{PROJECT_ROOT_ABS}}/forge_vibe_agent_instructions_done.txt`** for later phases. |
+| **Exit criteria (all required)** | [ ] You will apply **every file write** under **`{{PROJECT_ROOT_ABS}}`**, not under `{{ASSEMBLY_WORK_DIR_ABS}}` (except optional self-edit of this prompt). [ ] You can quote back the **absolute** path to **`AGENTS.md`** and the **marker** file. |
+| **If blocked** | Stop; do not guess the root. User must re-run **`forge-vibe assemble --project-root <correct-dir>`**. |
+
+### Phase P1 — Discovery & shortlist
+
+| | |
+|--|--|
+| **Objective** | Load constraints and pick **~15–20** element **themes** (not 60+). |
+| **Inputs** | `docs/FORGE-INSTALL-PROFILE.json`, `docs/FORGE-AGENTS-ELEMENT-MENU.md` (or copy in temp workspace), **`{{AGENTS_MD_ABS}}`**, `docs/FORGE-AGENTIC-ASSEMBLY.md`. |
+| **Actions** | 1. Read inputs. 2. {{ELEMENTS_STEP}} 3. Map themes to enabled **domains** / **`domain_requirements`**. 4. Infer facts from **`package.json`** / **`pyproject.toml`** / lockfiles / **`.github/workflows/`** / **README** / tree. |
+| **Exit criteria (all required)** | [ ] You can name the **stack** and **primary verify commands** you will put in **AGENTS.md** (even roughly). [ ] Shortlist is **bounded** (~15–20 themes), not a dump of the whole menu. |
+| **If blocked** | Read more of the repo; still proceed to **P2** with best-effort facts rather than stalling in chat. |
+
+### Phase P2 — `AGENTS.md` rewrite (blocking)
+
+| | |
+|--|--|
+| **Objective** | Replace the install **scaffold** with a **dense, project-specific** runbook. |
+| **Inputs** | Current **`{{AGENTS_MD_ABS}}`**, profile, menu shortlist, repo facts. |
+| **Actions** | 1. **Rewrite** **`{{AGENTS_MD_ABS}}`**: keep the **eight-domain** headings the installer emitted; under each, only bullets and short sentences with **real** commands, paths, tool names, and Always / Ask / Never boundaries. 2. **Remove entirely** the block under **`### Canonical scaffold (forge install)`** (installer/assembly meta). 3. **Strip** pedagogy: no **What:** / **Why:** from the menu, no generic tutorials, no “describe in one paragraph…” placeholders. 4. **Save** with your editor/write tool. 5. **Re-read** the file from disk to confirm persistence. |
+| **Exit criteria (all required)** | [ ] File **`{{AGENTS_MD_ABS}}`** exists and is non-empty. [ ] **`### Canonical scaffold (forge install)`** paragraph is **gone** (tuned runbook does not explain that it came from the installer). [ ] No obvious install placeholders remain (e.g. “replace with…”, “### Canonical scaffold” as the main content). |
+| **If blocked** | Save the **best partial** rewrite anyway, then still complete **P3** so the pipeline can succeed; you can refine in a follow-up. |
+
+### Phase P3 — Completion marker (blocking gate)
+
+| | |
+|--|--|
+| **Objective** | Create the **only** file the parent uses as a cheap “agent acted” signal. |
+| **Inputs** | Absolute marker path: **`{{PROJECT_ROOT_ABS}}/forge_vibe_agent_instructions_done.txt`**. |
+| **Actions** | 1. Use your **write** tool to create that file (empty or one ISO timestamp line). 2. Path must be **under** **`{{PROJECT_ROOT_ABS}}`** (same folder as **`AGENTS.md`**), **never** only under `{{ASSEMBLY_WORK_DIR_ABS}}`. |
+| **Exit criteria (all required)** | [ ] File exists at the exact path above. [ ] You did **P3** **after** saving **P2** (or after a deliberate partial **P2**). |
+| **If blocked** | Retry write; check cwd and path. **Without this file, parent exit is often 1** when **G1** also fires. |
+
+### Phase P4 — Optional skills & packs polish
+
+| | |
+|--|--|
+| **Objective** | Align **Optional skills & packs** lines in **AGENTS.md** with the profile. |
+| **Actions** | If **`optional_skills`** or UI/memory/hooks flags apply: ensure **display name**, **`forge-<skill-id>`**, and **when to use** appear in **`{{AGENTS_MD_ABS}}`**. Do **not** paste this assembly prompt or **`SKILL.md`** paths into **AGENTS.md**; per-host detail belongs in **CLAUDE.md** / rules / **GEMINI.md** (see matrix). |
+| **Exit criteria** | [ ] N/A if profile has none. [ ] If profile has entries, each line in **AGENTS.md** has name + id + trigger. |
+
+### Phase P5 — Host alignment
+
+| | |
+|--|--|
+| **Objective** | Mirror facts into host-specific files **after** **P3** succeeded. |
+| **Inputs** | `docs/FORGE-COMPATIBILITY-MATRIX.md`, `targets` from profile. |
+| **Actions** | For each **enabled** target, update the matching paths (e.g. **`CLAUDE.md`** / **`.claude/rules/*.md`**, **`.cursor/rules/*.mdc`**, **`GEMINI.md`**, **`docs/FORGE-CODEX.md`**, **`.github/copilot-instructions.md`**, **`.clinerules/`**, **`docs/FORGE-KIMI.md`**). |
+| **Exit criteria** | [ ] Best-effort alignment done **or** explicitly deferred — **P3** must **not** be skipped for this. |
+
+### Phase P6 — Closeout
+
+| | |
+|--|--|
+| **Objective** | Leave repo consistent; do not delete forge metadata. |
+| **Actions** | 1. Do **not** remove `docs/FORGE-INSTALL-PROFILE.json`, `docs/FORGE-AGENTS-ELEMENT-MENU.md`, or other forge metadata unless the user asked. 2. If temp workspace still exists and **parent** will not auto-remove it, user deletes `{{ASSEMBLY_WORK_DIR_ABS}}` manually (see README there). |
+| **Exit criteria** | [ ] **P3** file still present. [ ] **`{{AGENTS_MD_ABS}}`** still reflects **P2** (and **P4** if applicable). |
+
+**Escalation / stop early:** **P2 (minimal) + P3** beats perfect **P5** with **no marker**. Chat-only completion is a **failure** for **G1 ∧ G2**.
+
+---
+
+## If `AGENTS.md` still looks generic after this run
+
+The **forge-vibe** CLI **never** auto-rewrites `AGENTS.md` after install — it only writes a **scaffold**. **Tailoring happens only when you execute this workflow and save edits** to `{{AGENTS_MD_ABS}}`. If the CLI spawn failed, you used `--no-invoke`, or the session stopped after a plan-only reply, the scaffold will be unchanged.
 
 ## What you are editing
 
@@ -54,21 +139,3 @@ The file **`{{AGENTS_MD_ABS}}`** (also shown as root **`AGENTS.md`**) is the **f
 ## Core instruction (from forge blueprint)
 
 {{AGENTIC_PROMPT}}
-
-## Steps
-
-1. Confirm you are operating in **`{{PROJECT_ROOT_ABS}}`** and that **`{{AGENTS_MD_ABS}}`** is the `AGENTS.md` you will overwrite. Read `docs/FORGE-INSTALL-PROFILE.json`, `docs/FORGE-AGENTS-ELEMENT-MENU.md`, **`{{AGENTS_MD_ABS}}`**, and `docs/FORGE-AGENTIC-ASSEMBLY.md`.
-2. {{ELEMENTS_STEP}}
-3. **Rewrite** **`{{AGENTS_MD_ABS}}`** (root `AGENTS.md`) into a **dense** spec: keep the **eight-domain** headings the installer emitted; under each, only bullets and short sentences with **real** commands, paths, tool names, and Always / Ask / Never boundaries. **Delete** scaffold filler and any duplicated “why this matters” text. **Remove entirely** the pre-assemble block under **`### Canonical scaffold (forge install)`** (the paragraph that says this file is a **structure template** from the installer) — tuned **`AGENTS.md`** must not retain installer/assembly instructions. **Save** the file — a verbal summary is not sufficient.
-4. **Completion marker (do this next, before host files):** create **`{{PROJECT_ROOT_ABS}}/forge_vibe_agent_instructions_done.txt`**. Use your **write** tool; path must be under **`{{PROJECT_ROOT_ABS}}`**, not under `{{ASSEMBLY_WORK_DIR_ABS}}`. File may be empty or one ISO timestamp line. This unlocks **`forge-vibe assemble` exit 0** together with a rewritten **AGENTS.md**.
-5. **Optional skills & packs:** if the profile lists **`optional_skills`** or UI/memory/hooks flags, keep end-user lines in **`AGENTS.md`**: **display name**, the bundled folder id in backticks (**`forge-<skill-id>`**), and **when to use it** (repo-specific triggers). **Do not** paste the **assembly reference** block from this prompt into **`AGENTS.md`**. Per-host paths, raw **`SKILL.md`** paths, and **docs/FORGE-COMPATIBILITY-MATRIX.md** prose belong in **CLAUDE.md** / **GEMINI.md** / rules — not in the portable runbook. (If you already saved **AGENTS.md** in step 3, edit again if this section was missing.)
-6. **Host alignment:** for each **enabled** host in `targets`, update the matching instruction files on disk (see `docs/FORGE-COMPATIBILITY-MATRIX.md`). Examples: **`CLAUDE.md`** + **`.claude/rules/*.md`** when `claude_code` is true; **`.cursor/rules/*.mdc`** when `cursor` is true; **`GEMINI.md`**, **`docs/FORGE-CODEX.md`**, **`.github/copilot-instructions.md`**, **`.clinerules/`**, **`docs/FORGE-KIMI.md`** for their targets. Do this **after** the marker file exists.
-7. Do **not** remove `docs/FORGE-INSTALL-PROFILE.json`, `docs/FORGE-AGENTS-ELEMENT-MENU.md`, or other forge metadata unless the user explicitly asked.
-
-## Definition of done
-
-- **`forge_vibe_agent_instructions_done.txt`** exists at **`{{PROJECT_ROOT_ABS}}`**.
-- **`{{AGENTS_MD_ABS}}`** is a project runbook (no scaffold banner paragraph, no “describe in one paragraph…” placeholder, real commands). If optional skills/packs apply, each line has **name**, **`forge-<id>`**, **when to use**.
-
-If you must stop early: **marker + minimally fixed AGENTS.md** beats a perfect **CLAUDE.md** with no marker.
-
