@@ -86,7 +86,7 @@ describe("runAssemble integration-ish", () => {
 
   it("returns 1 and keeps workspace when invoker exits 0 but AGENTS.md is still scaffold", async () => {
     const pickSpy = vi.spyOn(invokeCodingAgent, "pickAssemblerInvoker").mockReturnValue("claude_code");
-    const spawnSpy = vi.spyOn(invokeCodingAgent, "spawnAssemblerInvoker").mockReturnValue({ status: 0 });
+    const spawnSpy = vi.spyOn(invokeCodingAgent, "spawnAssemblerInvoker").mockResolvedValue({ status: 0 });
     const stdoutChunks: string[] = [];
     const stdoutSpy = vi.spyOn(process.stdout, "write").mockImplementation((chunk: string | Uint8Array) => {
       stdoutChunks.push(typeof chunk === "string" ? chunk : Buffer.from(chunk).toString("utf8"));
@@ -139,7 +139,7 @@ describe("runAssemble integration-ish", () => {
 
   it("returns 0 when invoker exits 0 and AGENTS.md was already non-scaffold and unchanged (idempotent)", async () => {
     const pickSpy = vi.spyOn(invokeCodingAgent, "pickAssemblerInvoker").mockReturnValue("claude_code");
-    const spawnSpy = vi.spyOn(invokeCodingAgent, "spawnAssemblerInvoker").mockReturnValue({ status: 0 });
+    const spawnSpy = vi.spyOn(invokeCodingAgent, "spawnAssemblerInvoker").mockResolvedValue({ status: 0 });
 
     const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "forge-assemble-tuned-"));
     const answers = resolveDefaults({ project_name: "tuned-check", targets: { cursor: true } });

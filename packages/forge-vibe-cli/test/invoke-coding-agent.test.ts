@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import path from "node:path";
-import { buildAssemblerOneShotPrompt } from "../src/invoke-coding-agent.js";
+import { buildAssemblerOneShotPrompt, invokerAssemblingLabel } from "../src/invoke-coding-agent.js";
 import { ASSEMBLY_DONE_MARKER_BASENAME } from "../src/assembly-constants.js";
 
 describe("buildAssemblerOneShotPrompt", () => {
@@ -31,5 +31,15 @@ describe("buildAssemblerOneShotPrompt", () => {
     });
     expect(text).toMatch(/CLAUDE\.md/);
     expect(text).toMatch(/FORGE-COMPATIBILITY-MATRIX/);
+  });
+});
+
+describe("invokerAssemblingLabel", () => {
+  it("returns a user-facing name per invoker", () => {
+    expect(invokerAssemblingLabel("claude_code")).toBe("Claude Code");
+    expect(invokerAssemblingLabel("cursor")).toBe("Cursor");
+    expect(invokerAssemblingLabel("github_copilot")).toBe("GitHub Copilot");
+    expect(invokerAssemblingLabel("gemini_cli")).toBe("Gemini");
+    expect(invokerAssemblingLabel("openai_codex")).toBe("OpenAI Codex");
   });
 });

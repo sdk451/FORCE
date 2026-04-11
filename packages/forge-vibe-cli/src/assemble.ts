@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { isCI, isTTY, spinner } from "@clack/prompts";
 import { buildBlueprintDocument } from "./blueprint.js";
 import { installProfileJsonToAnswers, readInstallProfileJsonFile } from "./install-profile.js";
 import { applyTemplate } from "./template.js";
@@ -14,6 +15,7 @@ import {
 } from "./assembly-constants.js";
 import { buildIdeAssemblyChatPaste } from "./ide-assembly-paste.js";
 import {
+  invokerAssemblingLabel,
   invokerBinary,
   invokerDisplayName,
   pickAssemblerInvoker,
@@ -379,10 +381,33 @@ export async function runAssemble(opts: AssembleRunOptions): Promise<number> {
     }
     const agentsMdBeforeNorm = normalizeAgentsMarkdownForCompare(agentsMdBeforeInvoke);
 
-    console.error(
-      `[forge-vibe assemble] Invoking ${invokerDisplayName(picked)} for assembly (cwd=${root})…`,
-    );
-    const { status, error } = spawnAssemblerInvoker(picked, root, invokerPromptAbs, answers.targets);
+    const showSpinner = !isCI() && isTTY(process.stderr);
+    const spin = showSpinner ? spinner() : null;
+    if (spin) {
+      spin.start(
+        `${invokerAssemblingLabel(picked)} is assembling — this usually takes several minutes (LLM + file edits)`,
+      );
+    } else {
+      console.error(
+        `[forge-vibe assemble] Invoking ${invokerAssemblingLabel(picked)} (\`${invokerBinary(picked)}\`) for assembly (cwd=${root})…`,
+      );
+      console.error(
+        "[forge-vibe assemble] Most time is spent inside the coding agent (not forge-vibe); this step can take several minutes.",
+      );
+    }
+
+    const { status, error } = await spawnAssemblerInvoker(picked, root, invokerPromptAbs, answers.targets);
+
+    if (spin) {
+      if (error) {
+        spin.stop(`Could not start ${invokerAssemblingLabel(picked)}`);
+      } else if (status === 0) {
+        spin.stop(`${invokerAssemblingLabel(picked)} finished`);
+      } else {
+        spin.stop(`${invokerAssemblingLabel(picked)} exited with code ${status}`);
+      }
+    }
+
     if (error) {
       console.error(`[forge-vibe assemble] Failed to start ${invokerDisplayName(picked)}: ${String(error)}`);
       console.error(

@@ -1,5 +1,5 @@
 import path from "node:path";
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import type { SpawnSyncOptions } from "node:child_process";
 import { ASSEMBLY_DONE_MARKER_BASENAME } from "./assembly-constants.js";
 import type { InstallAnswers } from "./types.js";
@@ -46,6 +46,22 @@ export function invokerDisplayName(id: AssembleInvokerId): string {
       return "gemini";
     case "openai_codex":
       return "codex";
+  }
+}
+
+/** Short product-style name for user-facing lines (e.g. spinner: "Gemini is assembling…"). */
+export function invokerAssemblingLabel(id: AssembleInvokerId): string {
+  switch (id) {
+    case "claude_code":
+      return "Claude Code";
+    case "cursor":
+      return "Cursor";
+    case "github_copilot":
+      return "GitHub Copilot";
+    case "gemini_cli":
+      return "Gemini";
+    case "openai_codex":
+      return "OpenAI Codex";
   }
 }
 
@@ -137,60 +153,69 @@ export function buildAssemblerOneShotPrompt(
   return lines.join(" ");
 }
 
+function spawnAssemblerProcess(
+  command: string,
+  args: string[],
+  base: ReturnType<typeof baseSpawnOptions>,
+  body: string,
+): Promise<{ status: number | null; error?: Error }> {
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = (r: { status: number | null; error?: Error }) => {
+      if (settled) return;
+      settled = true;
+      resolve(r);
+    };
+    const child = spawn(command, args, {
+      ...base,
+      stdio: ["pipe", "inherit", "inherit"],
+    });
+    child.once("error", (err) => finish({ status: null, error: err }));
+    child.once("close", (code) => finish({ status: code, error: undefined }));
+    if (child.stdin) {
+      child.stdin.end(body, "utf8");
+    } else {
+      finish({ status: null, error: new Error("stdin pipe unavailable for assembler process") });
+    }
+  });
+}
+
 /**
  * Run a one-shot agent session that reads the assembly prompt at `promptPath` (absolute) and edits the repo.
  * Uses aggressive auto-approve flags appropriate for trusted repos only.
+ *
+ * **Async** (uses `spawn`, not `spawnSync`) so the terminal can show a spinner while the vendor CLI runs.
  */
-export function spawnAssemblerInvoker(
+export async function spawnAssemblerInvoker(
   id: AssembleInvokerId,
   projectRoot: string,
   promptPath: string,
   targets?: InstallAnswers["targets"],
-): { status: number | null; error?: Error } {
+): Promise<{ status: number | null; error?: Error }> {
   const body = buildAssemblerOneShotPrompt(projectRoot, promptPath, targets);
   const base = baseSpawnOptions(projectRoot);
 
   switch (id) {
-    case "claude_code": {
+    case "claude_code":
       // Pipe prompt via stdin — avoids Windows cmd.exe mangling special chars (|, &, ∧, parentheses…) in long arg strings.
-      const r = spawnSync(
+      return spawnAssemblerProcess(
         "claude",
         ["-p", "--permission-mode", "acceptEdits", "--no-session-persistence"],
-        { ...base, input: body, stdio: ["pipe", "inherit", "inherit"] },
+        base,
+        body,
       );
-      return { status: r.status, error: r.error };
-    }
-    case "cursor": {
-      const r = spawnSync(
-        "cursor",
-        ["agent", "--print", "--yolo"],
-        { ...base, input: body, stdio: ["pipe", "inherit", "inherit"] },
-      );
-      return { status: r.status, error: r.error };
-    }
-    case "github_copilot": {
-      const r = spawnSync(
+    case "cursor":
+      return spawnAssemblerProcess("cursor", ["agent", "--print", "--yolo"], base, body);
+    case "github_copilot":
+      return spawnAssemblerProcess(
         "copilot",
         ["-p", "-s", "--no-ask-user", "--allow-all"],
-        { ...base, input: body, stdio: ["pipe", "inherit", "inherit"] },
+        base,
+        body,
       );
-      return { status: r.status, error: r.error };
-    }
-    case "gemini_cli": {
-      const r = spawnSync(
-        "gemini",
-        ["-p", "--approval-mode", "auto_edit"],
-        { ...base, input: body, stdio: ["pipe", "inherit", "inherit"] },
-      );
-      return { status: r.status, error: r.error };
-    }
-    case "openai_codex": {
-      const r = spawnSync(
-        "codex",
-        ["exec", "--sandbox", "workspace-write"],
-        { ...base, input: body, stdio: ["pipe", "inherit", "inherit"] },
-      );
-      return { status: r.status, error: r.error };
-    }
+    case "gemini_cli":
+      return spawnAssemblerProcess("gemini", ["-p", "--approval-mode", "auto_edit"], base, body);
+    case "openai_codex":
+      return spawnAssemblerProcess("codex", ["exec", "--sandbox", "workspace-write"], base, body);
   }
 }

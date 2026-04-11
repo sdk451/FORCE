@@ -24,13 +24,7 @@
   "optional_skills": [
     "frontend-design",
     "superpowers",
-    "planning-with-files",
-    "systematic-debugging",
-    "code-review-expert",
-    "context-engineering",
-    "skill-creator",
-    "playwright-browser",
-    "remotion-best-practices"
+    "planning-with-files"
   ],
   "include_ui_workflow_pack": true,
   "include_memory_enhanced": true,
