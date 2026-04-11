@@ -1,5 +1,6 @@
 import type { ContextAdvancedMap, ContextCoreMap, InstallAnswers } from "./types.js";
 import { CONTEXT_ADVANCED_IDS, CONTEXT_CORE_IDS } from "./context-config.js";
+import { DOMAIN_H2_TITLE, DOMAIN_IDS, DOMAIN_SECTIONS, type DomainId } from "./domain-config.js";
 import { forgeSkillInstallDir } from "./forge-skill-path.js";
 
 export interface CanonicalVars {
@@ -11,27 +12,40 @@ function block(title: string, body: string): string {
   return `## ${title}\n\n${body.trim()}`;
 }
 
-export function sectionOverview(v: CanonicalVars): string {
-  return block(
-    "Project overview & identity",
+function subsection(title: string, body: string): string {
+  return `### ${title}\n\n${body.trim()}`;
+}
+
+const coreTitles: Record<keyof ContextCoreMap, string> = {
+  overview: "Project overview & identity",
+  tech_stack: "Tech stack declaration",
+  commands: "Commands (build, test, lint, deploy)",
+  architecture: "Architecture & file structure",
+  code_style: "Code style & conventions",
+  verification: "Verification & definition of done",
+  git_pr: "Git & PR conventions",
+};
+
+const advancedTitles: Record<keyof ContextAdvancedMap, string> = {
+  security: "Security boundaries",
+  agent_behavior: "Agent behavior",
+  context_compaction: "Context management & compaction (Claude / long sessions)",
+  memory_handoff: "Memory & session handoff",
+  ui_ux_workflow_section: "UI/UX verification workflow",
+  debugging_protocol: "Debugging protocol",
+  forbidden_patterns: "Forbidden patterns",
+};
+
+const coreBodies: Record<keyof ContextCoreMap, (v: CanonicalVars) => string> = {
+  overview: (v) =>
     `**${v.PROJECT_NAME}** — describe in one paragraph what this repo is, what it is **not**, and whether it is a monorepo or single app. Agents calibrate from this block first.
 
 - **Primary stack (summary):** ${v.STACK}`,
-  );
-}
-
-export function sectionTechStack(v: CanonicalVars): string {
-  return block(
-    "Tech stack declaration",
+  tech_stack: (v) =>
     `List **languages, frameworks, and major libraries with versions** (e.g. TypeScript 5.x, React 19, …). Keeps agents from mixing paradigms (ESM vs CJS, wrong router, etc.).
 
 - **Declared stack:** ${v.STACK} — replace with exact versions and packages for this repo.`,
-  );
-}
-
-export function sectionCommands(_v: CanonicalVars): string {
-  return block(
-    "Commands (build, test, lint, deploy)",
+  commands: (_v: CanonicalVars) =>
     `Put **copy-pasteable** commands in fenced code blocks. This is the highest-leverage section: agents use these to verify work.
 
 \`\`\`bash
@@ -50,135 +64,111 @@ export function sectionCommands(_v: CanonicalVars): string {
 \`\`\`
 
 **Rule:** Replace placeholders with commands that work on a clean clone.`,
-  );
-}
-
-export function sectionArchitecture(v: CanonicalVars): string {
-  return block(
-    "Architecture & file structure",
+  architecture: () =>
     `Summarize **where features live**, important directories, and **boundaries** (what not to refactor). **Reference** canonical files by path instead of pasting their full contents — keeps context short and fresh.
 
 - **Monorepos:** nested \`AGENTS.md\` per package is allowed; nearest file wins per [agents.md](https://agents.md/).`,
-  );
-}
-
-export function sectionCodeStyle(v: CanonicalVars): string {
-  return block(
-    "Code style & conventions",
+  code_style: (v) =>
     `Point to **Prettier / ESLint / Ruff** configs. Prefer **negative rules with alternatives** (e.g. “NEVER use \`any\` — use \`unknown\` and narrow”).
 
 - **Stack:** ${v.STACK} — align with team formatter and linter.`,
-  );
-}
-
-export function sectionVerification(_v: CanonicalVars): string {
-  return block(
-    "Verification & definition of done",
+  verification: () =>
     `**Non-negotiable:** define how the agent **proves** correctness — tests, typecheck, screenshots/story renders for UI — not prose “done”.
 
 - Prefer **specific checks** over vague acceptance (see Anthropic Claude Code best practices).
 - For UI: run story/tests or capture Playwright screenshot when this repo cares about visuals.`,
-  );
-}
-
-export function sectionGitPr(_v: CanonicalVars): string {
-  return block(
-    "Git & PR conventions",
+  git_pr: () =>
     `Branch naming, **conventional commits** (or team standard), PR description expectations, and **what must not be committed** (secrets, build artifacts).`,
-  );
-}
+};
 
-export function sectionSecurity(_v: CanonicalVars): string {
-  return block(
-    "Security boundaries",
+const advancedBodies: Record<keyof ContextAdvancedMap, (v: CanonicalVars) => string> = {
+  security: () =>
     `Secrets handling, allowed network usage, dependency approval, env var patterns, sensitive paths off-limits. **Hooks** (Claude) or CI can enforce what must be deterministic.`,
-  );
-}
-
-export function sectionAgentBehavior(_v: CanonicalVars): string {
-  return block(
-    "Agent behavior",
+  agent_behavior: () =>
     `**Method:** fix at **root cause**, not symptoms; reproduce → hypothesize → test → iterate; search existing code before adding new abstractions; plan before large edits.
 
 - Prefer **specific verification** over praise.`,
-  );
-}
-
-export function sectionContextCompaction(_v: CanonicalVars): string {
-  return block(
-    "Context management & compaction (Claude / long sessions)",
+  context_compaction: () =>
     `When context is compacted, **preserve**: modified file list, test commands used, open hypotheses, and user constraints. Use subagents or external plan files for heavy research.`,
-  );
-}
-
-export function sectionMemoryHandoff(_v: CanonicalVars): string {
-  return block(
-    "Memory & session handoff",
+  memory_handoff: () =>
     `Use **PROJECT_MEMORY.md** (or host memory) for **decisions vs scratch**; keep summaries **decision-faithful** — do not drop error signatures, URLs, or rationale.`,
-  );
-}
-
-export function sectionUiUxWorkflow(_v: CanonicalVars): string {
-  return block(
-    "UI/UX verification workflow",
+  ui_ux_workflow_section: () =>
     `For visual work: design intent → implement against **stories or tokens** → verify with **Playwright** or story tests. Avoid prose-only UI acceptance.`,
-  );
-}
-
-export function sectionDebuggingProtocol(_v: CanonicalVars): string {
-  return block(
-    "Debugging protocol",
+  debugging_protocol: () =>
     `1) Reproduce with smallest case 2) One hypothesis 3) Test that hypothesis 4) Observe and iterate. **Do not** paper over errors without root-cause analysis.`,
-  );
-}
-
-export function sectionForbiddenPatterns(_v: CanonicalVars): string {
-  return block(
-    "Forbidden patterns",
+  forbidden_patterns: () =>
     `List patterns **never** to use, each with a **preferred alternative** (pure prohibitions stall agents). Maintain with \`.cursor/rules\` / \`.claude/rules\` for always-on enforcement where needed.`,
-  );
-}
-
-const sectionBuilders: Record<
-  keyof ContextCoreMap,
-  (v: CanonicalVars) => string
-> = {
-  overview: sectionOverview,
-  tech_stack: sectionTechStack,
-  commands: sectionCommands,
-  architecture: sectionArchitecture,
-  code_style: sectionCodeStyle,
-  verification: sectionVerification,
-  git_pr: sectionGitPr,
 };
 
-const advancedBuilders: Record<
-  keyof ContextAdvancedMap,
-  (v: CanonicalVars) => string
-> = {
-  security: sectionSecurity,
-  agent_behavior: sectionAgentBehavior,
-  context_compaction: sectionContextCompaction,
-  memory_handoff: sectionMemoryHandoff,
-  ui_ux_workflow_section: sectionUiUxWorkflow,
-  debugging_protocol: sectionDebuggingProtocol,
-  forbidden_patterns: sectionForbiddenPatterns,
-};
+const sectionBuilders: Record<keyof ContextCoreMap, (v: CanonicalVars) => string> = Object.fromEntries(
+  CONTEXT_CORE_IDS.map((id) => [
+    id,
+    (v: CanonicalVars) => block(coreTitles[id], coreBodies[id](v)),
+  ]),
+) as Record<keyof ContextCoreMap, (v: CanonicalVars) => string>;
 
-function assembleCore(c: ContextCoreMap, v: CanonicalVars): string {
-  const parts: string[] = [];
-  for (const id of CONTEXT_CORE_IDS) {
-    if (c[id]) parts.push(sectionBuilders[id](v));
-  }
-  return parts.join("\n\n");
+const advancedBuilders: Record<keyof ContextAdvancedMap, (v: CanonicalVars) => string> =
+  Object.fromEntries(
+    CONTEXT_ADVANCED_IDS.map((id) => [
+      id,
+      (v: CanonicalVars) => block(advancedTitles[id], advancedBodies[id](v)),
+    ]),
+  ) as Record<keyof ContextAdvancedMap, (v: CanonicalVars) => string>;
+
+export function sectionOverview(v: CanonicalVars): string {
+  return sectionBuilders.overview(v);
+}
+export function sectionTechStack(v: CanonicalVars): string {
+  return sectionBuilders.tech_stack(v);
+}
+export function sectionCommands(v: CanonicalVars): string {
+  return sectionBuilders.commands(v);
+}
+export function sectionArchitecture(v: CanonicalVars): string {
+  return sectionBuilders.architecture(v);
+}
+export function sectionCodeStyle(v: CanonicalVars): string {
+  return sectionBuilders.code_style(v);
+}
+export function sectionVerification(v: CanonicalVars): string {
+  return sectionBuilders.verification(v);
+}
+export function sectionGitPr(v: CanonicalVars): string {
+  return sectionBuilders.git_pr(v);
+}
+export function sectionSecurity(v: CanonicalVars): string {
+  return advancedBuilders.security(v);
+}
+export function sectionAgentBehavior(v: CanonicalVars): string {
+  return advancedBuilders.agent_behavior(v);
+}
+export function sectionContextCompaction(v: CanonicalVars): string {
+  return advancedBuilders.context_compaction(v);
+}
+export function sectionMemoryHandoff(v: CanonicalVars): string {
+  return advancedBuilders.memory_handoff(v);
+}
+export function sectionUiUxWorkflow(v: CanonicalVars): string {
+  return advancedBuilders.ui_ux_workflow_section(v);
+}
+export function sectionDebuggingProtocol(v: CanonicalVars): string {
+  return advancedBuilders.debugging_protocol(v);
+}
+export function sectionForbiddenPatterns(v: CanonicalVars): string {
+  return advancedBuilders.forbidden_patterns(v);
 }
 
-function assembleAdvanced(a: ContextAdvancedMap, v: CanonicalVars): string {
-  const parts: string[] = [];
-  for (const id of CONTEXT_ADVANCED_IDS) {
-    if (a[id]) parts.push(advancedBuilders[id](v));
+function assembleDomainChunk(domain: DomainId, a: InstallAnswers, v: CanonicalVars): string | null {
+  const { core: coreIds, advanced: advIds } = DOMAIN_SECTIONS[domain];
+  const chunks: string[] = [];
+  for (const id of coreIds) {
+    if (a.context_core[id]) chunks.push(subsection(coreTitles[id], coreBodies[id](v)));
   }
-  return parts.join("\n\n");
+  for (const id of advIds) {
+    if (a.context_advanced[id]) chunks.push(subsection(advancedTitles[id], advancedBodies[id](v)));
+  }
+  if (chunks.length === 0) return null;
+  return `## ${DOMAIN_H2_TITLE[domain]}\n\n${chunks.join("\n\n")}`;
 }
 
 const agentsPreamble = (v: CanonicalVars) => `# AGENTS — ${v.PROJECT_NAME}
@@ -191,15 +181,15 @@ Root **AGENTS.md** is the cross-tool interchange; pair with **CLAUDE.md** / **GE
 
 ### Design principles (forge)
 
-Keep files **short**; **verify** don’t just describe; **reference** example files instead of pasting them; use **hooks** for must-always enforcement and markdown for guidance. *Research:* \`canonical-agents-md-research-2026-04-03.md\` (planning artifacts).`;
+Keep files **short** (aim **150–300** lines of instruction for best follow quality); **verify** don’t just describe; **reference** example files instead of pasting them; use **hooks** for must-always enforcement and markdown for guidance. Portable body below is grouped into **eight domains** aligned with **CODING_AGENT_INSTRUCTION_ELEMENTS.md** (Foundation → Orchestration). *Also see:* \`canonical-agents-md-research-2026-04-03.md\` (planning artifacts).`;
 
 /** Portable sections shared by AGENTS.md, Copilot instructions, and (via @import) GEMINI/CLAUDE. */
 export function buildPortableMarkdownSections(a: InstallAnswers, v: CanonicalVars): string {
   const parts: string[] = [];
-  const core = assembleCore(a.context_core, v);
-  const adv = assembleAdvanced(a.context_advanced, v);
-  if (core) parts.push(core);
-  if (adv) parts.push(adv);
+  for (const d of DOMAIN_IDS) {
+    const chunk = assembleDomainChunk(d, a, v);
+    if (chunk) parts.push(chunk);
+  }
   if (a.include_ui_workflow_pack) {
     parts.push(
       block(

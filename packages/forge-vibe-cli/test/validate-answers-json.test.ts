@@ -16,6 +16,15 @@ describe("validateInstallAnswersPartialJson", () => {
     ).toEqual({ ok: true });
   });
 
+  it("accepts domains and domain_requirements", () => {
+    expect(
+      validateInstallAnswersPartialJson({
+        domains: { foundation: true, orchestration: false },
+        domain_requirements: { execution: "Use pnpm only" },
+      }),
+    ).toEqual({ ok: true });
+  });
+
   it("rejects unknown top-level keys", () => {
     const r = validateInstallAnswersPartialJson({ foo: 1 });
     expect(r.ok).toBe(false);

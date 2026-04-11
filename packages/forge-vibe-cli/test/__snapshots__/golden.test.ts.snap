@@ -45,7 +45,10 @@ exports[`buildPlannedFiles > emits stable path set for default MVP answers 1`] =
   "AGENTS.md",
   "CLAUDE.md",
   "PROJECT_MEMORY.md",
+  "docs/FORGE-AGENTIC-ASSEMBLY.md",
+  "docs/FORGE-ASSEMBLE.md",
   "docs/FORGE-COMPATIBILITY-MATRIX.md",
+  "docs/FORGE-INSTALL-PROFILE.json",
   "docs/FORGE-MERGE-GUIDE.md",
   "docs/FORGE-OMX-COMPANION.md",
 ]

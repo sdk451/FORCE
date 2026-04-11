@@ -31,7 +31,7 @@ describe("validate-targets", () => {
     ).not.toThrow();
   });
 
-  it("assertAtLeastOneCoreSection throws when all core sections off", () => {
+  it("assertAtLeastOneCoreSection throws when all portable slices off", () => {
     const answers = resolveDefaults({
       context_core: {
         overview: false,
@@ -42,7 +42,16 @@ describe("validate-targets", () => {
         verification: false,
         git_pr: false,
       },
+      context_advanced: {
+        security: false,
+        agent_behavior: false,
+        context_compaction: false,
+        memory_handoff: false,
+        ui_ux_workflow_section: false,
+        debugging_protocol: false,
+        forbidden_patterns: false,
+      },
     });
-    expect(() => assertAtLeastOneCoreSection(answers)).toThrow(/core AGENTS/);
+    expect(() => assertAtLeastOneCoreSection(answers)).toThrow(/portable AGENTS/);
   });
 });

@@ -10,28 +10,43 @@ import { buildPlannedFiles } from "./plan.js";
 import { checkFiles } from "./check.js";
 import { promptOverwriteExistingDiffs } from "./interactive/prompt-overwrite.js";
 import { writePlannedFiles } from "./write-files.js";
-import type { ContextAdvancedMap, ContextCoreMap } from "./context-config.js";
-import {
-  CONTEXT_ADVANCED_TUI,
-  CONTEXT_CORE_TUI,
-  defaultContextAdvanced,
-  defaultContextCore,
-  OPTIONAL_SKILL_TUI,
-} from "./context-config.js";
+import { OPTIONAL_SKILL_TUI } from "./context-config.js";
 import { assertAtLeastOneAgent, assertAtLeastOneCoreSection } from "./validate-targets.js";
 import { validateInstallAnswersPartialOrThrow } from "./validate-answers-json.js";
 import { makeStderrProgress } from "./progress-stderr.js";
 import { inferStackFromRepo } from "./infer-stack-from-repo.js";
 import { promptCheckbox, promptStack } from "./interactive/checkbox-prompt.js";
 import { promptProjectName } from "./interactive/prompt-project-name.js";
+import { DOMAIN_TUI, type DomainMap } from "./domain-config.js";
+import { promptDomainRequirements } from "./interactive/prompt-domain-requirements.js";
+import { buildBlueprintDocument } from "./blueprint.js";
+import { runAssemble } from "./assemble.js";
+import type { AssembleInvokerId } from "./invoke-coding-agent.js";
+
+function parseAssembleAgent(s: string | undefined): "auto" | AssembleInvokerId {
+  if (s === undefined || s === "" || s === "auto") return "auto";
+  if (
+    s === "claude_code" ||
+    s === "cursor" ||
+    s === "github_copilot" ||
+    s === "gemini_cli" ||
+    s === "openai_codex"
+  ) {
+    return s;
+  }
+  throw new Error(
+    `Invalid --agent "${s}". Use auto, claude_code, cursor, github_copilot, gemini_cli, or openai_codex.`,
+  );
+}
 
 function printHelp(): void {
   console.log(`forge-vibe — BMAD-style installer for versioned agent context packs
 
 Primary flow (interactive TUI, like BMAD npx installers):
   install [--project-root <dir>] [--dry-run] [--force]
-      Run checkbox prompts, then write AGENTS.md, host rules/skills, and docs under the
-      project root. Default project root is the current working directory (your repo root).
+      Run prompts: target agents → stack → eight instruction domains (Foundation–Orchestration)
+      → optional skills → packs; then write AGENTS.md, host rules/skills, profile JSON, assembly
+      guide, and docs under the project root. Default project root is the current working directory.
       If files already differ from the planned output, you are prompted before overwriting
       (unless --force). Does not accept --answers or --yes (use write for automation).
 
@@ -41,6 +56,18 @@ Other commands:
       Interactive write (no --answers / --yes) prompts before overwriting differing files
       unless --force.
   load [--json] [--answers <file>]     Resolved manifest + planned paths (JSON)
+  blueprint [--project-root <dir>] [--answers <file>] [--yes] [--json]
+      Emit a single JSON bundle: install profile + agentic_prompt + path references.
+      No file writes. With TTY and no --answers/--yes, runs the same prompts as install
+      (including optional domain notes), then prints JSON only.
+  assemble [--project-root <dir>] [--profile <path>]
+           [--agent auto|claude_code|cursor|github_copilot|gemini_cli|openai_codex]
+           [--dry-run] [--no-invoke]
+      Read docs/FORGE-INSTALL-PROFILE.json, write docs/FORGE-ASSEMBLE-PROMPT.md, then spawn a
+      host CLI when on PATH and enabled in the profile (--agent auto): Claude, Cursor (cursor agent),
+      GitHub Copilot CLI (copilot), Gemini, Codex. If none match or --no-invoke, prints a copy-paste
+      IDE chat block on stdout (absolute path to the prompt file) for Cline, Kimi, VS Code chat, etc.
+      Requires network/auth for the chosen vendor CLI.
   check [--project-root <dir>] [--answers <file>]
   resolve-defaults [--answers <file>]  Merge partial answers with defaults (stdout JSON)
 
@@ -48,12 +75,16 @@ Options:
   --project-root <dir>   Target repo root (default: cwd). All emitted paths are relative to this.
   --answers <file>       JSON partial/full answers; validated against the pack schema (not install)
   --json                 load: single-line JSON (no indentation); default load is pretty-printed
-  --dry-run              install/write: print actions only
+  --dry-run              install/write: print actions only; assemble: print plan only
   --force                install/write: overwrite differing files without prompting
   --yes                  write: non-interactive (use defaultAnswers when no --answers)
+  --agent                assemble: auto | claude_code | cursor | github_copilot | gemini_cli | openai_codex
+  --profile              assemble: path to install profile JSON relative to project root
+  --no-invoke            assemble: write FORGE-ASSEMBLE-PROMPT.md only; do not spawn a CLI
 
 Environment:
-  No network is required for core install/write/check/load commands.
+  No network is required for core install/write/check/load/blueprint commands.
+  assemble invokes vendor CLIs that use their own network and credentials.
 
 Target agents (answers.targets.* — booleans; at least one must be true after merge):
 
@@ -67,12 +98,17 @@ Target agents (answers.targets.* — booleans; at least one must be true after m
 
 Defaults: claude_code + cursor on; other targets off unless toggled or set in answers.
 
-Context (portable AGENTS.md composition):
-  context_core       Core sections — default all true; at least one required after merge
-  context_advanced   Optional add-ons — default all true (security, behavior, debugging, …); turn off to slim AGENTS.md
+Domains (portable AGENTS.md — eight groups aligned with CODING_AGENT_INSTRUCTION_ELEMENTS.md):
+  domains.*          Booleans: foundation, standards, execution, safety, architecture, quality, knowledge, orchestration
+                     When set in --answers, they drive which slices appear unless you also set context_core / context_advanced
+  domain_requirements Optional strings per domain for a follow-up agentic pass (see docs/FORGE-AGENTIC-ASSEMBLY.md)
+  context_core / context_advanced  Low-level slice toggles; use when not using domains
 
 optional_skills — top-10 shortlist; each id emits forge-<id>/SKILL.md + workflow.md under host-native paths where that target is on.
   See schemas/install-answers.partial.schema.json for allowed ids.
+
+Emitted on write/install: docs/FORGE-INSTALL-PROFILE.json + docs/FORGE-AGENTIC-ASSEMBLY.md
+Preview bundle (no writes): forge-vibe blueprint [--answers <file> | --yes | interactive]
 
 Schema (in published package):
   schemas/install-answers.partial.schema.json (draft-07; unknown keys rejected)
@@ -115,22 +151,11 @@ async function promptInteractive(projectRoot: string): Promise<InstallAnswers> {
     projectRoot,
     fallbackHint: defaultAnswers.project_name,
   });
-  const inferredStack = await inferStackFromRepo(projectRoot);
-  const stackInitial = inferredStack ?? defaultAnswers.stack;
-  const detectionHint =
-    inferredStack === "typescript"
-      ? "Repository scan: JS/TS markers at project root (e.g. package.json / tsconfig). Pre-selected — change if wrong."
-      : inferredStack === "python"
-        ? "Repository scan: Python markers at project root (e.g. pyproject.toml / requirements.txt). Pre-selected — change if wrong."
-        : undefined;
-  const stack = await promptStack({
-    initial: stackInitial,
-    detectionHint,
-  });
 
   const agentMap = await promptCheckbox({
-    title: "Target coding agents",
-    subtitle: "Space toggles, Enter confirms. At least one agent required.",
+    title: "Step 1 — Target coding agents",
+    subtitle:
+      "Where should forge write rules and skills? Space toggles, Enter confirms. At least one agent required.",
     minSelected: 1,
     items: [
       {
@@ -168,30 +193,37 @@ async function promptInteractive(projectRoot: string): Promise<InstallAnswers> {
     ],
   });
 
-  const coreMap = await promptCheckbox({
-    title: "Core AGENTS.md sections",
+  const inferredStack = await inferStackFromRepo(projectRoot);
+  const stackInitial = inferredStack ?? defaultAnswers.stack;
+  const detectionHint =
+    inferredStack === "typescript"
+      ? "Repository scan: JS/TS markers at project root (e.g. package.json / tsconfig). Pre-selected — change if wrong."
+      : inferredStack === "python"
+        ? "Repository scan: Python markers at project root (e.g. pyproject.toml / requirements.txt). Pre-selected — change if wrong."
+        : undefined;
+  const stack = await promptStack({
+    initial: stackInitial,
+    detectionHint,
+  });
+
+  const domainMap = await promptCheckbox({
+    title: "Step 2 — Instruction domains (portable AGENTS.md)",
     subtitle:
-      "Portable baseline context. All on by default — turn off sections you want minimal. At least one required.",
+      "Aligned with CODING_AGENT_INSTRUCTION_ELEMENTS.md. All on by default — turn off to slim context. At least one domain required.",
     minSelected: 1,
-    items: CONTEXT_CORE_TUI.map((row) => ({
+    items: DOMAIN_TUI.map((row) => ({
       id: row.id,
       label: row.label,
       hint: row.hint,
-      checked: defaultContextCore[row.id],
+      checked: defaultAnswers.domains[row.id],
     })),
   });
 
-  const advMap = await promptCheckbox({
-    title: "Advanced context (optional add-ons)",
-    subtitle: "All on by default — disable sections you want omitted from AGENTS.md / host rules.",
-    minSelected: 0,
-    items: CONTEXT_ADVANCED_TUI.map((row) => ({
-      id: row.id,
-      label: row.label,
-      hint: row.hint,
-      checked: defaultContextAdvanced[row.id],
-    })),
-  });
+  const domains = Object.fromEntries(
+    DOMAIN_TUI.map((row) => [row.id, domainMap.get(row.id) ?? false]),
+  ) as DomainMap;
+
+  const domain_requirements = await promptDomainRequirements({ domains });
 
   const skillMap = await promptCheckbox({
     title: "Optional skill bundles (top-10 shortlist)",
@@ -236,12 +268,8 @@ async function promptInteractive(projectRoot: string): Promise<InstallAnswers> {
   return resolveDefaults({
     project_name,
     stack,
-    context_core: Object.fromEntries(
-      CONTEXT_CORE_TUI.map((row) => [row.id, coreMap.get(row.id) ?? false]),
-    ) as ContextCoreMap,
-    context_advanced: Object.fromEntries(
-      CONTEXT_ADVANCED_TUI.map((row) => [row.id, advMap.get(row.id) ?? false]),
-    ) as ContextAdvancedMap,
+    domains,
+    ...(domain_requirements !== undefined ? { domain_requirements } : {}),
     optional_skills,
     targets: {
       claude_code: agentMap.get("claude_code") ?? false,
@@ -276,12 +304,34 @@ async function main(): Promise<void> {
       "dry-run": { type: "boolean", default: false },
       force: { type: "boolean", default: false },
       yes: { type: "boolean", default: false },
+      agent: { type: "string", default: "auto" },
+      profile: { type: "string" },
+      "no-invoke": { type: "boolean", default: false },
     },
     allowPositionals: false,
   });
 
   const root = path.resolve(values["project-root"] ?? process.cwd());
-  const ranInteractiveTui = cmd === "install" || (cmd === "write" && !values.answers && !values.yes);
+
+  if (cmd === "assemble") {
+    try {
+      const code = await runAssemble({
+        projectRoot: root,
+        profileRelative: values.profile,
+        agent: parseAssembleAgent(values.agent),
+        dryRun: values["dry-run"],
+        noInvoke: values["no-invoke"],
+      });
+      process.exit(code);
+    } catch (e) {
+      console.error((e as Error).message);
+      process.exit(1);
+    }
+  }
+
+  const ranInteractiveTui =
+    cmd === "install" ||
+    ((cmd === "write" || cmd === "blueprint") && !values.answers && !values.yes);
 
   if (cmd === "install") {
     if (values.answers) {
@@ -297,7 +347,7 @@ async function main(): Promise<void> {
   let partial: Partial<InstallAnswers> = {};
   if (values.answers) {
     partial = await readAnswersFile(values.answers);
-  } else if (cmd === "write" && values.yes) {
+  } else if ((cmd === "write" || cmd === "blueprint") && values.yes) {
     partial = {};
   } else if (cmd === "install") {
     partial = {};
@@ -309,6 +359,11 @@ async function main(): Promise<void> {
       if (cmd === "install") {
         console.error(
           `forge-vibe install → project root: ${root}\n(AGENTS.md, host rules/skills, and docs are written with paths relative to this directory.)\n`,
+        );
+      }
+      if (cmd === "blueprint") {
+        console.error(
+          `forge-vibe blueprint → project root: ${root}\n(printing JSON only — no files written.)\n`,
         );
       }
       answers = await promptInteractive(root);
@@ -334,6 +389,8 @@ async function main(): Promise<void> {
       optional_packs_selected: {
         ui_ux_workflow: answers.include_ui_workflow_pack,
       },
+      domains: answers.domains,
+      domain_requirements: answers.domain_requirements,
       context_core: answers.context_core,
       context_advanced: answers.context_advanced,
       optional_skills: answers.optional_skills,
@@ -346,6 +403,13 @@ async function main(): Promise<void> {
 
   if (cmd === "resolve-defaults") {
     console.log(JSON.stringify(answers, null, 2));
+    return;
+  }
+
+  if (cmd === "blueprint") {
+    const doc = await buildBlueprintDocument(answers, root);
+    const text = values.json ? JSON.stringify(doc) : `${JSON.stringify(doc, null, 2)}\n`;
+    process.stdout.write(text);
     return;
   }
 

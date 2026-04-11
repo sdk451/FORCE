@@ -1,16 +1,26 @@
 import type { ContextAdvancedMap, ContextCoreMap, OptionalSkillId } from "./context-config.js";
 import { defaultContextAdvanced, defaultContextCore } from "./context-config.js";
+import type { DomainId, DomainMap } from "./domain-config.js";
+import { defaultDomains } from "./domain-config.js";
 
 export type { ContextAdvancedMap, ContextCoreMap, OptionalSkillId } from "./context-config.js";
+export type { DomainId, DomainMap } from "./domain-config.js";
 
 export type StackId = "typescript" | "python";
 
 export interface InstallAnswers {
   project_name: string;
   stack: StackId;
-  /** Part 3 Step 2 — core AGENTS sections (§1.1); default all on. */
+  /**
+   * Eight domain toggles (CODING_AGENT_INSTRUCTION_ELEMENTS.md). Drive `context_core` /
+   * `context_advanced` when present in partial answers; always stored resolved on output.
+   */
+  domains: DomainMap;
+  /** Optional free-text per domain for a follow-up agentic assembly pass (see FORGE-AGENTIC-ASSEMBLY.md). */
+  domain_requirements?: Partial<Record<DomainId, string>>;
+  /** Core AGENTS slices — derived from `domains` when installer uses domain flow; overridable via --answers. */
   context_core: ContextCoreMap;
-  /** Part 3 Step 3 — advanced optional sections (§1.2). */
+  /** Advanced slices — derived from `domains` when installer uses domain flow. */
   context_advanced: ContextAdvancedMap;
   /** Part 3 Step 4 — optional skill bundle ids (pack SKILL.md + workflow.md → forge-<id>/ on install). */
   optional_skills: OptionalSkillId[];
@@ -36,6 +46,8 @@ export interface InstallAnswers {
 export const defaultAnswers: InstallAnswers = {
   project_name: "my-project",
   stack: "typescript",
+  domains: { ...defaultDomains },
+  domain_requirements: undefined,
   context_core: { ...defaultContextCore },
   context_advanced: { ...defaultContextAdvanced },
   optional_skills: [],

@@ -8,97 +8,98 @@ Root **AGENTS.md** is the cross-tool interchange; pair with **CLAUDE.md** / **GE
 
 ### Design principles (forge)
 
-Keep files **short**; **verify** don’t just describe; **reference** example files instead of pasting them; use **hooks** for must-always enforcement and markdown for guidance. *Research:* `canonical-agents-md-research-2026-04-03.md` (planning artifacts).
+Keep files **short** (aim **150–300** lines of instruction for best follow quality); **verify** don’t just describe; **reference** example files instead of pasting them; use **hooks** for must-always enforcement and markdown for guidance. Portable body below is grouped into **eight domains** aligned with **CODING_AGENT_INSTRUCTION_ELEMENTS.md** (Foundation → Orchestration). *Also see:* `canonical-agents-md-research-2026-04-03.md` (planning artifacts).
 
-## Project overview & identity
+## Foundation
 
-**forge-vibe-code-enhancement** — describe in one paragraph what this repo is, what it is **not**, and whether it is a monorepo or single app. Agents calibrate from this block first.
+### Project overview & identity
 
-- **Primary stack (summary):** Python
+**forge-vibe-code-enhancement** — templates and tooling for installing portable agent context (AGENTS.md, host rules, optional skills) into application repos. It is **not** a hosted product runtime; it is a **monorepo** with a publishable CLI under `packages/forge-vibe-cli/`. Agents calibrate from this block first.
 
-## Tech stack declaration
+- **Primary stack (summary):** Python (repo docs and packs); CLI is **TypeScript** (`packages/forge-vibe-cli`).
 
-List **languages, frameworks, and major libraries with versions** (e.g. TypeScript 5.x, React 19, …). Keeps agents from mixing paradigms (ESM vs CJS, wrong router, etc.).
+### Tech stack declaration
 
-- **Declared stack:** Python — replace with exact versions and packages for this repo.
+- **CLI package:** TypeScript, Node 20+, Vitest — see `packages/forge-vibe-cli/package.json`.
+- **Workspace docs / packs:** Markdown templates, JSON Schema (`packages/forge-vibe-cli/schemas/`).
 
-## Commands (build, test, lint, deploy)
+### Architecture & file structure
 
-Put **copy-pasteable** commands in fenced code blocks. This is the highest-leverage section: agents use these to verify work.
+- `packages/forge-vibe-cli/` — installer source, `packs/` templates, `schemas/install-answers.partial.schema.json`.
+- `.cursor/rules/` — always-on forge rules for this repo (when using Cursor).
+- `docs/` — compatibility matrix, merge guide, agentic assembly (`docs/FORGE-AGENTIC-ASSEMBLY.md`), research artifacts.
+- **Boundaries:** do not rename published schema URLs or break `resolveDefaults` / `buildPlannedFiles` without updating tests and snapshots.
+
+## Standards
+
+### Code style & conventions
+
+Match existing style in each package. CLI: TypeScript strictness per `packages/forge-vibe-cli/tsconfig.json`. Prefer **negative rules with alternatives** in rule files (e.g. never X — prefer Y).
+
+## Execution
+
+### Commands (build, test, lint, deploy)
 
 ```bash
-# install
-# npm ci   # or pnpm install / uv sync — document the real one
+# CLI package
+cd packages/forge-vibe-cli
+npm ci
+npm test
+npm run build   # if defined — check package.json
 
-# lint / typecheck
-# npm run lint
-# npm run build
-
-# test
-# npm test
-
-# e2e (if applicable)
-# npx playwright test
+# After install in a consumer repo: agent-driven assembly (Claude / Gemini / Codex CLI on PATH)
+# forge-vibe assemble [--dry-run] [--no-invoke] [--agent auto|claude_code|gemini_cli|openai_codex]
 ```
 
-**Rule:** Replace placeholders with commands that work on a clean clone.
+**Rule:** Replace with the exact commands from `packages/forge-vibe-cli/package.json` on a clean clone.
 
-## Architecture & file structure
+## Safety
 
-Summarize **where features live**, important directories, and **boundaries** (what not to refactor). **Reference** canonical files by path instead of pasting their full contents — keeps context short and fresh.
+### Security boundaries
 
-- **Monorepos:** nested `AGENTS.md` per package is allowed; nearest file wins per [agents.md](https://agents.md/).
+No secrets in repo. Installer must not require network for core `install` / `write` / `check` / `load`. Review hook recipes before enabling `allow_hooks`.
 
-## Code style & conventions
+### Forbidden patterns
 
-Point to **Prettier / ESLint / Ruff** configs. Prefer **negative rules with alternatives** (e.g. “NEVER use `any` — use `unknown` and narrow”).
+List patterns **never** to use, each with a **preferred alternative** (pure prohibitions stall agents). Maintain with `.cursor/rules` / `.claude/rules` for always-on enforcement where needed.
 
-- **Stack:** Python — align with team formatter and linter.
+## Architecture
 
-## Verification & definition of done
-
-**Non-negotiable:** define how the agent **proves** correctness — tests, typecheck, screenshots/story renders for UI — not prose “done”.
-
-- Prefer **specific checks** over vague acceptance (see Anthropic Claude Code best practices).
-- For UI: run story/tests or capture Playwright screenshot when this repo cares about visuals.
-
-## Git & PR conventions
-
-Branch naming, **conventional commits** (or team standard), PR description expectations, and **what must not be committed** (secrets, build artifacts).
-
-## Security boundaries
-
-Secrets handling, allowed network usage, dependency approval, env var patterns, sensitive paths off-limits. **Hooks** (Claude) or CI can enforce what must be deterministic.
-
-## Agent behavior
+### Agent behavior
 
 **Method:** fix at **root cause**, not symptoms; reproduce → hypothesize → test → iterate; search existing code before adding new abstractions; plan before large edits.
 
 - Prefer **specific verification** over praise.
 
-## Context management & compaction (Claude / long sessions)
-
-When context is compacted, **preserve**: modified file list, test commands used, open hypotheses, and user constraints. Use subagents or external plan files for heavy research.
-
-## Memory & session handoff
-
-Use **PROJECT_MEMORY.md** (or host memory) for **decisions vs scratch**; keep summaries **decision-faithful** — do not drop error signatures, URLs, or rationale.
-
-## UI/UX verification workflow
-
-For visual work: design intent → implement against **stories or tokens** → verify with **Playwright** or story tests. Avoid prose-only UI acceptance.
-
-## Debugging protocol
+### Debugging protocol
 
 1) Reproduce with smallest case 2) One hypothesis 3) Test that hypothesis 4) Observe and iterate. **Do not** paper over errors without root-cause analysis.
 
-## Forbidden patterns
+## Quality
 
-List patterns **never** to use, each with a **preferred alternative** (pure prohibitions stall agents). Maintain with `.cursor/rules` / `.claude/rules` for always-on enforcement where needed.
+### Verification & definition of done
 
-## UI workflow pack
+**Non-negotiable:** prove changes with **Vitest** in `packages/forge-vibe-cli` for CLI edits; update snapshots when planned output paths change intentionally.
 
-This repo opted into the **UI workflow pack** — see **docs/UI-WORKFLOW-PACK.md** for Figma / Storybook / Playwright / shadcn-oriented guidance.
+### Git & PR conventions
+
+Conventional commits; PR descriptions state what changed and why; do not commit secrets or local-only answers files with sensitive data.
+
+## Knowledge
+
+### Memory & session handoff
+
+Use **PROJECT_MEMORY.md** for **decisions vs scratch**; keep summaries **decision-faithful** — do not drop error signatures, URLs, or rationale.
+
+### UI/UX verification workflow
+
+When UI packs apply to a consumer repo, use **docs/UI-WORKFLOW-PACK.md** (if installed) and browser/story tests — not prose-only acceptance. This meta-repo is primarily docs/CLI.
+
+## Orchestration
+
+### Context management & compaction (Claude / long sessions)
+
+When context is compacted, **preserve**: modified file list, test commands used, open hypotheses, and user constraints. Use subagents or external plan files for heavy research.
 
 ## Project memory
 

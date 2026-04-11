@@ -17,6 +17,7 @@ import { loadPackManifest } from "./manifest.js";
 import { packsDir } from "./pack-root.js";
 import { applyTemplate } from "./template.js";
 import { forgeSkillInstallDir } from "./forge-skill-path.js";
+import { buildInstallProfileJson } from "./install-profile.js";
 
 async function readTpl(rel: string): Promise<string> {
   const p = path.join(packsDir(), rel);
@@ -365,6 +366,19 @@ You enabled **allow_hooks**. The emitted \`.claude/settings.json\` contains **ex
     content: mergeGuide(),
   });
 
+  files.push({
+    path: "docs/FORGE-INSTALL-PROFILE.json",
+    content: buildInstallProfileJson(answers),
+  });
+  files.push({
+    path: "docs/FORGE-AGENTIC-ASSEMBLY.md",
+    content: applyTemplate(await readTpl("core/templates/FORGE-AGENTIC-ASSEMBLY.md.tpl"), v),
+  });
+  files.push({
+    path: "docs/FORGE-ASSEMBLE.md",
+    content: applyTemplate(await readTpl("core/templates/FORGE-ASSEMBLE.md.tpl"), v),
+  });
+
   if (answers.include_ui_workflow_pack) {
     files.push({
       path: "docs/UI-WORKFLOW-PACK.md",
@@ -421,6 +435,8 @@ function buildMatrixDoc(a: InstallAnswers, packVersion: string): string {
 ### Optional skills (when \`optional_skills\` is non-empty)
 
 Skill id \`tdd\` → install folder \`forge-tdd\` (always \`forge-\` prefix). Each folder contains \`SKILL.md\` and \`workflow.md\`.
+
+**Domain hints (CODING_AGENT_INSTRUCTION_ELEMENTS.md):** *frontend-design* → Standards / Knowledge; *playwright-browser* → Execution / Quality; *systematic-debugging* → Architecture; *tdd*, *code-review-expert* → Quality; *planning-with-files*, *context-engineering*, *skill-creator* → Orchestration / Knowledge; *superpowers* → Orchestration; *remotion-best-practices* → exemplar domain pack.
 
 | Host | Path pattern |
 |------|----------------|

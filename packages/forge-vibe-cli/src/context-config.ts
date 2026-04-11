@@ -1,7 +1,8 @@
 /**
  * Canonical context sections & optional skills — aligned with
+ * `CODING_AGENT_INSTRUCTION_ELEMENTS.md` (eight domains → portable slices) and
  * `_bmad-output/planning-artifacts/research/canonical-agents-md-research-2026-04-03.md`
- * (Part 1 core/advanced sections, Part 2 top-10 skills, Part 3 TUI).
+ * (core/advanced slices, top-10 skills, TUI).
  */
 
 export const CONTEXT_CORE_IDS = [
@@ -100,6 +101,10 @@ export function normalizeOptionalSkills(ids: unknown): OptionalSkillId[] {
 
 export function countEnabledCore(c: ContextCoreMap): number {
   return CONTEXT_CORE_IDS.filter((k) => c[k]).length;
+}
+
+export function countEnabledAdvanced(a: ContextAdvancedMap): number {
+  return CONTEXT_ADVANCED_IDS.filter((k) => a[k]).length;
 }
 
 /** TUI labels — align with `canonical-agents-md-research-2026-04-03.md` Part 3. */

@@ -1,0 +1,76 @@
+{
+  "models": [
+    {
+      "title": "Ollama · Qwen2.5 Coder 32B (via LiteLLM)",
+      "provider": "anthropic",
+      "model": "claude-3-5-sonnet-20241022",
+      "apiBase": "http://localhost:4000",
+      "apiKey": "sk-local-dev-only",
+      "contextLength": 32768,
+      "systemMessage": "You are an expert software engineer. Be concise. Prefer working code over lengthy explanations. When editing files, show only the changed sections unless the full file is small."
+    },
+    {
+      "title": "Ollama · Qwen2.5 Coder 7B — Fast",
+      "provider": "anthropic",
+      "model": "claude-3-haiku-20240307",
+      "apiBase": "http://localhost:4000",
+      "apiKey": "sk-local-dev-only",
+      "contextLength": 32768,
+      "systemMessage": "You are a concise, expert coding assistant. Return only code unless explanation is explicitly requested."
+    }
+  ],
+
+  "tabAutocompleteModel": {
+    "title": "Autocomplete (Qwen2.5 7B)",
+    "provider": "ollama",
+    "model": "qwen2.5-coder:7b",
+    "apiBase": "http://localhost:11434"
+  },
+
+  "embeddingsProvider": {
+    "provider": "ollama",
+    "model": "nomic-embed-text",
+    "apiBase": "http://localhost:11434"
+  },
+
+  "contextProviders": [
+    { "name": "code" },
+    { "name": "docs" },
+    { "name": "diff" },
+    { "name": "terminal" },
+    { "name": "problems" },
+    { "name": "folder" },
+    { "name": "codebase" }
+  ],
+
+  "slashCommands": [
+    {
+      "name": "edit",
+      "description": "Edit highlighted code"
+    },
+    {
+      "name": "comment",
+      "description": "Add comments to the code"
+    },
+    {
+      "name": "share",
+      "description": "Export the current chat session to markdown"
+    },
+    {
+      "name": "cmd",
+      "description": "Generate a shell command"
+    },
+    {
+      "name": "commit",
+      "description": "Generate a git commit message"
+    }
+  ],
+
+  "allowAnonymousTelemetry": false,
+
+  "ui": {
+    "codeBlockToolbarPosition": "top",
+    "fontSize": 13,
+    "displayRawMarkdown": false
+  }
+}

@@ -7,6 +7,34 @@
   "properties": {
     "project_name": { "type": "string", "minLength": 1 },
     "stack": { "type": "string", "enum": ["typescript", "python"] },
+    "domains": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "foundation": { "type": "boolean" },
+        "standards": { "type": "boolean" },
+        "execution": { "type": "boolean" },
+        "safety": { "type": "boolean" },
+        "architecture": { "type": "boolean" },
+        "quality": { "type": "boolean" },
+        "knowledge": { "type": "boolean" },
+        "orchestration": { "type": "boolean" }
+      }
+    },
+    "domain_requirements": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "foundation": { "type": "string" },
+        "standards": { "type": "string" },
+        "execution": { "type": "string" },
+        "safety": { "type": "string" },
+        "architecture": { "type": "string" },
+        "quality": { "type": "string" },
+        "knowledge": { "type": "string" },
+        "orchestration": { "type": "string" }
+      }
+    },
     "context_core": {
       "type": "object",
       "additionalProperties": false,

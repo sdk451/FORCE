@@ -69,7 +69,8 @@ describe("host context wiring", () => {
     });
     const md = buildCopilotInstructionsMd(a, v);
     expect(md).toContain("# GitHub Copilot");
-    expect(md).toContain("## Commands (build, test, lint, deploy)");
+    expect(md).toContain("## Execution");
+    expect(md).toContain("### Commands (build, test, lint, deploy)");
   });
 
   it("emits hook script when allow_hooks and Claude", async () => {
