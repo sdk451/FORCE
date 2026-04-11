@@ -147,7 +147,7 @@ describe("buildPlannedFiles", () => {
     expect(agents?.content).toMatch(/## Optional skills & packs/);
     expect(agents?.content).toMatch(/TDD/);
     expect(agents?.content).toMatch(/Systematic debugging/);
-    expect(agents?.content).not.toMatch(/forge-tdd/);
+    expect(agents?.content).toMatch(/`forge-tdd`/);
     const paths = new Set(files.map((f) => f.path));
     expect(paths.has(".claude/skills/forge-tdd/SKILL.md")).toBe(true);
     expect(paths.has(".claude/skills/forge-tdd/workflow.md")).toBe(true);

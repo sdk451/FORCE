@@ -4,7 +4,7 @@ Use this checklist **after** `forge-vibe` has written baseline files (`AGENTS.md
 
 **Preview without writing files:** run **`forge-vibe blueprint`** (`--yes`, `--answers <file>`, or interactive) to print a JSON bundle you can paste into a coding agent.
 
-**Invoke a host CLI:** run **`forge-vibe assemble`** (see **`docs/FORGE-ASSEMBLE.md`**) to create a **temp assembly workspace** (prompt + copies under OS temp), then spawn **Claude**, **Cursor** (`cursor agent`), **GitHub Copilot CLI** (`copilot`), **Gemini**, or **Codex** when installed. On **CLI exit 0** and a rewritten root **AGENTS.md** (installer **structure-template** banner and overview placeholder removed), that folder is **deleted**. If the vendor CLI exits **0** but **AGENTS.md** still matches those scaffold markers, **forge-vibe** keeps the workspace, exits **1**, and prints a **copy-paste IDE block**. With **`--no-invoke`**, no CLI on `PATH`, or other **failed** runs, stderr/stdout includes that block with the **temp path** and instructions to **delete the folder after** successful assembly.
+**Invoke a host CLI:** run **`forge-vibe assemble`** (see **`docs/FORGE-ASSEMBLE.md`**) to create a **temp assembly workspace** (prompt + copies under OS temp), then spawn **Claude**, **Cursor** (`cursor agent`), **GitHub Copilot CLI** (`copilot`), **Gemini**, or **Codex** when installed. On **CLI exit 0**, **forge-vibe** checks root **AGENTS.md** (normalized line endings): it fails (**exit 1**, workspace kept) only if the file is **still the exact install template** *and* **unchanged since the invoke** (nothing saved). If **AGENTS.md** already differed from that template before the run, a second assemble with **no on-disk edits** exits **0** (idempotent). If the file **changed** off the template this run, exit **0** and the temp folder is removed. With **`--no-invoke`**, no CLI on `PATH`, or other **failed** runs, stderr/stdout includes the IDE block with the **temp path** and cleanup instructions.
 
 ## Inputs (gather in one message to your coding agent)
 
@@ -20,7 +20,7 @@ Use this checklist **after** `forge-vibe` has written baseline files (`AGENTS.md
 > Rewrite **AGENTS.md** into a **concise runbook** (~150–300 lines): cover roughly **15–20** element themes that matter here, aligned with the eight **domains** and any optional **`domain_requirements`** notes.  
 > **Remove** What/Why/generic examples — only **this repo’s** commands, versions, paths, and boundaries. **Infer** from the codebase and CI, then reconcile with the profile.  
 > Respect **selected targets**: align host-specific files; keep portable **AGENTS.md** as the source of truth.  
-> If the profile lists **optional skills** or optional packs, keep **Optional skills & packs** in **AGENTS.md** as **name + when to use** only (repo-tightened triggers) — no installer meta, no **`forge-*`** paths or **`SKILL.md`** / matrix copy-paste.  
+> If the profile lists **optional skills** or optional packs, keep **Optional skills & packs** in **AGENTS.md** as **name + `forge-<id>` + when to use** (repo-tightened triggers) — no installer/assembly meta, no **`SKILL.md`** / matrix copy-paste.  
 > After **AGENTS.md**, propose minimal **always-on** rule updates under **.cursor/rules/** or **.claude/rules/** only where hooks or deterministic checks require it.  
 > Move depth to linked docs (e.g. `docs/architecture.md`, ADRs) instead of bloating **AGENTS.md**.
 
@@ -31,7 +31,7 @@ Use this checklist **after** `forge-vibe` has written baseline files (`AGENTS.md
 - [ ] Real install / test / lint commands and stack versions (from repo + profile).  
 - [ ] **Foundation** names entry points and refactor boundaries; **Safety** has Always / Ask / Never.  
 - [ ] **Execution** matches CI or documents divergence; on-disk skill layout matches **docs/FORGE-COMPATIBILITY-MATRIX.md** in host files (not necessarily spelled out in **AGENTS.md**).  
-- [ ] Every **`optional_skills`** entry and selected pack (**UI**, **memory**, **hooks**) still appears in **AGENTS.md** as **name + when to use** (no **`forge-*`** / **`SKILL.md`** / matrix prose in the portable runbook).
+- [ ] Every **`optional_skills`** entry and selected pack (**UI**, **memory**, **hooks**) still appears in **AGENTS.md** as **name + `forge-<id>` + when to use** (no **`SKILL.md`** / matrix prose in the portable runbook).
 
 ## Not legal or compliance advice
 

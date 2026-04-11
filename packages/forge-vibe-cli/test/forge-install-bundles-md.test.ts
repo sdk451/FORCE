@@ -32,7 +32,7 @@ describe("buildForgeInstallBundlesSection", () => {
     expect(md).toMatch(/TDD/);
     expect(md).toMatch(/Planning with files/);
     expect(md).toMatch(/test-first discipline/);
-    expect(md).not.toMatch(/forge-tdd/);
+    expect(md).toMatch(/`forge-tdd`/);
     expect(md).not.toMatch(/FORGE-COMPATIBILITY-MATRIX/);
     expect(md).not.toMatch(/FORGE-INSTALL-PROFILE/);
   });

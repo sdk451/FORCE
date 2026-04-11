@@ -6,6 +6,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { ASSEMBLY_PROMPT_BASENAME } from "../src/assembly-constants.js";
 import { buildAssemblePromptMarkdown, runAssemble } from "../src/assemble.js";
+import { canonicalAgentsMdTemplate } from "../src/plan.js";
 import * as invokeCodingAgent from "../src/invoke-coding-agent.js";
 import { buildInstallProfileJson } from "../src/install-profile.js";
 import { resolveDefaults } from "../src/resolve-defaults.js";
@@ -91,7 +92,7 @@ describe("runAssemble integration-ish", () => {
     await fs.writeFile(path.join(tmp, "docs/FORGE-INSTALL-PROFILE.json"), buildInstallProfileJson(answers), "utf8");
     await fs.writeFile(
       path.join(tmp, "AGENTS.md"),
-      "### Canonical scaffold (forge install)\n\nUntil you run assemble, this file is the **structure template** from the installer.\n",
+      canonicalAgentsMdTemplate(answers),
       "utf8",
     );
 
@@ -120,6 +121,31 @@ describe("runAssemble integration-ish", () => {
       if (assemblyWorkDir) {
         await fs.rm(assemblyWorkDir, { recursive: true, force: true }).catch(() => undefined);
       }
+    }
+  });
+
+  it("returns 0 when invoker exits 0 and AGENTS.md was already non-scaffold and unchanged (idempotent)", async () => {
+    const pickSpy = vi.spyOn(invokeCodingAgent, "pickAssemblerInvoker").mockReturnValue("claude_code");
+    const spawnSpy = vi.spyOn(invokeCodingAgent, "spawnAssemblerInvoker").mockReturnValue({ status: 0 });
+
+    const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "forge-assemble-tuned-"));
+    const answers = resolveDefaults({ project_name: "tuned-check", targets: { cursor: true } });
+    await fs.mkdir(path.join(tmp, "docs"), { recursive: true });
+    await fs.writeFile(path.join(tmp, "docs/FORGE-INSTALL-PROFILE.json"), buildInstallProfileJson(answers), "utf8");
+    const tuned = `${canonicalAgentsMdTemplate(answers)}\n\n## Already assembled\n\nBody.\n`;
+    await fs.writeFile(path.join(tmp, "AGENTS.md"), tuned, "utf8");
+
+    try {
+      const code = await runAssemble({
+        projectRoot: tmp,
+        agent: "auto",
+        dryRun: false,
+        noInvoke: false,
+      });
+      expect(code).toBe(0);
+    } finally {
+      pickSpy.mockRestore();
+      spawnSpy.mockRestore();
     }
   });
 });

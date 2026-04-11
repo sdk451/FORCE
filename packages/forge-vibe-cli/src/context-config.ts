@@ -140,3 +140,25 @@ export const OPTIONAL_SKILL_TUI: { id: OptionalSkillId; label: string; hint: str
   { id: "playwright-browser", label: "Playwright / browser verification", hint: "MCP or CLI" },
   { id: "remotion-best-practices", label: "Remotion pattern (exemplar)", hint: "domain-skill template" },
 ];
+
+/**
+ * Optional skills whose workflows assume **Claude Code hooks** (e.g. PostToolUse: run tests/lint after
+ * edits, quality gates). Drives whether **CLAUDE.md** includes **Hooks & automation** when `allow_hooks`
+ * is false — see `claudeHooksSectionNeeded`.
+ */
+export const OPTIONAL_SKILL_IDS_REQUIRING_CLAUDE_HOOKS: ReadonlySet<OptionalSkillId> = new Set([
+  "tdd",
+  "code-review-expert",
+]);
+
+export function optionalSkillsRequireClaudeHooks(ids: readonly OptionalSkillId[]): boolean {
+  return ids.some((id) => OPTIONAL_SKILL_IDS_REQUIRING_CLAUDE_HOOKS.has(id));
+}
+
+/** Emit **## Hooks & automation** in CLAUDE.md when hooks are on or hook-oriented skills are selected. */
+export function claudeHooksSectionNeeded(a: {
+  allow_hooks: boolean;
+  optional_skills: readonly OptionalSkillId[];
+}): boolean {
+  return a.allow_hooks || optionalSkillsRequireClaudeHooks(a.optional_skills);
+}

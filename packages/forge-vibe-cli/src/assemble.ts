@@ -16,8 +16,12 @@ import {
   spawnAssemblerInvoker,
   type AssembleInvokerId,
 } from "./invoke-coding-agent.js";
-import { agentsMdStillCanonicalScaffold } from "./assemble-scaffold-check.js";
+import {
+  assembleAgentsMdIndicatesNoDiskProgress,
+  normalizeAgentsMarkdownForCompare,
+} from "./assemble-scaffold-check.js";
 import { buildForgeInstallBundlesSection } from "./forge-install-bundles-md.js";
+import { canonicalAgentsMdTemplate } from "./plan.js";
 import { suggestMonorepoRootIfNestedPackage } from "./project-root-hint.js";
 
 export { ASSEMBLY_PROMPT_BASENAME } from "./assembly-constants.js";
@@ -292,6 +296,15 @@ export async function runAssemble(opts: AssembleRunOptions): Promise<number> {
       );
     }
 
+    const agentsAbs = path.join(root, "AGENTS.md");
+    let agentsMdBeforeInvoke = "";
+    try {
+      agentsMdBeforeInvoke = await fs.readFile(agentsAbs, "utf8");
+    } catch {
+      agentsMdBeforeInvoke = "";
+    }
+    const agentsMdBeforeNorm = normalizeAgentsMarkdownForCompare(agentsMdBeforeInvoke);
+
     console.error(
       `[forge-vibe assemble] Invoking ${invokerDisplayName(picked)} for assembly (cwd=${root})…`,
     );
@@ -305,29 +318,35 @@ export async function runAssemble(opts: AssembleRunOptions): Promise<number> {
       return 1;
     }
     if (status === 0) {
-      const agentsAbs = path.join(root, "AGENTS.md");
       let agentsText = "";
       try {
         agentsText = await fs.readFile(agentsAbs, "utf8");
       } catch {
         agentsText = "";
       }
-      if (agentsMdStillCanonicalScaffold(agentsText)) {
+      if (assembleAgentsMdIndicatesNoDiskProgress(agentsMdBeforeNorm, agentsText, answers)) {
         console.error(
-          `[forge-vibe assemble] ${invokerDisplayName(picked)} exited 0, but this file still looks like the forge scaffold (installer banner or overview placeholder): ${agentsAbs}`,
+          `[forge-vibe assemble] ${invokerDisplayName(picked)} exited 0, but ${agentsAbs} is still the exact forge install scaffold for this profile and did not change on disk during this run (after normalizing line endings). Save a rewritten file, or use --project-root if edits went elsewhere.`,
         );
         console.error(
-          "[forge-vibe assemble] If you edited a different AGENTS.md (e.g. monorepo root vs package), re-run with --project-root pointing at the same directory you are verifying.",
+          "[forge-vibe assemble] Clear the scaffold: remove \"### Canonical scaffold (forge install)\", replace placeholders with repo facts. If AGENTS.md already differs from `forge-vibe write` for this profile, a repeat assemble with no on-disk edits exits 0 (idempotent).",
         );
         console.error(
-          "[forge-vibe assemble] Assembly workspace kept. Use the IDE paste block to run assembly in your editor, then delete the temp folder when AGENTS.md is actually rewritten.",
+          "[forge-vibe assemble] Assembly workspace kept. Use the IDE paste block if needed, then delete the temp folder when done.",
         );
         writeIdeAssemblyPaste(root, workDirAbs, pasteDest, suggestedMonorepoRootAbs);
         return 1;
       }
       await removeAssemblyWorkspace(workDirAbs);
+      const templateNorm = normalizeAgentsMarkdownForCompare(canonicalAgentsMdTemplate(answers));
+      const afterNorm = normalizeAgentsMarkdownForCompare(agentsText);
+      const idempotentNoEdit = agentsMdBeforeNorm === afterNorm && agentsMdBeforeNorm !== templateNorm;
       console.error(
-        `[forge-vibe assemble] ${invokerDisplayName(picked)} finished (exit 0). Removed assembly workspace. Scaffold check passed for ${agentsAbs}. Confirm host files (e.g. CLAUDE.md) if targets.claude_code is enabled in the profile.`,
+        `[forge-vibe assemble] ${invokerDisplayName(picked)} finished (exit 0). Removed assembly workspace. ${agentsAbs} ${
+          idempotentNoEdit
+            ? "was already tuned and unchanged this run (idempotent assemble)."
+            : "changed off the install scaffold or was already non-scaffold."
+        } Confirm host files (e.g. CLAUDE.md) if targets.claude_code is enabled in the profile.`,
       );
       return 0;
     }

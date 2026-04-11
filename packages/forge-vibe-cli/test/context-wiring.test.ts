@@ -17,10 +17,11 @@ describe("host context wiring", () => {
       targets: { claude_code: true, cursor: false },
       include_memory_enhanced: true,
     });
-    const md = buildClaudeMd(a, v, "Hooks disabled.");
+    const md = buildClaudeMd(a, v);
     expect(md).toContain("@AGENTS.md");
     expect(md.indexOf("@AGENTS.md")).toBeLessThan(md.indexOf("## Claude-specific"));
     expect(md).toContain("@PROJECT_MEMORY.md");
+    expect(md).not.toMatch(/## Hooks & automation/);
   });
 
   it("CLAUDE.md omits PROJECT_MEMORY import when memory pack off", () => {
@@ -29,9 +30,10 @@ describe("host context wiring", () => {
       targets: { claude_code: true, cursor: false },
       include_memory_enhanced: false,
     });
-    const md = buildClaudeMd(a, v, "Hooks disabled.");
+    const md = buildClaudeMd(a, v);
     expect(md).toContain("@AGENTS.md");
     expect(md).not.toContain("@PROJECT_MEMORY.md");
+    expect(md).not.toMatch(/## Hooks & automation/);
   });
 
   it("GEMINI.md imports AGENTS.md only", () => {

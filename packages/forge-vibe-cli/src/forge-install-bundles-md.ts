@@ -28,7 +28,8 @@ function portableBundlesBody(a: InstallAnswers): string {
   for (const id of a.optional_skills) {
     const row = OPTIONAL_SKILL_TUI.find((r) => r.id === id);
     const label = row?.label ?? id;
-    lines.push(`- **${label}** — ${skillWhenLine(id)}`);
+    const dir = forgeSkillInstallDir(id);
+    lines.push(`- **${label}** (\`${dir}\`) — ${skillWhenLine(id)}`);
   }
   if (a.include_ui_workflow_pack) {
     lines.push(
@@ -55,7 +56,7 @@ function assemblyPromptBundlesBody(a: InstallAnswers): string {
     "Authoritative selection lives in **`docs/FORGE-INSTALL-PROFILE.json`** (`optional_skills`, `include_ui_workflow_pack`, `include_memory_enhanced`, `allow_hooks`).\n\n",
   );
   parts.push(
-    "**After assembly,** root **`AGENTS.md`** must carry **only** end-user guidance: each selected skill/pack’s **display name** and **when to use it** (repo-specific triggers). **Remove** installer prose, **`forge-*` ids**, paths to **`SKILL.md`**, and compatibility-matrix / host-discovery instructions from **`AGENTS.md`** — those belong in rules or host files, not the portable runbook.\n\n",
+    "**After assembly,** root **`AGENTS.md`** must carry end-user guidance: each skill’s **display name**, **`forge-<id>`** (so agents can resolve the bundle), and **when to use it** (repo-specific triggers). **Remove** installer/assembly prose, **`SKILL.md`** paths, matrix tables, and host-discovery instructions from **`AGENTS.md`** — put those in rules or host files.\n\n",
   );
 
   if (a.optional_skills.length > 0) {
@@ -96,7 +97,7 @@ function assemblyPromptBundlesBody(a: InstallAnswers): string {
 }
 
 /**
- * - **agents_portable** — `AGENTS.md` / Copilot / portable body: skill **name** + **when to use** only.
+ * - **agents_portable** — `AGENTS.md` / Copilot / portable body: skill **name**, **`forge-<id>`** folder name, + **when to use**.
  * - **assembly_prompt** — full install reference for the temp assembly prompt only.
  */
 export function buildForgeInstallBundlesSection(

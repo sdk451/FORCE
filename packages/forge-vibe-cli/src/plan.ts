@@ -79,6 +79,11 @@ function canonVars(a: InstallAnswers): { PROJECT_NAME: string; STACK: string } {
   return { PROJECT_NAME: a.project_name, STACK: stackLabel };
 }
 
+/** Exact `AGENTS.md` the installer would emit for these answers — used by `assemble` to detect an untouched scaffold. */
+export function canonicalAgentsMdTemplate(a: InstallAnswers): string {
+  return buildAgentsMd(a, canonVars(a));
+}
+
 function varsFor(a: InstallAnswers): Record<string, string> {
   const date = new Date().toISOString().slice(0, 10);
   const ui = a.include_ui_workflow_pack
@@ -88,10 +93,6 @@ function varsFor(a: InstallAnswers): Record<string, string> {
     ? "\n## Memory\n\nMaintain **PROJECT_MEMORY.md** per compaction rules.\n"
     : "";
   const stackLabel = a.stack === "typescript" ? "TypeScript / Node" : "Python";
-  const hooks =
-    a.allow_hooks
-      ? "Hooks **opt-in** is enabled — see **docs/FORGE-HOOK-OPTIN.md** and review `.claude/settings.json`."
-      : "Hooks **disabled** in emitted `.claude/settings.json` (safe default). Enable via installer with `allow_hooks: true` plus review.";
   const optionalSkillsNote =
     a.optional_skills.length > 0 ||
     a.include_ui_workflow_pack ||
@@ -105,7 +106,6 @@ function varsFor(a: InstallAnswers): Record<string, string> {
     DATE_ISO: date,
     UI_SECTION: ui,
     MEMORY_SECTION: mem,
-    HOOKS_BLOCK: hooks,
     OPTIONAL_SKILLS_NOTE: optionalSkillsNote,
   };
 }
@@ -124,7 +124,7 @@ export async function buildPlannedFiles(answers: InstallAnswers): Promise<{
   if (answers.targets.claude_code) {
     files.push({
       path: "CLAUDE.md",
-      content: buildClaudeMd(answers, cv, v.HOOKS_BLOCK),
+      content: buildClaudeMd(answers, cv),
     });
     files.push({
       path: ".claude/rules/forge-core.md",

@@ -1,10 +1,35 @@
-# BMADder - the forge-vibe-code-enhancement
+# BMADder — forge-vibe-code-enhancement
 
 Monorepo for **forge-vibe**: versioned **agent context packs** and a **BMAD-style CLI** that materializes portable **AGENTS.md**-centric context into **Claude Code**, **Cursor**, **Cline**, **Gemini CLI**, **OpenAI Codex CLI**, **GitHub Copilot**, and **Kimi Code** layouts. Planning and BMAD outputs live under **`_bmad-output/`**; product requirements and epics are in **`_bmad-output/planning-artifacts/`**.
 
-## Why this exists
+## How forge-vibe came about
 
-Teams want one **canonical** description of how AI coding agents should work in a repo (stack, commands, verification, security), then **host-specific** files so each tool can load the right shape (rules, skills, companion markdown). This project implements that split: a **normative pack** under `packages/forge-vibe-cli/packs/` and a **generator** that writes only the trees you select.
+Most teams started with ad hoc **CLAUDE.md**, **AGENTS.md**, **GEMINI.md**, **.cursorrules**, or **.windsurfrules** files—copy-pasted from blog posts or internal snippets—with no shared vocabulary for *what* belongs in agent instructions or *how much* is enough.
+
+**forge-vibe** grew out of a deliberate inventory of that landscape: **50+ production examples** were reviewed and distilled into **60+ distinct instruction elements**, each with rationale and placement guidance. That work is summarized in **[docs/coding_agent_instructions_research.md](docs/coding_agent_instructions_research.md)**. The full pattern catalog (examples and implementation notes per element) lives in **[CODING_AGENT_INSTRUCTION_ELEMENTS.md](CODING_AGENT_INSTRUCTION_ELEMENTS.md)** at the repo root (also shipped from the CLI pack as a template).
+
+The CLI does not dump all 60+ blocks into every repo. Instead it:
+
+- Maps the research into **eight domains** (Foundation → Orchestration) you can toggle at install time.
+- Emits a **short, structured scaffold** (portable **AGENTS.md** + host-specific trees) aligned with those domains.
+- Records choices in **`docs/FORGE-INSTALL-PROFILE.json`** and supports a follow-up **assembly** flow (**`docs/FORGE-AGENTIC-ASSEMBLY.md`**) so a coding agent can tighten instructions against the element menu and your real codebase—without starting from a blank file.
+
+So forge-vibe is both **research-backed** (what high-performing instruction sets tend to contain) and **opinionated about delivery** (token budget, portability across hosts, optional skills and packs).
+
+### Research takeaways (short)
+
+| Finding | Implication for forge-vibe |
+|--------|----------------------------|
+| **~150–200** instructions are what frontier models follow reliably; very long files degrade behavior | Scaffold aims for a **dense** tuned **AGENTS.md** (on the order of hundreds of lines), not an encyclopedia |
+| **Real examples** (commands, paths, snippets) beat prose | Templates emphasize **copy-pasteable** commands and repo-specific facts after assembly |
+| **Always / Ask first / Never** boundaries deliver outsized value for few lines | **Safety** and related slices are first-class in the domain model |
+| **Hierarchy** (e.g. monorepo **AGENTS.md** per package) beats one giant root file | Documented in pack guidance; nearest **AGENTS.md** wins per [agents.md](https://agents.md/) |
+
+For engineers who want strong “vibe coding” output with lower wasted tokens, the research doc frames this as a **framework template** (scaffold + catalog), alignment with **governance** patterns (decisions, ADRs), and a path toward **skills** and **quality checklists**—see the closing section of **[docs/coding_agent_instructions_research.md](docs/coding_agent_instructions_research.md)**.
+
+## Why this exists (product terms)
+
+Teams want one **canonical** description of how AI coding agents should work in a repo (stack, commands, verification, security), then **host-specific** files so each tool loads the right shape (rules, skills, companion markdown). This project implements that split: a **normative pack** under `packages/forge-vibe-cli/packs/` and a **generator** that writes only the trees you select.
 
 ## Repository layout
 
@@ -13,7 +38,7 @@ Teams want one **canonical** description of how AI coding agents should work in 
 | **`packages/forge-vibe-cli`** | Publishable npm package **`forge-vibe`** (folder name differs): CLI `forge-vibe`, packs, JSON Schema |
 | **`packages/forge-vibe-cli/packs/`** | Core templates, stack variants (TypeScript / Python), optional UI workflow pack, stub **optional skills** |
 | **`packages/forge-vibe-cli/schemas/`** | **`install-answers.partial.schema.json`** — validates `--answers` JSON (draft-07; unknown keys rejected) |
-| **`docs/`** | Research, growth adapter notes, FR42 placeholder |
+| **`docs/`** | Research (including coding agent instructions), growth adapter notes, FR42 placeholder |
 | **`_bmad-output/`** | PRD, epics, sprint status, implementation artifacts |
 
 ## Requirements
@@ -151,6 +176,8 @@ Published npm package name: **`forge-vibe`** (this root `package.json` is a **pr
 
 | Topic | Location |
 |-------|----------|
+| **Coding agent instructions — research summary** | [docs/coding_agent_instructions_research.md](docs/coding_agent_instructions_research.md) |
+| **60+ element catalog** (examples + guidance) | [CODING_AGENT_INSTRUCTION_ELEMENTS.md](CODING_AGENT_INSTRUCTION_ELEMENTS.md) |
 | Build, pack & npm publish | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) |
 | Template & research (Epic 1) | [docs/agent-config-template-research.md](docs/agent-config-template-research.md) |
 | Growth adapters (Epic 4) | [docs/growth-adapters/README.md](docs/growth-adapters/README.md) |

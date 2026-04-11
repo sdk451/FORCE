@@ -11,6 +11,8 @@ All paths are **relative to the forge emit root** (default: `git rev-parse --sho
 | Host | Native paths (when target enabled) |
 |------|-------------------------------------|
 | **Claude Code** | Root `CLAUDE.md` (`@AGENTS.md`), `.claude/rules/*.md`, `.claude/settings.json`, `.claude/skills/` |
+
+**CLAUDE.md — Hooks & automation:** The **## Hooks & automation** section is **omitted** when **`allow_hooks`** is false and no hook-oriented optional skill is selected (**`tdd`**, **`code-review-expert`**). If **`allow_hooks`** is true, the section documents the emitted **PostToolUse** / **SessionEnd** entries in **`.claude/settings.json`** and **`scripts/forge-claude/session-end-memory-hint.mjs`**. If only hook-oriented skills are on (hooks still off), **CLAUDE.md** explains how to enable hooks or merge **`settings.hooks.example.json`** from the pack.
 | **Cursor** | Root `AGENTS.md` (agents.md convention) + `.cursor/rules/*.mdc`, `.cursor/skills/` |
 | **Cline** | `.clinerules/*.md` — `forge-core.md`, `forge-stack.md`, optional `forge-memory.md`, optional advanced slices + `docs/FORGE-CLINE.md` |
 | **Gemini CLI** | Root `GEMINI.md` (`@AGENTS.md`), `.gemini/settings.json` (`context.fileName`: GEMINI.md) |

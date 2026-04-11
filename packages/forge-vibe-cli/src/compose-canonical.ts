@@ -1,5 +1,11 @@
 import type { ContextAdvancedMap, ContextCoreMap, InstallAnswers } from "./types.js";
-import { CONTEXT_ADVANCED_IDS, CONTEXT_CORE_IDS } from "./context-config.js";
+import {
+  CONTEXT_ADVANCED_IDS,
+  CONTEXT_CORE_IDS,
+  OPTIONAL_SKILL_IDS_REQUIRING_CLAUDE_HOOKS,
+  OPTIONAL_SKILL_TUI,
+  claudeHooksSectionNeeded,
+} from "./context-config.js";
 import { DOMAIN_H2_TITLE, DOMAIN_IDS, DOMAIN_SECTIONS, type DomainId } from "./domain-config.js";
 import { buildForgeInstallBundlesSection } from "./forge-install-bundles-md.js";
 
@@ -233,8 +239,40 @@ ${buildPortableMarkdownSections(a, v)}
 `;
 }
 
-export function buildClaudeMd(a: InstallAnswers, v: CanonicalVars, hooksBlock: string): string {
+function buildClaudeHooksSectionMarkdown(a: InstallAnswers): string {
+  if (a.allow_hooks) {
+    return [
+      "Hooks are **enabled** in **`.claude/settings.json`** for this profile.",
+      "",
+      "- **PostToolUse** (matcher `Write|Edit`): replace the placeholder \`echo\` with your **format / lint / test** commands (see **docs/FORGE-HOOK-OPTIN.md**).",
+      "- **SessionEnd**: **\`node scripts/forge-claude/session-end-memory-hint.mjs\`** — stderr reminder to update **PROJECT_MEMORY.md** when that file exists (no automatic edits).",
+      "",
+      "**High risk:** hooks run shell commands. Review with your team before committing.",
+    ].join("\n");
+  }
+
+  const hookSkillIds = a.optional_skills.filter((id) => OPTIONAL_SKILL_IDS_REQUIRING_CLAUDE_HOOKS.has(id));
+  const labels = hookSkillIds
+    .map((id) => OPTIONAL_SKILL_TUI.find((r) => r.id === id)?.label ?? id)
+    .join(", ");
+
+  return [
+    `You selected optional skills (**${labels}**) that work best with **PostToolUse** hooks (e.g. run tests or lint after edits). This profile has **\`allow_hooks: false\`** — **\`.claude/settings.json\`** is the no-hooks template.`,
+    "",
+    "To wire hooks: re-run **`forge-vibe`** and enable **Claude hooks**, or copy hook examples from the forge pack (**\`settings.hooks.example.json\`**) / **docs/FORGE-HOOK-OPTIN.md** (from a hooks-enabled install) into **`.claude/settings.json`** and add **\`scripts/forge-claude/session-end-memory-hint.mjs\`** if you use SessionEnd.",
+  ].join("\n");
+}
+
+export function buildClaudeMd(a: InstallAnswers, v: CanonicalVars): string {
   const memImport = a.include_memory_enhanced ? "\n@PROJECT_MEMORY.md\n" : "";
+  const showHooks = claudeHooksSectionNeeded(a);
+  const verificationBody = showHooks
+    ? "Follow **AGENTS.md** verification / DOD; use hooks only where the team has reviewed them."
+    : "Follow **AGENTS.md** verification / DOD.";
+  const hooksSection = showHooks
+    ? `\n## Hooks & automation\n\n${buildClaudeHooksSectionMarkdown(a)}\n`
+    : "";
+
   return `# CLAUDE.md — ${v.PROJECT_NAME}
 
 <!-- forge: Claude Code loads CLAUDE.md at session start. @ imports include portable context. First run may prompt to approve file imports. -->
@@ -249,12 +287,8 @@ ${memImport}
 
 ## Verification
 
-Follow **AGENTS.md** verification / DOD; use hooks only where the team has reviewed them.
-
-## Hooks & automation
-
-${hooksBlock}
-`;
+${verificationBody}
+${hooksSection}`;
 }
 
 export function buildGeminiMd(a: InstallAnswers, v: CanonicalVars): string {
