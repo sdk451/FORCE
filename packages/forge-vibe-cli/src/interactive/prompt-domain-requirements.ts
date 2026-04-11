@@ -1,38 +1,24 @@
-import { confirm, isCancel, text } from "@clack/prompts";
-import { DOMAIN_TUI, type DomainId, type DomainMap } from "../domain-config.js";
+import { isCancel, text } from "@clack/prompts";
+import { DOMAIN_TUI, type DomainId } from "../domain-config.js";
 
 /**
- * Optional free-text per **enabled** domain for FORGE-INSTALL-PROFILE / agent assembly.
- * Skipped when non-TTY or user declines the confirm step.
+ * Optional free-text per foundation domain for FORGE-INSTALL-PROFILE / assembly.
+ * All eight domains are always installed; this step only adds extra paths or constraints.
+ * Non-TTY: skipped (no prompts).
  */
-export async function promptDomainRequirements(opts: {
-  domains: DomainMap;
+export async function promptDomainRequirements(opts?: {
   stdin?: NodeJS.ReadStream;
   stdout?: NodeJS.WriteStream;
 }): Promise<Partial<Record<DomainId, string>> | undefined> {
-  const stdin = opts.stdin ?? process.stdin;
-  const stdout = opts.stdout ?? process.stdout;
+  const stdin = opts?.stdin ?? process.stdin;
+  const stdout = opts?.stdout ?? process.stdout;
   if (!stdin.isTTY || !stdout.isTTY) return undefined;
-
-  const enabledCount = DOMAIN_TUI.filter((row) => opts.domains[row.id]).length;
-  if (enabledCount === 0) return undefined;
-
-  const want = await confirm({
-    message:
-      "Add optional notes per enabled domain? (Stored in FORGE-INSTALL-PROFILE.json for the agent assembly step.)",
-    initialValue: false,
-    input: stdin,
-    output: stdout,
-  });
-
-  if (isCancel(want) || !want) return undefined;
 
   const out: Partial<Record<DomainId, string>> = {};
   for (const row of DOMAIN_TUI) {
-    if (!opts.domains[row.id]) continue;
     const raw = await text({
-      message: `${row.label}\n${row.hint}`,
-      placeholder: "Enter to skip this domain",
+      message: `${row.label}\n${row.hint}\n\nOptional: paste file paths, globs, or short notes for this domain. All eight domains stay in AGENTS.md — Enter continues with no extra notes here.`,
+      placeholder: "Paths or notes (optional)",
       input: stdin,
       output: stdout,
     });

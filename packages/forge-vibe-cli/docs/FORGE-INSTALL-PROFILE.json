@@ -1,0 +1,57 @@
+{
+  "$schema": "forge-install-profile/1",
+  "project_name": "forge-vibe-cli",
+  "stack": "typescript",
+  "targets": {
+    "claude_code": true,
+    "cursor": true,
+    "cline": false,
+    "gemini_cli": false,
+    "openai_codex": false,
+    "github_copilot": false,
+    "kimi_code": false
+  },
+  "domains": {
+    "foundation": true,
+    "standards": true,
+    "execution": true,
+    "safety": true,
+    "architecture": true,
+    "quality": true,
+    "knowledge": true,
+    "orchestration": true
+  },
+  "optional_skills": [
+    "frontend-design",
+    "superpowers",
+    "planning-with-files",
+    "systematic-debugging",
+    "code-review-expert",
+    "context-engineering",
+    "skill-creator",
+    "playwright-browser"
+  ],
+  "include_ui_workflow_pack": true,
+  "include_memory_enhanced": true,
+  "allow_hooks": false,
+  "derived": {
+    "context_core": {
+      "overview": true,
+      "tech_stack": true,
+      "commands": true,
+      "architecture": true,
+      "code_style": true,
+      "verification": true,
+      "git_pr": true
+    },
+    "context_advanced": {
+      "security": true,
+      "agent_behavior": true,
+      "context_compaction": true,
+      "memory_handoff": true,
+      "ui_ux_workflow_section": true,
+      "debugging_protocol": true,
+      "forbidden_patterns": true
+    }
+  }
+}

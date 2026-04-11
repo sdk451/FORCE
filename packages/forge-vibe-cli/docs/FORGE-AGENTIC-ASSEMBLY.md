@@ -1,4 +1,4 @@
-# Agentic assembly — {{PROJECT_NAME}}
+# Agentic assembly — forge-vibe-cli
 
 Use this checklist **after** `forge-vibe` has written baseline files (`AGENTS.md`, host rules, optional skills). Root **`AGENTS.md`** at that point is the **canonical scaffold** (structure + placeholders), not the finished tuned file. Goal: turn that scaffold plus your notes into **project-specific** instructions without starting from a blank page.
 

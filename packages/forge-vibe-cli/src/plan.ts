@@ -370,6 +370,21 @@ You enabled **allow_hooks**. The emitted \`.claude/settings.json\` contains **ex
     path: "docs/FORGE-INSTALL-PROFILE.json",
     content: buildInstallProfileJson(answers),
   });
+
+  const elementMenuBody = await readTpl("core/templates/agents.md.tpl");
+  files.push({
+    path: "docs/FORGE-AGENTS-ELEMENT-MENU.md",
+    content: `# Element menu (assembly reference) — ${answers.project_name}
+
+**Purpose:** Use this file as a **pick list** of instruction-element *types* when rewriting root **AGENTS.md** during **\`forge-vibe assemble\`**. It is the forge pack copy of **\`agents.md.tpl\`** (full menu with pedagogical examples).
+
+**Output shape:** Select roughly **15–20** elements that fit this repo and the install profile (**\`domains\`**, **\`domain_requirements\`**). The final **AGENTS.md** must be **concise** (~150–300 lines target) and **repo-specific**. **Do not** copy this file wholesale. **Omit** **What / Why** prose and generic **Example** blocks from the final **AGENTS.md** — replace with facts inferred from the tree (manifests, CI, README, configs) plus **docs/FORGE-INSTALL-PROFILE.json**.
+
+---
+
+${elementMenuBody}`,
+  });
+
   files.push({
     path: "docs/FORGE-AGENTIC-ASSEMBLY.md",
     content: applyTemplate(await readTpl("core/templates/FORGE-AGENTIC-ASSEMBLY.md.tpl"), v),
@@ -408,6 +423,7 @@ function mergeGuide(): string {
 - **Kimi Code**: keep **AGENTS.md** authoritative; align **docs/FORGE-KIMI.md** with team Kimi workflow.
 - **Optional rules:** \`forge-behavior\`, \`forge-security\`, \`forge-debugging\`, \`forge-forbidden\` — merge if you already use the same filenames (**Claude** \`.claude/rules\`, **Cursor** \`.mdc\`, **Cline** \`.clinerules\`).
 - **Optional skills (installer):** under each host tree, directories \`forge-<skill-id>/\` with \`SKILL.md\` + \`workflow.md\` (e.g. \`.cursor/skills/forge-tdd/\`). Same bundle per skill where that host was selected.
+- **docs/FORGE-AGENTS-ELEMENT-MENU.md:** assembly **menu** (pack \`agents.md.tpl\`) — keep when merging; do not treat as final **AGENTS.md** content.
 `;
 }
 

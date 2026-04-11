@@ -179,6 +179,10 @@ Portable agent context ([agents.md](https://agents.md/) convention). **Closest f
 
 Root **AGENTS.md** is the cross-tool interchange; pair with **CLAUDE.md** / **GEMINI.md** when those hosts are in use.
 
+### Canonical scaffold (forge install)
+
+Until you run **\`forge-vibe assemble\`**, this file is the **structure template** from the installer: section headings and **placeholder** guidance (e.g. “describe in one paragraph”, commented sample commands). **Replace** that boilerplate with **repository-specific** facts using the **assembly prompt** (forge writes it under a **temporary folder** — see assemble stderr / IDE paste for the path), plus **\`docs/FORGE-INSTALL-PROFILE.json\`**, **\`docs/FORGE-AGENTS-ELEMENT-MENU.md\`** (element-type shortlist from pack **\`agents.md.tpl\`**), optional **\`CODING_AGENT_INSTRUCTION_ELEMENTS.md\`**, and **\`docs/FORGE-AGENTIC-ASSEMBLY.md\`**. Do not treat placeholder text as the team’s final policy.
+
 ### Design principles (forge)
 
 Keep files **short** (aim **150–300** lines of instruction for best follow quality); **verify** don’t just describe; **reference** example files instead of pasting them; use **hooks** for must-always enforcement and markdown for guidance. Portable body below is grouped into **eight domains** aligned with **CODING_AGENT_INSTRUCTION_ELEMENTS.md** (Foundation → Orchestration). *Also see:* \`canonical-agents-md-research-2026-04-03.md\` (planning artifacts).`;

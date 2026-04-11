@@ -17,5 +17,6 @@ describe("buildBlueprintDocument", () => {
     expect(doc.agentic_prompt).toContain("bp-test");
     expect(doc.agentic_prompt).toContain("FORGE-INSTALL-PROFILE");
     expect(doc.references.element_catalog).toBe("CODING_AGENT_INSTRUCTION_ELEMENTS.md");
+    expect(doc.references.element_menu_file).toBe("docs/FORGE-AGENTS-ELEMENT-MENU.md");
   });
 });

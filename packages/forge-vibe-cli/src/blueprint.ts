@@ -20,7 +20,10 @@ export interface BlueprintDocument {
   references: {
     install_profile_file: string;
     assembly_guide_file: string;
+    /** Full 60+ catalog when present at repo root. */
     element_catalog: string;
+    /** Forge-emitted shortlist menu (agents.md.tpl) for assembly. */
+    element_menu_file: string;
   };
 }
 
@@ -40,6 +43,7 @@ export async function buildBlueprintDocument(
       install_profile_file: "docs/FORGE-INSTALL-PROFILE.json",
       assembly_guide_file: "docs/FORGE-AGENTIC-ASSEMBLY.md",
       element_catalog: "CODING_AGENT_INSTRUCTION_ELEMENTS.md",
+      element_menu_file: "docs/FORGE-AGENTS-ELEMENT-MENU.md",
     },
   };
 }

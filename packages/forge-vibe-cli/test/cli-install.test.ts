@@ -44,6 +44,7 @@ describe("assemble command", () => {
     });
     expect(r.status).toBe(0);
     expect(r.stdout).toMatch(/dry_run/);
+    expect(r.stdout).toMatch(/assembly_workspace/);
   });
 
   it("writes prompt and prints IDE paste on stdout with --no-invoke", async () => {
@@ -57,8 +58,14 @@ describe("assemble command", () => {
     expect(r.status).toBe(0);
     expect(r.stdout).toMatch(/forge-vibe — copy into your IDE agent chat/);
     expect(r.stdout).toMatch(/FORGE-ASSEMBLE-PROMPT\.md/);
-    const promptPath = path.join(tmp, "docs", "FORGE-ASSEMBLE-PROMPT.md");
-    const content = await fs.readFile(promptPath, "utf8");
+    expect(r.stdout).toMatch(/Temporary assembly workspace/);
+    const m = r.stderr.match(/Assembly workspace \(WIP\): (.+)/);
+    expect(m).toBeTruthy();
+    const workDir = m![1].trim();
+    const content = await fs.readFile(path.join(workDir, "FORGE-ASSEMBLE-PROMPT.md"), "utf8");
     expect(content).toContain("cli-ni");
+    await expect(fs.stat(path.join(tmp, "docs", "FORGE-ASSEMBLE-PROMPT.md"))).rejects.toMatchObject({
+      code: "ENOENT",
+    });
   });
 });

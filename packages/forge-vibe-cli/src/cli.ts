@@ -15,9 +15,10 @@ import { assertAtLeastOneAgent, assertAtLeastOneCoreSection } from "./validate-t
 import { validateInstallAnswersPartialOrThrow } from "./validate-answers-json.js";
 import { makeStderrProgress } from "./progress-stderr.js";
 import { inferStackFromRepo } from "./infer-stack-from-repo.js";
+import { confirm, isCancel, log } from "@clack/prompts";
 import { promptCheckbox, promptStack } from "./interactive/checkbox-prompt.js";
 import { promptProjectName } from "./interactive/prompt-project-name.js";
-import { DOMAIN_TUI, type DomainMap } from "./domain-config.js";
+import { defaultDomains, type DomainMap } from "./domain-config.js";
 import { promptDomainRequirements } from "./interactive/prompt-domain-requirements.js";
 import { buildBlueprintDocument } from "./blueprint.js";
 import { runAssemble } from "./assemble.js";
@@ -44,10 +45,11 @@ function printHelp(): void {
 
 Primary flow (interactive TUI, like BMAD npx installers):
   install [--project-root <dir>] [--dry-run] [--force]
-      Run prompts: target agents → stack → eight instruction domains (Foundation–Orchestration)
-      → optional skills → packs; then write AGENTS.md, host rules/skills, profile JSON, assembly
-      guide, and docs under the project root. Default project root is the current working directory.
-      If files already differ from the planned output, you are prompted before overwriting
+      Run prompts: target agents → stack → optional per-domain notes (all eight foundations always
+      included) → optional skills → packs; then write AGENTS.md (canonical scaffold + placeholders), host
+      rules/skills, profile JSON, assembly guide, and docs. AGENTS.md is tuned by a follow-up
+      \`forge-vibe assemble\` (or IDE paste) — see the banner after a successful install. Default
+      project root is cwd. If files differ from planned output, you are prompted before overwrite
       (unless --force). Does not accept --answers or --yes (use write for automation).
 
 Other commands:
@@ -63,10 +65,10 @@ Other commands:
   assemble [--project-root <dir>] [--profile <path>]
            [--agent auto|claude_code|cursor|github_copilot|gemini_cli|openai_codex]
            [--dry-run] [--no-invoke]
-      Read docs/FORGE-INSTALL-PROFILE.json, write docs/FORGE-ASSEMBLE-PROMPT.md, then spawn a
-      host CLI when on PATH and enabled in the profile (--agent auto): Claude, Cursor (cursor agent),
-      GitHub Copilot CLI (copilot), Gemini, Codex. If none match or --no-invoke, prints a copy-paste
-      IDE chat block on stdout (absolute path to the prompt file) for Cline, Kimi, VS Code chat, etc.
+      Read docs/FORGE-INSTALL-PROFILE.json, create a temp assembly workspace (prompt + doc copies),
+      then spawn a host CLI when on PATH and enabled in the profile (--agent auto): Claude, Cursor (cursor agent),
+      GitHub Copilot CLI (copilot), Gemini, Codex. If none match or --no-invoke, prints a copy-paste IDE chat block on stdout (stderr when
+      launched from the post-install prompt) for Cline, Kimi, VS Code chat, etc.
       Requires network/auth for the chosen vendor CLI.
   check [--project-root <dir>] [--answers <file>]
   resolve-defaults [--answers <file>]  Merge partial answers with defaults (stdout JSON)
@@ -80,7 +82,7 @@ Options:
   --yes                  write: non-interactive (use defaultAnswers when no --answers)
   --agent                assemble: auto | claude_code | cursor | github_copilot | gemini_cli | openai_codex
   --profile              assemble: path to install profile JSON relative to project root
-  --no-invoke            assemble: write FORGE-ASSEMBLE-PROMPT.md only; do not spawn a CLI
+  --no-invoke            assemble: write prompt under temp dir only; do not spawn a CLI
 
 Environment:
   No network is required for core install/write/check/load/blueprint commands.
@@ -98,16 +100,16 @@ Target agents (answers.targets.* — booleans; at least one must be true after m
 
 Defaults: claude_code + cursor on; other targets off unless toggled or set in answers.
 
-Domains (portable AGENTS.md — eight groups aligned with CODING_AGENT_INSTRUCTION_ELEMENTS.md):
-  domains.*          Booleans: foundation, standards, execution, safety, architecture, quality, knowledge, orchestration
-                     When set in --answers, they drive which slices appear unless you also set context_core / context_advanced
-  domain_requirements Optional strings per domain for a follow-up agentic pass (see docs/FORGE-AGENTIC-ASSEMBLY.md)
+Domains (portable AGENTS.md — eight foundations, always on in the interactive TUI):
+  Interactive install always emits all eight domain groups (Foundation → Orchestration).
+  domains.*          Booleans in --answers / write: override which slices appear unless you set context_core / context_advanced
+  domain_requirements Optional strings per domain for assembly (see docs/FORGE-AGENTIC-ASSEMBLY.md)
   context_core / context_advanced  Low-level slice toggles; use when not using domains
 
 optional_skills — top-10 shortlist; each id emits forge-<id>/SKILL.md + workflow.md under host-native paths where that target is on.
   See schemas/install-answers.partial.schema.json for allowed ids.
 
-Emitted on write/install: docs/FORGE-INSTALL-PROFILE.json + docs/FORGE-AGENTIC-ASSEMBLY.md
+Emitted on write/install: docs/FORGE-INSTALL-PROFILE.json + docs/FORGE-AGENTS-ELEMENT-MENU.md + docs/FORGE-AGENTIC-ASSEMBLY.md
 Preview bundle (no writes): forge-vibe blueprint [--answers <file> | --yes | interactive]
 
 Schema (in published package):
@@ -206,24 +208,15 @@ async function promptInteractive(projectRoot: string): Promise<InstallAnswers> {
     detectionHint,
   });
 
-  const domainMap = await promptCheckbox({
-    title: "Step 2 — Instruction domains (portable AGENTS.md)",
-    subtitle:
-      "Aligned with CODING_AGENT_INSTRUCTION_ELEMENTS.md. All on by default — turn off to slim context. At least one domain required.",
-    minSelected: 1,
-    items: DOMAIN_TUI.map((row) => ({
-      id: row.id,
-      label: row.label,
-      hint: row.hint,
-      checked: defaultAnswers.domains[row.id],
-    })),
-  });
+  log.message(
+    "Step 2 — Eight foundations (portable AGENTS.md)\n" +
+      "All eight instruction domains (Foundation → Orchestration) are always included. " +
+      "Next: optional extra context per domain only — Enter leaves that domain without added notes.",
+  );
 
-  const domains = Object.fromEntries(
-    DOMAIN_TUI.map((row) => [row.id, domainMap.get(row.id) ?? false]),
-  ) as DomainMap;
+  const domains: DomainMap = { ...defaultDomains };
 
-  const domain_requirements = await promptDomainRequirements({ domains });
+  const domain_requirements = await promptDomainRequirements();
 
   const skillMap = await promptCheckbox({
     title: "Optional skill bundles (top-10 shortlist)",
@@ -284,6 +277,48 @@ async function promptInteractive(projectRoot: string): Promise<InstallAnswers> {
     include_memory_enhanced: optMap.get("memory") ?? false,
     allow_hooks: optMap.get("hooks") ?? false,
   });
+}
+
+function printPostWriteAssemblyBanner(projectRoot: string): void {
+  const line = "—".repeat(62);
+  console.error("");
+  console.error(line);
+  console.error("forge-vibe: AGENTS.md is a canonical scaffold (structure + placeholders), not final tuned context.");
+  console.error("Next — customize for this repo:");
+  console.error(`  cd ${projectRoot}`);
+  console.error("  forge-vibe assemble");
+  console.error("Paste-only if no vendor CLI on PATH:");
+  console.error("  forge-vibe assemble --no-invoke");
+  console.error("Guides: docs/FORGE-AGENTIC-ASSEMBLY.md · docs/FORGE-ASSEMBLE.md");
+  console.error(line);
+  console.error("");
+}
+
+async function maybeOfferAssembleAfterInteractiveWrite(projectRoot: string): Promise<void> {
+  const runNow = await confirm({
+    message:
+      "Run `forge-vibe assemble` now? Uses a coding agent CLI on PATH if available; otherwise prints copy-paste text for your IDE (stderr).",
+    initialValue: false,
+  });
+
+  if (isCancel(runNow) || !runNow) {
+    console.error("[forge-vibe] Skipped assemble. Run `forge-vibe assemble` when you are ready.");
+    return;
+  }
+
+  const code = await runAssemble({
+    projectRoot,
+    agent: "auto",
+    dryRun: false,
+    noInvoke: false,
+    idePasteDestination: "stderr",
+  });
+
+  if (code !== 0) {
+    console.error(
+      `[forge-vibe] assemble exited with code ${code}. Install output is on disk; try: forge-vibe assemble --no-invoke`,
+    );
+  }
 }
 
 async function main(): Promise<void> {
@@ -467,6 +502,16 @@ async function main(): Promise<void> {
       });
       for (const r of results) {
         console.log(`${r.action}\t${r.path}`);
+      }
+      if (!values["dry-run"]) {
+        printPostWriteAssemblyBanner(root);
+        if (
+          ranInteractiveTui &&
+          process.stdin.isTTY &&
+          process.stdout.isTTY
+        ) {
+          await maybeOfferAssembleAfterInteractiveWrite(root);
+        }
       }
     } catch (e) {
       console.error(String(e));

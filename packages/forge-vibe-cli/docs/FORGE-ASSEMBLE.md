@@ -28,6 +28,6 @@ forge-vibe assemble [--project-root <dir>] [--profile <path>]
 - **`docs/FORGE-AGENTS-ELEMENT-MENU.md`** — element-type menu (forge **agents.md.tpl**); assembly shortlists ~15–20 themes from it.
 - Optional: **`CODING_AGENT_INSTRUCTION_ELEMENTS.md`** at repo root (full 60+ catalog).
 
-## Project: {{PROJECT_NAME}}
+## Project: forge-vibe-cli
 
 See **docs/FORGE-AGENTIC-ASSEMBLY.md** for the manual / blueprint workflow.
