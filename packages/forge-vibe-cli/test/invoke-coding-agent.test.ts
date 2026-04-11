@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import path from "node:path";
 import { buildAssemblerOneShotPrompt } from "../src/invoke-coding-agent.js";
+import { ASSEMBLY_DONE_MARKER_BASENAME } from "../src/assembly-constants.js";
 
 describe("buildAssemblerOneShotPrompt", () => {
   it("includes absolute repo root, absolute prompt path, and AGENTS.md path", () => {
@@ -11,6 +12,8 @@ describe("buildAssemblerOneShotPrompt", () => {
     expect(text).toContain(promptAbs);
     expect(text).toContain(path.join(root, "AGENTS.md"));
     expect(text).toMatch(/write\/edit files|Primary deliverable/i);
+    expect(text).toContain(path.join(root, ASSEMBLY_DONE_MARKER_BASENAME));
+    expect(text).toMatch(/CRITICAL|exits 1/i);
   });
 
   it("reminds to align CLAUDE.md when claude_code target is enabled", () => {

@@ -7,7 +7,7 @@ import { applyTemplate } from "./template.js";
 import { packsDir } from "./pack-root.js";
 import type { InstallAnswers } from "./types.js";
 import { activeAdapterIds } from "./types.js";
-import { ASSEMBLY_PROMPT_BASENAME } from "./assembly-constants.js";
+import { ASSEMBLY_DONE_MARKER_BASENAME, ASSEMBLY_PROMPT_BASENAME } from "./assembly-constants.js";
 import { buildIdeAssemblyChatPaste } from "./ide-assembly-paste.js";
 import {
   invokerBinary,
@@ -24,7 +24,7 @@ import { buildForgeInstallBundlesSection } from "./forge-install-bundles-md.js";
 import { canonicalAgentsMdTemplate } from "./plan.js";
 import { suggestMonorepoRootIfNestedPackage } from "./project-root-hint.js";
 
-export { ASSEMBLY_PROMPT_BASENAME } from "./assembly-constants.js";
+export { ASSEMBLY_DONE_MARKER_BASENAME, ASSEMBLY_PROMPT_BASENAME } from "./assembly-constants.js";
 
 async function readTpl(rel: string): Promise<string> {
   return fs.readFile(path.join(packsDir(), rel), "utf8");
@@ -181,6 +181,24 @@ async function removeAssemblyWorkspace(workDirAbs: string): Promise<void> {
   await fs.rm(workDirAbs, { recursive: true, force: true });
 }
 
+async function removeAssemblyDoneMarker(projectRootAbs: string): Promise<void> {
+  const marker = path.join(projectRootAbs, ASSEMBLY_DONE_MARKER_BASENAME);
+  try {
+    await fs.unlink(marker);
+  } catch {
+    /* ENOENT: no stale marker */
+  }
+}
+
+async function assemblyDoneMarkerPresent(projectRootAbs: string): Promise<boolean> {
+  try {
+    await fs.access(path.join(projectRootAbs, ASSEMBLY_DONE_MARKER_BASENAME));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Creates a **temporary** assembly workspace under the system temp dir, then optionally spawns a host CLI.
  * On successful CLI exit **0**, the workspace is deleted. Otherwise the IDE paste block includes the workspace path and cleanup instructions.
@@ -296,6 +314,8 @@ export async function runAssemble(opts: AssembleRunOptions): Promise<number> {
       );
     }
 
+    await removeAssemblyDoneMarker(root);
+
     const agentsAbs = path.join(root, "AGENTS.md");
     let agentsMdBeforeInvoke = "";
     try {
@@ -324,12 +344,18 @@ export async function runAssemble(opts: AssembleRunOptions): Promise<number> {
       } catch {
         agentsText = "";
       }
-      if (assembleAgentsMdIndicatesNoDiskProgress(agentsMdBeforeNorm, agentsText, answers)) {
+      const markerPresent = await assemblyDoneMarkerPresent(root);
+      const agentsProgressed = !assembleAgentsMdIndicatesNoDiskProgress(
+        agentsMdBeforeNorm,
+        agentsText,
+        answers,
+      );
+      if (!markerPresent && !agentsProgressed) {
         console.error(
-          `[forge-vibe assemble] ${invokerDisplayName(picked)} exited 0, but ${agentsAbs} is still the exact forge install scaffold for this profile and did not change on disk during this run (after normalizing line endings). Save a rewritten file, or use --project-root if edits went elsewhere.`,
+          `[forge-vibe assemble] ${invokerDisplayName(picked)} exited 0, but assembly did not complete: missing **${ASSEMBLY_DONE_MARKER_BASENAME}** at ${root} and ${agentsAbs} is still the install scaffold unchanged this run.`,
         );
         console.error(
-          "[forge-vibe assemble] Clear the scaffold: remove \"### Canonical scaffold (forge install)\", replace placeholders with repo facts. If AGENTS.md already differs from `forge-vibe write` for this profile, a repeat assemble with no on-disk edits exits 0 (idempotent).",
+          `[forge-vibe assemble] Create **${path.join(root, ASSEMBLY_DONE_MARKER_BASENAME)}** immediately after saving **AGENTS.md** (see FORGE-ASSEMBLE-PROMPT **Critical** + step 4; the agent CLI one-shot also repeats this path). Rewrite **AGENTS.md** off the install scaffold. Use --project-root if edits went to a different tree.`,
         );
         console.error(
           "[forge-vibe assemble] Assembly workspace kept. Use the IDE paste block if needed, then delete the temp folder when done.",
@@ -341,12 +367,13 @@ export async function runAssemble(opts: AssembleRunOptions): Promise<number> {
       const templateNorm = normalizeAgentsMarkdownForCompare(canonicalAgentsMdTemplate(answers));
       const afterNorm = normalizeAgentsMarkdownForCompare(agentsText);
       const idempotentNoEdit = agentsMdBeforeNorm === afterNorm && agentsMdBeforeNorm !== templateNorm;
+      const completionNote = markerPresent
+        ? `Completion marker **${ASSEMBLY_DONE_MARKER_BASENAME}** present.`
+        : idempotentNoEdit
+          ? "No marker file (idempotent: AGENTS.md already non-scaffold, unchanged)."
+          : "AGENTS.md changed off install scaffold (marker file optional in this case).";
       console.error(
-        `[forge-vibe assemble] ${invokerDisplayName(picked)} finished (exit 0). Removed assembly workspace. ${agentsAbs} ${
-          idempotentNoEdit
-            ? "was already tuned and unchanged this run (idempotent assemble)."
-            : "changed off the install scaffold or was already non-scaffold."
-        } Confirm host files (e.g. CLAUDE.md) if targets.claude_code is enabled in the profile.`,
+        `[forge-vibe assemble] ${invokerDisplayName(picked)} finished (exit 0). Removed assembly workspace. ${completionNote} Confirm host files (e.g. CLAUDE.md) if targets.claude_code is enabled in the profile.`,
       );
       return 0;
     }

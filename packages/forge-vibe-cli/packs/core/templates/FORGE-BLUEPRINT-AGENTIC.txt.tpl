@@ -1,5 +1,7 @@
 You are improving agent instructions for the repository **{{PROJECT_NAME}}**.
 
+**Hard requirement for `forge-vibe assemble`:** after saving root **AGENTS.md**, create an empty file **`forge_vibe_agent_instructions_done.txt`** in the **same directory** as **AGENTS.md** (repository root). Do this **before** long refactors of **CLAUDE.md** / **.cursor/** — the CLI deletes that file before each run and treats it as the completion signal. Missing file + unchanged scaffold ⇒ assemble exits **1**.
+
 Read **docs/FORGE-INSTALL-PROFILE.json**, **docs/FORGE-AGENTS-ELEMENT-MENU.md** (element-type menu from forge **agents.md.tpl**), and root **AGENTS.md**. Use **CODING_AGENT_INSTRUCTION_ELEMENTS.md** at the repo root only if you need the full 60+ catalog.
 
 Rewrite **AGENTS.md** into a **concise runbook** (~150–300 lines): cover roughly **15–20** element themes that fit this repo, guided by enabled **domains** and **`domain_requirements`**. **Do not** copy What/Why/generic examples from the menu — only **repo-specific** facts. **Infer** from manifests, CI, README, and the tree, then reconcile with the profile.

@@ -11,6 +11,7 @@ forge-vibe assemble [--project-root <dir>] [--profile <path>]
 ```
 
 - Creates a **temporary assembly workspace** under your OS temp dir (`forge-vibe-assemble-*`) with **`FORGE-ASSEMBLE-PROMPT.md`**, **`README-ASSEMBLY-WORKSPACE.md`**, and copies of forge **`docs/`** files — **not** in the repo. **Removed automatically** after a **successful** CLI run (exit 0).
+- **Completion:** before each invoke, **`forge_vibe_agent_instructions_done.txt`** is **deleted** from the project root if it exists. After exit **0**, success requires that marker file **or** **AGENTS.md** changed off the install scaffold (see **`FORGE-ASSEMBLE-PROMPT.md`** — the agent should create the marker when done).
 - **`--agent auto`:** picks the first **on-PATH** CLI whose target is enabled in **`docs/FORGE-INSTALL-PROFILE.json`**, in this order: **Claude Code** → **Cursor** → **GitHub Copilot CLI** → **Gemini** → **Codex**.
 - **Spawned CLIs** (trusted repo only; flags favor non-interactive edits):
   - **Claude Code:** `claude -p "…" --permission-mode acceptEdits`

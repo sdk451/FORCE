@@ -1,6 +1,7 @@
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import type { SpawnSyncOptions } from "node:child_process";
+import { ASSEMBLY_DONE_MARKER_BASENAME } from "./assembly-constants.js";
 import type { InstallAnswers } from "./types.js";
 
 /** Windows: PATH often resolves `claude` → `claude.cmd`; spawn without a shell yields ENOENT. */
@@ -124,6 +125,7 @@ export function buildAssemblerOneShotPrompt(
   const root = path.resolve(projectRoot);
   const promptAbs = path.isAbsolute(promptPath) ? promptPath : path.join(root, promptPath);
   const agentsAbs = path.join(root, "AGENTS.md");
+  const markerAbs = path.join(root, ASSEMBLY_DONE_MARKER_BASENAME);
   const lines = [
     "Forge-vibe assembly task (non-interactive -p / print mode).",
     "Do not ask the user what to work on or wait for replies. Do not end with a question. Read the prompt file, use your file-edit tools, complete all steps, then finish.",
@@ -132,6 +134,8 @@ export function buildAssemblerOneShotPrompt(
     `Primary deliverable: rewrite the root AGENTS file on disk: ${agentsAbs}`,
     "Infer concrete facts from this repo (package.json, CI, README, src layout) and from FORGE-INSTALL-PROFILE.json (repo docs/ or copy next to the prompt); replace all scaffold placeholders.",
     "You must write/edit files — especially AGENTS.md — not reply with only a plan or summary.",
+    `CRITICAL — parent CLI exit code: immediately after you save ${agentsAbs}, you MUST use your write tool to create this exact file (may be empty): ${markerAbs}`,
+    "If that file is missing when you stop, forge-vibe assemble exits 1 even if you wrote a plan in chat. Create the marker before spending time on CLAUDE.md, Cursor rules, or other hosts — you can align those after the marker exists.",
   ];
   const host = hostAlignmentReminder(targets);
   if (host) lines.push(host);

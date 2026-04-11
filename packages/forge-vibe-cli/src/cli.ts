@@ -334,7 +334,7 @@ async function maybeOfferAssembleAfterInteractiveWrite(projectRoot: string): Pro
 
   if (code !== 0) {
     console.error(
-      `[forge-vibe] assemble exited with code ${code}. Install output is on disk; try: forge-vibe assemble --no-invoke`,
+      `[forge-vibe] assemble exited with code ${code}. If the agent exited 0 but forge-vibe still failed, create forge_vibe_agent_instructions_done.txt at the project root after AGENTS.md (see FORGE-ASSEMBLE-PROMPT). Install output is on disk; try: forge-vibe assemble --no-invoke`,
     );
   }
 }

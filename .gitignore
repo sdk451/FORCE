@@ -6,3 +6,6 @@ dist/
 *.tsbuildinfo
 coverage/
 private-dist/*.tgz
+
+# forge-vibe assemble completion marker (regenerated each run; do not commit)
+forge_vibe_agent_instructions_done.txt
