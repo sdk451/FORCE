@@ -7,6 +7,7 @@ import {
   buildCopilotInstructionsMd,
   buildGeminiMd,
   buildProjectMemoryMd,
+  buildSelfEvolvingClaudeMd,
   sectionAgentBehavior,
   sectionDebuggingProtocol,
   sectionForbiddenPatterns,
@@ -84,6 +85,28 @@ export function canonicalAgentsMdTemplate(a: InstallAnswers): string {
   return buildAgentsMd(a, canonVars(a));
 }
 
+function stackSelfEvolvingCommandBlock(stack: InstallAnswers["stack"]): string {
+  if (stack === "typescript") {
+    return [
+      "```bash",
+      "# Align commands with AGENTS.md — replace with your repo’s scripts",
+      "npm ci",
+      "npm run build",
+      "npm test",
+      "npm run lint",
+      "```",
+    ].join("\n");
+  }
+  return ["```bash", "pip install -e .", "pytest", "ruff check .", "```"].join("\n");
+}
+
+function stackSelfEvolvingArchitectureHint(stack: InstallAnswers["stack"]): string {
+  if (stack === "typescript") {
+    return "Typical: `src/` with boundaries as documented in **AGENTS.md** — replace with your tree.";
+  }
+  return "Typical: package / `src/` layout — align with **AGENTS.md** Architecture.";
+}
+
 function varsFor(a: InstallAnswers): Record<string, string> {
   const date = new Date().toISOString().slice(0, 10);
   const ui = a.include_ui_workflow_pack
@@ -97,8 +120,9 @@ function varsFor(a: InstallAnswers): Record<string, string> {
     a.optional_skills.length > 0 ||
     a.include_ui_workflow_pack ||
     a.include_memory_enhanced ||
-    a.allow_hooks
-      ? `\n- **Optional skills & packs:** Root **AGENTS.md** lists **when to use** each selected bundle (**Optional skills & packs**). On-disk skill folders: \`${a.optional_skills.map((id) => forgeSkillInstallDir(id)).join("`, `") || "(none)"}\` (\`SKILL.md\` + \`workflow.md\` per **docs/FORGE-COMPATIBILITY-MATRIX.md**); also **UI workflow pack**, **PROJECT_MEMORY.md**, and **Claude hooks** when enabled.\n`
+    a.allow_hooks ||
+    a.include_self_evolving_claude
+      ? `\n- **Optional skills & packs:** Root **AGENTS.md** lists **when to use** each selected bundle (**Optional skills & packs**). On-disk skill folders: \`${a.optional_skills.map((id) => forgeSkillInstallDir(id)).join("`, `") || "(none)"}\` (\`SKILL.md\` + \`workflow.md\` per **docs/FORGE-COMPATIBILITY-MATRIX.md**); also **UI workflow pack**, **PROJECT_MEMORY.md**, **Claude hooks**, and **Self-Evolving Claude Code** (when enabled) per **docs/FORGE-SELF-EVOLVING.md**.\n`
       : "";
   return {
     PROJECT_NAME: a.project_name,
@@ -107,7 +131,36 @@ function varsFor(a: InstallAnswers): Record<string, string> {
     UI_SECTION: ui,
     MEMORY_SECTION: mem,
     OPTIONAL_SKILLS_NOTE: optionalSkillsNote,
+    SELF_EVOLVING_COMMANDS_BLOCK: stackSelfEvolvingCommandBlock(a.stack),
+    SELF_EVOLVING_ARCHITECTURE_HINT: stackSelfEvolvingArchitectureHint(a.stack),
   };
+}
+
+async function emitSelfEvolvingClaudePack(
+  files: PlannedFile[],
+  v: Record<string, string>,
+): Promise<void> {
+  const rels: [string, string][] = [
+    ["self-evolving-claude/rules/self-evolving-core-invariants.md.tpl", ".claude/rules/self-evolving-core-invariants.md"],
+    ["self-evolving-claude/rules/self-evolving-security.md.tpl", ".claude/rules/self-evolving-security.md"],
+    ["self-evolving-claude/rules/self-evolving-api-design.md.tpl", ".claude/rules/self-evolving-api-design.md"],
+    ["self-evolving-claude/rules/self-evolving-performance.md.tpl", ".claude/rules/self-evolving-performance.md"],
+    ["self-evolving-claude/agents/architect.md.tpl", ".claude/agents/architect.md"],
+    ["self-evolving-claude/agents/reviewer.md.tpl", ".claude/agents/reviewer.md"],
+    ["self-evolving-claude/skills/evolution/SKILL.md.tpl", ".claude/skills/self-evolving-evolution/SKILL.md"],
+    ["self-evolving-claude/skills/evolve/SKILL.md.tpl", ".claude/skills/self-evolving-evolve/SKILL.md"],
+    ["self-evolving-claude/skills/review/SKILL.md.tpl", ".claude/skills/self-evolving-review/SKILL.md"],
+    ["self-evolving-claude/skills/boot/SKILL.md.tpl", ".claude/skills/self-evolving-boot/SKILL.md"],
+    ["self-evolving-claude/skills/fix-issue/SKILL.md.tpl", ".claude/skills/self-evolving-fix-issue/SKILL.md"],
+    ["self-evolving-claude/memory/README.md.tpl", ".claude/memory/README.md"],
+    ["self-evolving-claude/memory/learned-rules.md.tpl", ".claude/memory/learned-rules.md"],
+    ["self-evolving-claude/memory/evolution-log.md.tpl", ".claude/memory/evolution-log.md"],
+    ["self-evolving-claude/docs/FORGE-SELF-EVOLVING.md.tpl", "docs/FORGE-SELF-EVOLVING.md"],
+  ];
+  for (const [src, dest] of rels) {
+    const raw = await readTpl(src);
+    files.push({ path: dest, content: applyTemplate(raw, v) });
+  }
 }
 
 export async function buildPlannedFiles(answers: InstallAnswers): Promise<{
@@ -122,9 +175,17 @@ export async function buildPlannedFiles(answers: InstallAnswers): Promise<{
   files.push({ path: "AGENTS.md", content: buildAgentsMd(answers, cv) });
 
   if (answers.targets.claude_code) {
+    const claudeMdContent =
+      answers.include_self_evolving_claude
+        ? buildSelfEvolvingClaudeMd(
+            answers,
+            cv,
+            applyTemplate(await readTpl("self-evolving-claude/CLAUDE-cognitive-core.md.tpl"), v),
+          )
+        : buildClaudeMd(answers, cv);
     files.push({
       path: "CLAUDE.md",
-      content: buildClaudeMd(answers, cv),
+      content: claudeMdContent,
     });
     files.push({
       path: ".claude/rules/forge-core.md",
@@ -198,6 +259,10 @@ You enabled **allow_hooks**. The emitted \`.claude/settings.json\` contains **ex
         path: ".claude/rules/forge-forbidden.md",
         content: sectionForbiddenPatterns(cv),
       });
+    }
+
+    if (answers.include_self_evolving_claude) {
+      await emitSelfEvolvingClaudePack(files, v);
     }
   }
 

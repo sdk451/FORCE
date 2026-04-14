@@ -27,7 +27,8 @@
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "repack-forge-vibe": "npm run build && npm run test && node ../../scripts/repack-forge-vibe.mjs"
   },
   "dependencies": {
     "@clack/prompts": "^1.2.0",

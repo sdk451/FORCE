@@ -253,8 +253,7 @@ function buildClaudeHooksSectionMarkdown(a: InstallAnswers): string {
   ].join("\n");
 }
 
-export function buildClaudeMd(a: InstallAnswers, v: CanonicalVars): string {
-  const memImport = a.include_memory_enhanced ? "\n@PROJECT_MEMORY.md\n" : "";
+function claudeMdVerificationHooksTail(a: InstallAnswers): string {
   const showHooks = claudeHooksSectionNeeded(a);
   const verificationBody = showHooks
     ? "Follow **AGENTS.md** verification / DOD; use hooks only where the team has reviewed them."
@@ -262,6 +261,11 @@ export function buildClaudeMd(a: InstallAnswers, v: CanonicalVars): string {
   const hooksSection = showHooks
     ? `\n## Hooks & automation\n\n${buildClaudeHooksSectionMarkdown(a)}\n`
     : "";
+  return `\n## Verification\n\n${verificationBody}\n${hooksSection}`;
+}
+
+export function buildClaudeMd(a: InstallAnswers, v: CanonicalVars): string {
+  const memImport = a.include_memory_enhanced ? "\n@PROJECT_MEMORY.md\n" : "";
 
   return `# CLAUDE.md — ${v.PROJECT_NAME}
 
@@ -274,11 +278,37 @@ ${memImport}
 - Prefer **Plan** mode for ambiguous or large refactors.
 - **Modular rules:** \`.claude/rules/\` — scoped policies (loaded at launch when pathless).
 - **Skills:** \`.claude/skills/\` — \`SKILL.md\` per [agentskills.io](https://agentskills.io/); loaded when invoked or when Claude selects them as relevant.
+${claudeMdVerificationHooksTail(a)}`;
+}
 
-## Verification
+/**
+ * Self-Evolving Claude pack: behavioral “cognitive core” in the middle; portable policy stays in **AGENTS.md** via `@AGENTS.md`.
+ * `cognitiveCoreFromTemplate` is the output of `CLAUDE-cognitive-core.md.tpl` (applyTemplate).
+ */
+export function buildSelfEvolvingClaudeMd(
+  a: InstallAnswers,
+  v: CanonicalVars,
+  cognitiveCoreFromTemplate: string,
+): string {
+  const memImport = a.include_memory_enhanced ? "\n@PROJECT_MEMORY.md\n" : "";
 
-${verificationBody}
-${hooksSection}`;
+  return `# Self-Evolving Engineering — ${v.PROJECT_NAME}
+
+<!-- forge-vibe: Self-Evolving Claude pack. Cognitive core adapted from Muditek's public guide (https://muditek.com/resources/claude-code-self-evolving). Portable norms: @AGENTS.md. -->
+
+@AGENTS.md
+${memImport}
+${cognitiveCoreFromTemplate}
+
+## Claude-specific execution (forge-vibe)
+
+- **Plan mode:** Prefer **Plan** for ambiguous or large refactors.
+- **Forge rules:** \`.claude/rules/forge-*.md\` — baseline from this installer.
+- **Self-evolving rules:** \`self-evolving-*.md\` — path-scoped security, API, performance, core invariants.
+- **Subagents:** \`.claude/agents/architect.md\`, \`reviewer.md\`.
+- **Skills:** \`.claude/skills/self-evolving-*/\` — evolution engine, evolve audit, review, boot, fix-issue (see **docs/FORGE-SELF-EVOLVING.md**).
+- **Generic skills:** other \`.claude/skills/\` bundles per [agentskills.io](https://agentskills.io/).
+${claudeMdVerificationHooksTail(a)}`;
 }
 
 export function buildGeminiMd(a: InstallAnswers, v: CanonicalVars): string {

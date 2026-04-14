@@ -113,7 +113,7 @@ Domains (portable AGENTS.md — eight foundations, always on in the interactive 
   domain_requirements Optional strings per domain for assembly (see docs/FORGE-AGENTIC-ASSEMBLY.md)
   context_core / context_advanced  Low-level slice toggles; use when not using domains
 
-optional_skills — top-10 shortlist; each id emits forge-<id>/SKILL.md + workflow.md under host-native paths where that target is on.
+optional_skills — shortlist of skill bundles; each id emits forge-<id>/SKILL.md + workflow.md under host-native paths where that target is on.
   See schemas/install-answers.partial.schema.json for allowed ids.
 
 Emitted on write/install: docs/FORGE-INSTALL-PROFILE.json + docs/FORGE-AGENTS-ELEMENT-MENU.md + docs/FORGE-AGENTIC-ASSEMBLY.md
@@ -225,7 +225,7 @@ async function promptInteractive(projectRoot: string): Promise<InstallAnswers> {
   const domain_requirements = await promptDomainRequirements();
 
   const skillMap = await promptCheckbox({
-    title: "Optional skill bundles (top-10 shortlist)",
+    title: "Optional skill bundles",
     subtitle: "Each selection installs forge-<name>/SKILL.md + workflow.md (BMAD-style). Replace or extend in your repo as needed. None required.",
     minSelected: 0,
     items: OPTIONAL_SKILL_TUI.map((row) => ({
@@ -262,6 +262,30 @@ async function promptInteractive(projectRoot: string): Promise<InstallAnswers> {
     ],
   });
 
+  let include_self_evolving_claude = false;
+  if (agentMap.get("claude_code")) {
+    log.message(
+      "Step 4 — Self-Evolving Claude Code (optional)\n" +
+        "Behavioral cognitive core + evolution memory (inspired by Muditek’s public guide). " +
+        "Keeps portable policy in **AGENTS.md** via `@AGENTS.md`; replaces default **CLAUDE.md** body and adds `.claude/` rules, agents, skills, memory.",
+    );
+    const seMap = await promptCheckbox({
+      title: "Self-Evolving Claude Code",
+      subtitle:
+        "Installs CLAUDE.md (self-evolving) + `.claude/rules/self-evolving-*.md`, agents, `self-evolving-*` skills, `.claude/memory/`. Requires Claude Code target.",
+      minSelected: 0,
+      items: [
+        {
+          id: "self_evolving",
+          label: "Self-Evolving Claude Code pack",
+          hint: "CLAUDE.md cognitive core + evolution templates (see docs/FORGE-SELF-EVOLVING.md)",
+          checked: defaultAnswers.include_self_evolving_claude,
+        },
+      ],
+    });
+    include_self_evolving_claude = seMap.get("self_evolving") === true;
+  }
+
   const optional_skills = OPTIONAL_SKILL_TUI.map((row) => row.id).filter((id) => skillMap.get(id) === true);
 
   return resolveDefaults({
@@ -282,6 +306,7 @@ async function promptInteractive(projectRoot: string): Promise<InstallAnswers> {
     include_ui_workflow_pack: optMap.get("ui_pack") ?? defaultAnswers.include_ui_workflow_pack,
     include_memory_enhanced: optMap.get("memory") ?? defaultAnswers.include_memory_enhanced,
     allow_hooks: optMap.get("hooks") ?? defaultAnswers.allow_hooks,
+    include_self_evolving_claude,
   });
 }
 

@@ -2,7 +2,7 @@
  * Canonical context sections & optional skills — aligned with
  * `CODING_AGENT_INSTRUCTION_ELEMENTS.md` (eight domains → portable slices) and
  * `_bmad-output/planning-artifacts/research/canonical-agents-md-research-2026-04-03.md`
- * (core/advanced slices, top-10 skills, TUI).
+ * (core/advanced slices, optional skills, TUI).
  */
 
 export const CONTEXT_CORE_IDS = [
@@ -27,7 +27,7 @@ export const CONTEXT_ADVANCED_IDS = [
 ] as const;
 export type ContextAdvancedId = (typeof CONTEXT_ADVANCED_IDS)[number];
 
-/** Top-10 skills from canonical research Part 2 (packs under packs/skills/: SKILL.md + workflow.md). */
+/** Optional skills (packs under packs/skills/: SKILL.md + workflow.md). */
 export const OPTIONAL_SKILL_IDS = [
   "frontend-design",
   "superpowers",
@@ -39,6 +39,8 @@ export const OPTIONAL_SKILL_IDS = [
   "skill-creator",
   "playwright-browser",
   "remotion-best-practices",
+  "security-review",
+  "test-coverage-review",
 ] as const;
 export type OptionalSkillId = (typeof OPTIONAL_SKILL_IDS)[number];
 
@@ -139,6 +141,8 @@ export const OPTIONAL_SKILL_TUI: { id: OptionalSkillId; label: string; hint: str
   { id: "skill-creator", label: "Skill creator (meta)", hint: "draft new SKILL.md" },
   { id: "playwright-browser", label: "Playwright / browser verification", hint: "MCP or CLI" },
   { id: "remotion-best-practices", label: "Remotion pattern (exemplar)", hint: "domain-skill template" },
+  { id: "security-review", label: "Security review", hint: "threats, secrets, authZ — structured pass" },
+  { id: "test-coverage-review", label: "Test coverage review", hint: "gaps, meaningful tests, not just %" },
 ];
 
 /**

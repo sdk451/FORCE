@@ -75,7 +75,9 @@
           "context-engineering",
           "skill-creator",
           "playwright-browser",
-          "remotion-best-practices"
+          "remotion-best-practices",
+          "security-review",
+          "test-coverage-review"
         ]
       }
     },
@@ -94,6 +96,7 @@
     },
     "include_ui_workflow_pack": { "type": "boolean" },
     "include_memory_enhanced": { "type": "boolean" },
-    "allow_hooks": { "type": "boolean" }
+    "allow_hooks": { "type": "boolean" },
+    "include_self_evolving_claude": { "type": "boolean" }
   }
 }

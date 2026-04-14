@@ -8,7 +8,8 @@ export function hasForgeInstallBundles(a: InstallAnswers): boolean {
     a.optional_skills.length > 0 ||
     a.include_ui_workflow_pack ||
     a.include_memory_enhanced ||
-    a.allow_hooks
+    a.allow_hooks ||
+    a.include_self_evolving_claude
   );
 }
 
@@ -46,6 +47,11 @@ function portableBundlesBody(a: InstallAnswers): string {
       "- **Claude hooks** — When repo automation or hook-backed guardrails apply; follow team policy for those checks.",
     );
   }
+  if (a.include_self_evolving_claude) {
+    lines.push(
+      "- **Self-Evolving Claude Code** — Claude Code session behavior + evolution memory (**.claude/memory/**, **self-evolving-*** rules/skills). See **docs/FORGE-SELF-EVOLVING.md**; portable norms stay in **AGENTS.md**.",
+    );
+  }
   if (lines.length === 0) return "";
   return `${lines.join("\n")}\n\n`;
 }
@@ -53,7 +59,7 @@ function portableBundlesBody(a: InstallAnswers): string {
 function assemblyPromptBundlesBody(a: InstallAnswers): string {
   const parts: string[] = [];
   parts.push(
-    "Authoritative selection lives in **`docs/FORGE-INSTALL-PROFILE.json`** (`optional_skills`, `include_ui_workflow_pack`, `include_memory_enhanced`, `allow_hooks`).\n\n",
+    "Authoritative selection lives in **`docs/FORGE-INSTALL-PROFILE.json`** (`optional_skills`, `include_ui_workflow_pack`, `include_memory_enhanced`, `allow_hooks`, `include_self_evolving_claude`).\n\n",
   );
   parts.push(
     "**After assembly,** root **`AGENTS.md`** must carry end-user guidance: each skill’s **display name**, **`forge-<id>`** (so agents can resolve the bundle), and **when to use it** (repo-specific triggers). **Remove** installer/assembly prose, **`SKILL.md`** paths, matrix tables, and host-discovery instructions from **`AGENTS.md`** — put those in rules or host files.\n\n",
@@ -90,6 +96,13 @@ function assemblyPromptBundlesBody(a: InstallAnswers): string {
     parts.push("### Claude hooks\n\n");
     parts.push(
       "Hooks may be enabled — **.claude/settings.json**. Assembly: one-line **when hooks matter** + team review policy if needed; not long forge-install copy.\n\n",
+    );
+  }
+
+  if (a.include_self_evolving_claude) {
+    parts.push("### Self-Evolving Claude Code\n\n");
+    parts.push(
+      "**CLAUDE.md** uses the cognitive-core + **@AGENTS.md** import; evolution assets live under **.claude/** — assembly should not duplicate them into **`AGENTS.md`**; keep **`AGENTS.md`** as portable project policy only.\n\n",
     );
   }
 

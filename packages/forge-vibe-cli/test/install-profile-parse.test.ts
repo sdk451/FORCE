@@ -15,6 +15,7 @@ describe("installProfileJsonToAnswers", () => {
     expect(back.targets).toEqual(answers.targets);
     expect(back.context_core).toEqual(answers.context_core);
     expect(back.context_advanced).toEqual(answers.context_advanced);
+    expect(back.include_self_evolving_claude).toBe(answers.include_self_evolving_claude);
   });
 
   it("rejects invalid profile", () => {

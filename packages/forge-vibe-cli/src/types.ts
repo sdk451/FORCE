@@ -41,6 +41,12 @@ export interface InstallAnswers {
   include_ui_workflow_pack: boolean;
   include_memory_enhanced: boolean;
   allow_hooks: boolean;
+  /**
+   * When true with `targets.claude_code`: CLAUDE.md uses the self-evolving cognitive core
+   * (portable policy remains in AGENTS.md via `@AGENTS.md`) and `.claude/` installs rules,
+   * agents, skills, and memory templates (Muditek-style evolution pack).
+   */
+  include_self_evolving_claude: boolean;
 }
 
 export const defaultAnswers: InstallAnswers = {
@@ -63,6 +69,7 @@ export const defaultAnswers: InstallAnswers = {
   include_ui_workflow_pack: true,
   include_memory_enhanced: true,
   allow_hooks: false,
+  include_self_evolving_claude: false,
 };
 
 /** Host IDs emitted in `load` and used in docs (FR-MAP-02). */

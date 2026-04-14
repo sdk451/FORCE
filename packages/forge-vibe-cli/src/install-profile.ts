@@ -31,6 +31,7 @@ export function buildInstallProfileObject(answers: InstallAnswers): Record<strin
     include_ui_workflow_pack: answers.include_ui_workflow_pack,
     include_memory_enhanced: answers.include_memory_enhanced,
     allow_hooks: answers.allow_hooks,
+    include_self_evolving_claude: answers.include_self_evolving_claude,
     derived: {
       context_core: answers.context_core,
       context_advanced: answers.context_advanced,
@@ -125,5 +126,6 @@ export function installProfileJsonToAnswers(data: unknown): InstallAnswers {
     include_ui_workflow_pack: Boolean(p.include_ui_workflow_pack),
     include_memory_enhanced: Boolean(p.include_memory_enhanced),
     allow_hooks: Boolean(p.allow_hooks),
+    include_self_evolving_claude: p.include_self_evolving_claude === true,
   };
 }
