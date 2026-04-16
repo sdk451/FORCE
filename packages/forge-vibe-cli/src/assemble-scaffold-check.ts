@@ -10,7 +10,7 @@ export function normalizeAgentsMarkdownForCompare(content: string): string {
 
 /**
  * True when on-disk **AGENTS.md** is still **byte-identical** (after normalization) to what
- * **`forge-vibe install` / `write`** would emit for the same **InstallAnswers** — i.e. assembly
+ * **`vibeforge install` / `write`** would emit for the same **InstallAnswers** — i.e. assembly
  * did not change the file. More reliable than substring heuristics (banner text, placeholders).
  */
 export function agentsMdMatchesForgeInstallTemplate(

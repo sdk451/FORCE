@@ -4,7 +4,7 @@
 
 ## Install order (suggested)
 
-1. Run **`forge-vibe write`** (or `npx`) to emit **AGENTS.md** and related files.
+1. Run **`vibeforge write`** (or `npx`) to emit **AGENTS.md** and related files.
 2. Install Codex + OMX per [OMX README](https://github.com/sdk451/oh-my-codex/blob/main/README.md): Node **20+**, `npm install -g @openai/codex oh-my-codex`, then `omx setup`.
 
 ## Coexistence

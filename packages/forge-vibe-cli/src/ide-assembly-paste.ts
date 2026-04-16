@@ -7,7 +7,7 @@ import { ASSEMBLY_DONE_MARKER_BASENAME, ASSEMBLY_PROMPT_BASENAME } from "./assem
  */
 export function buildIdeAssemblyChatPaste(opts: {
   projectRootAbs: string;
-  /** System-temp assembly workspace created by `forge-vibe assemble` (contains prompt + copies). */
+  /** System-temp assembly workspace created by `vibeforge assemble` (contains prompt + copies). */
   assemblyWorkDirAbs: string;
   /** Defaults to {@link ASSEMBLY_PROMPT_BASENAME}. */
   promptBasename?: string;
@@ -43,13 +43,13 @@ export function buildIdeAssemblyChatPaste(opts: {
           `  • Likely git / workspace root (parent of packages/):`,
           `      ${mono}`,
           `  If AGENTS.md and CLAUDE.md belong at the workspace root, do not edit only under packages/.`,
-          `  Re-run: forge-vibe install --project-root ${mono}  then  forge-vibe assemble --project-root ${mono}`,
+          `  Re-run: vibeforge install --project-root ${mono}  then  vibeforge assemble --project-root ${mono}`,
           `  and use that same path as “repository root” in your agent session.`,
           "",
         ];
   return [
     "",
-    "━━━━━━━━ forge-vibe — copy into your IDE agent chat ━━━━━━━━",
+    "━━━━━━━━ vibeforge — copy into your IDE agent chat ━━━━━━━━",
     "",
     ...(opts.repoStagingPromptAbs !== undefined
       ? [
@@ -77,7 +77,7 @@ export function buildIdeAssemblyChatPaste(opts: {
     "Cleanup after success: delete the temporary assembly workspace folder recursively:",
     `  ${workDir}`,
     "",
-    "If forge-vibe assemble exited 0, it also removed the workspace-local mirror folder under the project root (if present).",
+    "If vibeforge assemble exited 0, it also removed the workspace-local mirror folder under the project root (if present).",
     "",
     "If your agent still cannot read the workspace prompt path, paste the file contents into chat.",
     "",

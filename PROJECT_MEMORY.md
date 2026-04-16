@@ -8,7 +8,7 @@ Durable repo knowledge (FR-MEM pattern). **Decisions vs scratch** — move stabl
 
 ## Scratch / session bullets
 
-- (Compact after each session; prefer deterministic bullets over long prose.)
+- Published npm package name is **`vibeforge`** (CLI binary **`vibeforge`**). Workspace scripts use **`-w vibeforge`**; monorepo package **folder** stays **`packages/forge-vibe-cli`**. Repack npm script: **`repack-forge-vibe`** → `scripts/repack-forge-vibe.mjs`.
 
 ## Compaction rules
 

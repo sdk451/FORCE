@@ -24,7 +24,7 @@ describe("buildIdeAssemblyChatPaste", () => {
   it("prefers repo staging prompt path when repoStagingPromptAbs is set", () => {
     const root = path.resolve("/tmp/forge-proj");
     const workDir = path.join(root, "fake-temp-workspace");
-    const staging = path.join(root, ".forge-vibe-assemble", "FORGE-ASSEMBLE-PROMPT.md");
+    const staging = path.join(root, ".vibeforge-assemble", "FORGE-ASSEMBLE-PROMPT.md");
     const text = buildIdeAssemblyChatPaste({
       projectRootAbs: root,
       assemblyWorkDirAbs: workDir,

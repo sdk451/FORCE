@@ -58,7 +58,7 @@ describe("assemble command", () => {
       encoding: "utf8",
     });
     expect(r.status).toBe(0);
-    expect(r.stdout).toMatch(/forge-vibe — copy into your IDE agent chat/);
+    expect(r.stdout).toMatch(/vibeforge — copy into your IDE agent chat/);
     expect(r.stdout).toMatch(/FORGE-ASSEMBLE-PROMPT\.md/);
     expect(r.stdout).toMatch(/Temporary assembly workspace/);
     expect(r.stdout).toMatch(/Primary — assembly prompt inside your workspace/);

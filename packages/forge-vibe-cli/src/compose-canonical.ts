@@ -181,7 +181,7 @@ const agentsPreamble = (_v: CanonicalVars) => `# AGENTS.md — coding instructio
 
 ### Canonical scaffold (forge install)
 
-Until you run **\`forge-vibe assemble\`**, this file is the **structure template** from the installer: section headings and **placeholder** guidance (e.g. "describe in one paragraph", commented sample commands). **Replace** that boilerplate with **repository-specific** facts using the **assembly prompt** (forge writes it under a **temporary folder** — see assemble stderr / IDE paste for the path), plus **\`docs/FORGE-INSTALL-PROFILE.json\`**, **\`docs/FORGE-AGENTS-ELEMENT-MENU.md\`** (element-type shortlist from pack **\`agents.md.tpl\`**), optional **\`CODING_AGENT_INSTRUCTION_ELEMENTS.md\`**, and **\`docs/FORGE-AGENTIC-ASSEMBLY.md\`**. Do not treat placeholder text as the team's final policy.`;
+Until you run **\`vibeforge assemble\`**, this file is the **structure template** from the installer: section headings and **placeholder** guidance (e.g. "describe in one paragraph", commented sample commands). **Replace** that boilerplate with **repository-specific** facts using the **assembly prompt** (forge writes it under a **temporary folder** — see assemble stderr / IDE paste for the path), plus **\`docs/FORGE-INSTALL-PROFILE.json\`**, **\`docs/FORGE-AGENTS-ELEMENT-MENU.md\`** (element-type shortlist from pack **\`agents.md.tpl\`**), optional **\`CODING_AGENT_INSTRUCTION_ELEMENTS.md\`**, and **\`docs/FORGE-AGENTIC-ASSEMBLY.md\`**. Do not treat placeholder text as the team's final policy.`;
 
 /** Portable sections shared by AGENTS.md, Copilot instructions, and (via @import) GEMINI/CLAUDE. */
 export function buildPortableMarkdownSections(a: InstallAnswers, v: CanonicalVars): string {
@@ -249,7 +249,7 @@ function buildClaudeHooksSectionMarkdown(a: InstallAnswers): string {
   return [
     `You selected optional skills (**${labels}**) that work best with **PostToolUse** hooks (e.g. run tests or lint after edits). This profile has **\`allow_hooks: false\`** — **\`.claude/settings.json\`** is the no-hooks template.`,
     "",
-    "To wire hooks: re-run **`forge-vibe`** and enable **Claude hooks**, or copy hook examples from the forge pack (**\`settings.hooks.example.json\`**) / **docs/FORGE-HOOK-OPTIN.md** (from a hooks-enabled install) into **`.claude/settings.json`** and add **\`scripts/forge-claude/session-end-memory-hint.mjs\`** if you use SessionEnd.",
+    "To wire hooks: re-run **`vibeforge`** and enable **Claude hooks**, or copy hook examples from the forge pack (**\`settings.hooks.example.json\`**) / **docs/FORGE-HOOK-OPTIN.md** (from a hooks-enabled install) into **`.claude/settings.json`** and add **\`scripts/forge-claude/session-end-memory-hint.mjs\`** if you use SessionEnd.",
   ].join("\n");
 }
 
@@ -294,13 +294,13 @@ export function buildSelfEvolvingClaudeMd(
 
   return `# Self-Evolving Engineering — ${v.PROJECT_NAME}
 
-<!-- forge-vibe: Self-Evolving Claude pack. Cognitive core adapted from Muditek's public guide (https://muditek.com/resources/claude-code-self-evolving). Portable norms: @AGENTS.md. -->
+<!-- vibeforge: Self-Evolving Claude pack. Cognitive core adapted from Muditek's public guide (https://muditek.com/resources/claude-code-self-evolving). Portable norms: @AGENTS.md. -->
 
 @AGENTS.md
 ${memImport}
 ${cognitiveCoreFromTemplate}
 
-## Claude-specific execution (forge-vibe)
+## Claude-specific execution (vibeforge)
 
 - **Plan mode:** Prefer **Plan** for ambiguous or large refactors.
 - **Forge rules:** \`.claude/rules/forge-*.md\` — baseline from this installer.

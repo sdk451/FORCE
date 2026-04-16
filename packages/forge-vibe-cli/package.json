@@ -1,7 +1,7 @@
 {
-  "name": "forge-vibe",
+  "name": "vibeforge",
   "version": "0.1.0",
-  "description": "BMAD-style agent context installer: npx forge-vibe install (AGENTS.md + Claude, Cursor, Gemini, …)",
+  "description": "BMAD-style agent context installer: npx vibeforge install (AGENTS.md + Claude, Cursor, Gemini, …)",
   "keywords": [
     "agents.md",
     "claude",
@@ -17,7 +17,7 @@
   "type": "module",
   "main": "./dist/cli.js",
   "bin": {
-    "forge-vibe": "./dist/cli.js"
+    "vibeforge": "./dist/cli.js"
   },
   "files": [
     "dist",

@@ -22,7 +22,7 @@ export async function promptOverwriteExistingDiffs(opts: {
   const tail = more > 0 ? `\n  … and ${more} more` : "";
 
   const result = await confirm({
-    message: `${sorted.length} file(s) already exist and differ from this install (for example a previous forge-vibe run or hand edits):\n\n${list}${tail}\n\nOverwrite them with the new installer output?`,
+    message: `${sorted.length} file(s) already exist and differ from this install (for example a previous vibeforge run or hand edits):\n\n${list}${tail}\n\nOverwrite them with the new installer output?`,
     initialValue: true,
     input: stdin,
     output: stdout,

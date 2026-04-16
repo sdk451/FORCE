@@ -16,4 +16,4 @@ Forge targets **Kimi Code** / **Kimi CLI** by keeping portable repo context in *
 
 ---
 
-*Generated {{DATE_ISO}} by forge-vibe.*
+*Generated {{DATE_ISO}} by vibeforge.*

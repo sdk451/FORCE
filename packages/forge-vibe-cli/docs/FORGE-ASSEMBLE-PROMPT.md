@@ -1,6 +1,6 @@
 # Forge agent assembly — forge-vibe-cli
 
-> **Security:** When launched via `forge-vibe assemble`, your CLI may use auto-approve / workspace-write modes. Only run in repositories you trust.
+> **Security:** When launched via `vibeforge assemble`, your CLI may use auto-approve / workspace-write modes. Only run in repositories you trust.
 
 ## Repository
 
@@ -9,7 +9,7 @@
 
 ## What you are editing
 
-Root **`AGENTS.md`** is the **forge canonical scaffold**: correct **eight-domain structure** and checklist-style placeholders from `forge-vibe install`. Your job is to **rewrite** it into a **project-tuned** document — not to leave instructional filler (“describe…”, “replace with…”, commented bash samples) as if it were final policy. **Remove or replace** every placeholder with **verified** repo facts.
+Root **`AGENTS.md`** is the **forge canonical scaffold**: correct **eight-domain structure** and checklist-style placeholders from `vibeforge install`. Your job is to **rewrite** it into a **project-tuned** document — not to leave instructional filler (“describe…”, “replace with…”, commented bash samples) as if it were final policy. **Remove or replace** every placeholder with **verified** repo facts.
 
 ## Element menu & concise output
 

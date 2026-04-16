@@ -1,12 +1,12 @@
 # BMADder — forge-vibe-code-enhancement
 
-Monorepo for **forge-vibe**: versioned **agent context packs** and a **BMAD-style CLI** that materializes portable **AGENTS.md**-centric context into **Claude Code**, **Cursor**, **Cline**, **Gemini CLI**, **OpenAI Codex CLI**, **GitHub Copilot**, and **Kimi Code** layouts. Planning and BMAD outputs live under **`_bmad-output/`**; product requirements and epics are in **`_bmad-output/planning-artifacts/`**.
+Monorepo for **vibeforge**: versioned **agent context packs** and a **BMAD-style CLI** that materializes portable **AGENTS.md**-centric context into **Claude Code**, **Cursor**, **Cline**, **Gemini CLI**, **OpenAI Codex CLI**, **GitHub Copilot**, and **Kimi Code** layouts. Planning and BMAD outputs live under **`_bmad-output/`**; product requirements and epics are in **`_bmad-output/planning-artifacts/`**.
 
-## How forge-vibe came about
+## How vibeforge came about
 
 Most teams started with ad hoc **CLAUDE.md**, **AGENTS.md**, **GEMINI.md**, **.cursorrules**, or **.windsurfrules** files—copy-pasted from blog posts or internal snippets—with no shared vocabulary for *what* belongs in agent instructions or *how much* is enough.
 
-**forge-vibe** grew out of a deliberate inventory of that landscape: **50+ production examples** were reviewed and distilled into **60+ distinct instruction elements**, each with rationale and placement guidance. That work is summarized in **[docs/coding_agent_instructions_research.md](docs/coding_agent_instructions_research.md)**. The full pattern catalog (examples and implementation notes per element) lives in **[CODING_AGENT_INSTRUCTION_ELEMENTS.md](CODING_AGENT_INSTRUCTION_ELEMENTS.md)** at the repo root (also shipped from the CLI pack as a template).
+**vibeforge** grew out of a deliberate inventory of that landscape: **50+ production examples** were reviewed and distilled into **60+ distinct instruction elements**, each with rationale and placement guidance. That work is summarized in **[docs/coding_agent_instructions_research.md](docs/coding_agent_instructions_research.md)**. The full pattern catalog (examples and implementation notes per element) lives in **[CODING_AGENT_INSTRUCTION_ELEMENTS.md](CODING_AGENT_INSTRUCTION_ELEMENTS.md)** at the repo root (also shipped from the CLI pack as a template).
 
 The CLI does not dump all 60+ blocks into every repo. Instead it:
 
@@ -14,11 +14,11 @@ The CLI does not dump all 60+ blocks into every repo. Instead it:
 - Emits a **short, structured scaffold** (portable **AGENTS.md** + host-specific trees) aligned with those domains.
 - Records choices in **`docs/FORGE-INSTALL-PROFILE.json`** and supports a follow-up **assembly** flow (**`docs/FORGE-AGENTIC-ASSEMBLY.md`**) so a coding agent can tighten instructions against the element menu and your real codebase—without starting from a blank file.
 
-So forge-vibe is both **research-backed** (what high-performing instruction sets tend to contain) and **opinionated about delivery** (token budget, portability across hosts, optional skills and packs).
+So vibeforge is both **research-backed** (what high-performing instruction sets tend to contain) and **opinionated about delivery** (token budget, portability across hosts, optional skills and packs).
 
 ### Research takeaways (short)
 
-| Finding | Implication for forge-vibe |
+| Finding | Implication for vibeforge |
 |--------|----------------------------|
 | **~150–200** instructions are what frontier models follow reliably; very long files degrade behavior | Scaffold aims for a **dense** tuned **AGENTS.md** (on the order of hundreds of lines), not an encyclopedia |
 | **Real examples** (commands, paths, snippets) beat prose | Templates emphasize **copy-pasteable** commands and repo-specific facts after assembly |
@@ -35,7 +35,7 @@ Teams want one **canonical** description of how AI coding agents should work in 
 
 | Path | Purpose |
 |------|---------|
-| **`packages/forge-vibe-cli`** | Publishable npm package **`forge-vibe`** (folder name differs): CLI `forge-vibe`, packs, JSON Schema |
+| **`packages/forge-vibe-cli`** | Publishable npm package **`vibeforge`** (folder name differs): CLI `vibeforge`, packs, JSON Schema |
 | **`packages/forge-vibe-cli/packs/`** | Core templates, stack variants (TypeScript / Python), optional UI workflow pack, stub **optional skills** |
 | **`packages/forge-vibe-cli/schemas/`** | **`install-answers.partial.schema.json`** — validates `--answers` JSON (draft-07; unknown keys rejected) |
 | **`docs/`** | Research (including coding agent instructions), growth adapter notes, FR42 placeholder |
@@ -53,28 +53,28 @@ npm run build
 npm test
 ```
 
-**Local private package (build + test + pack):** `npm run repack-forge-vibe` writes **`private-dist/forge-vibe-*.tgz`** (ignored by git). See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md#local-repack-private-smoke-test).
+**Local private package (build + test + pack):** `npm run repack-forge-vibe` writes **`private-dist/vibeforge-*.tgz`** (ignored by git). See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md#local-repack-private-smoke-test).
 
 ### Recommended install flow (published package)
 
 From your **repository root** (TTY required for prompts):
 
 ```bash
-npx forge-vibe install
+npx vibeforge install
 ```
 
 All generated paths (**`AGENTS.md`**, **`.claude/`**, **`.cursor/`**, **`GEMINI.md`**, **`docs/`**, etc.) are **relative to the project root** — by default the directory where you run the command; override with **`--project-root <dir>`**.
 
-After **`npm install -g forge-vibe`**:
+After **`npm install -g vibeforge`**:
 
 ```bash
-forge-vibe install
+vibeforge install
 ```
 
 CLI help (all targets and options):
 
 ```bash
-npm run forge-vibe -- --help
+npm run vibeforge -- --help
 ```
 
 ### Commands
@@ -90,11 +90,11 @@ npm run forge-vibe -- --help
 Examples:
 
 ```bash
-npm run forge-vibe -- install --project-root .
-npm run forge-vibe -- load --json --yes
-npm run forge-vibe -- check --project-root .
-npm run forge-vibe -- write --dry-run --yes --project-root path/to/repo
-npm run forge-vibe -- write --yes --project-root . --answers answers.json
+npm run vibeforge -- install --project-root .
+npm run vibeforge -- load --json --yes
+npm run vibeforge -- check --project-root .
+npm run vibeforge -- write --dry-run --yes --project-root path/to/repo
+npm run vibeforge -- write --yes --project-root . --answers answers.json
 ```
 
 Interactive **`install`** or **`write`** (without **`--yes`** / **`--answers`**) walks through: project name → stack → **targets** (≥1) → **core AGENTS §1.1** (≥1) → **advanced §1.2** → **optional skills** → **hooks & packs**.
@@ -166,11 +166,11 @@ Duplicate skill ids in the array are **deduped** after validation.
 
 ```bash
 npm pack packages/forge-vibe-cli
-npm install -g ./forge-vibe-0.1.0.tgz
-forge-vibe install
+npm install -g ./vibeforge-0.1.0.tgz
+vibeforge install
 ```
 
-Published npm package name: **`forge-vibe`** (this root `package.json` is a **private** workspace orchestrator; sources live under **`packages/forge-vibe-cli/`**).
+Published npm package name: **`vibeforge`** (this root `package.json` is a **private** workspace orchestrator; sources live under **`packages/forge-vibe-cli/`**).
 
 ## Documentation index
 

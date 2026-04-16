@@ -25,6 +25,7 @@ import { runAssemble } from "./assemble.js";
 import { suggestMonorepoRootIfNestedPackage } from "./project-root-hint.js";
 import { resolveForgeEmitRoot } from "./resolve-emit-root.js";
 import type { AssembleInvokerId } from "./invoke-coding-agent.js";
+import { detectCodingAgentsOnPath } from "./detect-coding-agents.js";
 
 function parseAssembleAgent(s: string | undefined): "auto" | AssembleInvokerId {
   if (s === undefined || s === "" || s === "auto") return "auto";
@@ -43,7 +44,7 @@ function parseAssembleAgent(s: string | undefined): "auto" | AssembleInvokerId {
 }
 
 function printHelp(): void {
-  console.log(`forge-vibe — BMAD-style installer for versioned agent context packs
+  console.log(`vibeforge — BMAD-style installer for versioned agent context packs
 
 Primary flow (interactive TUI, like BMAD npx installers):
   install [--project-root <dir>] [--dry-run] [--force]
@@ -51,7 +52,7 @@ Primary flow (interactive TUI, like BMAD npx installers):
       Run prompts: target agents → stack → optional per-domain notes (all eight foundations always
       included) → optional skills → packs; then write AGENTS.md (canonical scaffold + placeholders), host
       rules/skills, profile JSON, assembly guide, and docs. AGENTS.md is tuned by a follow-up
-      \`forge-vibe assemble\` (or IDE paste) — see the banner after a successful install. Default
+      \`vibeforge assemble\` (or IDE paste) — see the banner after a successful install. Default
       project root is cwd. If files differ from planned output, you are prompted before overwrite
       (unless --force). Does not accept --answers or --yes (use write for automation).
 
@@ -74,7 +75,7 @@ Other commands:
       launched from the post-install prompt) for Cline, Kimi, VS Code chat, etc.
       Requires network/auth for the chosen vendor CLI.
       Temp workspace: OS temp dir (e.g. %TEMP% on Windows, /tmp on macOS/Linux) + folder
-      forge-vibe-assemble-<random>; stderr prints the full path as "Assembly workspace (WIP):".
+      vibeforge-assemble-<random>; stderr prints the full path as "Assembly workspace (WIP):".
   check [--project-root <dir>] [--answers <file>]
   resolve-defaults [--answers <file>]  Merge partial answers with defaults (stdout JSON)
 
@@ -117,7 +118,7 @@ optional_skills — shortlist of skill bundles; each id emits forge-<id>/SKILL.m
   See schemas/install-answers.partial.schema.json for allowed ids.
 
 Emitted on write/install: docs/FORGE-INSTALL-PROFILE.json + docs/FORGE-AGENTS-ELEMENT-MENU.md + docs/FORGE-AGENTIC-ASSEMBLY.md
-Preview bundle (no writes): forge-vibe blueprint [--answers <file> | --yes | interactive]
+Preview bundle (no writes): vibeforge blueprint [--answers <file> | --yes | interactive]
 
 Schema (in published package):
   schemas/install-answers.partial.schema.json (draft-07; unknown keys rejected)
@@ -152,7 +153,7 @@ async function readAnswersFile(file: string): Promise<Partial<InstallAnswers>> {
 async function promptInteractive(projectRoot: string): Promise<InstallAnswers> {
   if (!process.stdin.isTTY || !process.stdout.isTTY) {
     throw new Error(
-      "Interactive mode requires a terminal (TTY). From a terminal run: npx forge-vibe install (or forge-vibe install). For CI/scripts use: forge-vibe write --answers <file> or --yes.",
+      "Interactive mode requires a terminal (TTY). From a terminal run: npx vibeforge install (or vibeforge install). For CI/scripts use: vibeforge write --answers <file> or --yes.",
     );
   }
 
@@ -161,6 +162,31 @@ async function promptInteractive(projectRoot: string): Promise<InstallAnswers> {
     fallbackHint: defaultAnswers.project_name,
   });
 
+  const installed = detectCodingAgentsOnPath();
+  const installedLabels = (
+    [
+      ["claude_code", "Claude Code"],
+      ["cursor", "Cursor"],
+      ["cline", "Cline"],
+      ["gemini_cli", "Gemini CLI"],
+      ["openai_codex", "Codex CLI"],
+      ["github_copilot", "GitHub Copilot"],
+      ["kimi_code", "Kimi Code"],
+    ] as const
+  )
+    .filter(([id]) => installed[id])
+    .map(([, name]) => name);
+  if (installedLabels.length > 0) {
+    log.message(
+      `Detected agent CLI(s) on PATH: ${installedLabels.join(", ")}. Matching targets are pre-selected below (shown as “… (installed)”).`,
+    );
+  } else {
+    log.message(
+      "No matching agent CLIs on PATH (Cline/Kimi often have no CLI probe). Defaults: Claude Code + Cursor — adjust below.",
+    );
+  }
+
+  const t = defaultAnswers.targets;
   const agentMap = await promptCheckbox({
     title: "Step 1 — Target coding agents",
     subtitle:
@@ -169,35 +195,45 @@ async function promptInteractive(projectRoot: string): Promise<InstallAnswers> {
     items: [
       {
         id: "claude_code",
-        label: "Claude Code",
+        label: installed.claude_code ? "Claude Code (installed)" : "Claude Code",
         hint: ".claude/, CLAUDE.md",
-        checked: defaultAnswers.targets.claude_code,
+        checked: t.claude_code || installed.claude_code,
       },
-      { id: "cursor", label: "Cursor", hint: ".cursor/rules/*.mdc", checked: defaultAnswers.targets.cursor },
-      { id: "cline", label: "Cline", hint: ".clinerules/", checked: defaultAnswers.targets.cline },
+      {
+        id: "cursor",
+        label: installed.cursor ? "Cursor (installed)" : "Cursor",
+        hint: ".cursor/rules/*.mdc",
+        checked: t.cursor || installed.cursor,
+      },
+      {
+        id: "cline",
+        label: installed.cline ? "Cline (installed)" : "Cline",
+        hint: ".clinerules/",
+        checked: t.cline || installed.cline,
+      },
       {
         id: "gemini_cli",
-        label: "Gemini CLI",
+        label: installed.gemini_cli ? "Gemini CLI (installed)" : "Gemini CLI",
         hint: "GEMINI.md, .gemini/",
-        checked: defaultAnswers.targets.gemini_cli,
+        checked: t.gemini_cli || installed.gemini_cli,
       },
       {
         id: "openai_codex",
-        label: "Codex CLI",
+        label: installed.openai_codex ? "Codex CLI (installed)" : "Codex CLI",
         hint: "AGENTS.md + FORGE-CODEX.md",
-        checked: defaultAnswers.targets.openai_codex,
+        checked: t.openai_codex || installed.openai_codex,
       },
       {
         id: "github_copilot",
-        label: "GitHub Copilot",
+        label: installed.github_copilot ? "GitHub Copilot (installed)" : "GitHub Copilot",
         hint: ".github/copilot-instructions.md",
-        checked: defaultAnswers.targets.github_copilot,
+        checked: t.github_copilot || installed.github_copilot,
       },
       {
         id: "kimi_code",
-        label: "Kimi Code",
+        label: installed.kimi_code ? "Kimi Code (installed)" : "Kimi Code",
         hint: "FORGE-KIMI.md + AGENTS.md",
-        checked: defaultAnswers.targets.kimi_code,
+        checked: t.kimi_code || installed.kimi_code,
       },
     ],
   });
@@ -314,12 +350,12 @@ function printPostWriteAssemblyBanner(projectRoot: string): void {
   const line = "—".repeat(62);
   console.error("");
   console.error(line);
-  console.error("forge-vibe: AGENTS.md is a canonical scaffold (structure + placeholders), not final tuned context.");
+  console.error("vibeforge: AGENTS.md is a canonical scaffold (structure + placeholders), not final tuned context.");
   console.error("Next — customize for this repo (same forge project root as install):");
   console.error(`  cd ${projectRoot}`);
-  console.error("  forge-vibe assemble");
+  console.error("  vibeforge assemble");
   console.error("Paste-only if no vendor CLI on PATH:");
-  console.error("  forge-vibe assemble --no-invoke");
+  console.error("  vibeforge assemble --no-invoke");
   console.error("Guides: docs/FORGE-AGENTIC-ASSEMBLY.md · docs/FORGE-ASSEMBLE.md");
   console.error(line);
   console.error("");
@@ -329,23 +365,23 @@ async function printMonorepoPackageRootHintIfApplicable(projectRoot: string): Pr
   const mono = await suggestMonorepoRootIfNestedPackage(projectRoot);
   if (mono === undefined) return;
   const pkg = path.resolve(projectRoot);
-  console.error("forge-vibe: Monorepo — install ran under packages/<pkg>/ .");
+  console.error("vibeforge: Monorepo — install ran under packages/<pkg>/ .");
   console.error(`  AGENTS.md, CLAUDE.md, and docs/ were written only under: ${pkg}`);
   console.error(`  If they should live at the workspace root instead, reinstall and assemble with:`);
-  console.error(`    forge-vibe install --project-root ${mono}`);
-  console.error(`    forge-vibe assemble --project-root ${mono}`);
+  console.error(`    vibeforge install --project-root ${mono}`);
+  console.error(`    vibeforge assemble --project-root ${mono}`);
   console.error("");
 }
 
 async function maybeOfferAssembleAfterInteractiveWrite(projectRoot: string): Promise<void> {
   const runNow = await confirm({
     message:
-      "Run `forge-vibe assemble` now? Uses a coding agent CLI on PATH if available; otherwise prints copy-paste text for your IDE (stderr).",
+      "Run `vibeforge assemble` now? Uses a coding agent CLI on PATH if available; otherwise prints copy-paste text for your IDE (stderr).",
     initialValue: true,
   });
 
   if (isCancel(runNow) || !runNow) {
-    console.error("[forge-vibe] Skipped assemble. Run `forge-vibe assemble` when you are ready.");
+    console.error("[vibeforge] Skipped assemble. Run `vibeforge assemble` when you are ready.");
     return;
   }
 
@@ -359,7 +395,7 @@ async function maybeOfferAssembleAfterInteractiveWrite(projectRoot: string): Pro
 
   if (code !== 0) {
     console.error(
-      `[forge-vibe] assemble exited with code ${code}. If the agent exited 0 but forge-vibe still failed, create forge_vibe_agent_instructions_done.txt at the project root after AGENTS.md (see FORGE-ASSEMBLE-PROMPT). Install output is on disk; try: forge-vibe assemble --no-invoke`,
+      `[vibeforge] assemble exited with code ${code}. If the agent exited 0 but vibeforge still failed, create forge_vibe_agent_instructions_done.txt at the project root after AGENTS.md (see FORGE-ASSEMBLE-PROMPT). Install output is on disk; try: vibeforge assemble --no-invoke`,
     );
   }
 }
@@ -393,7 +429,7 @@ async function main(): Promise<void> {
   const { root, source } = resolveForgeEmitRoot(values["project-root"], cwd);
   if (values["project-root"] === undefined) {
     if (source === "git" && path.resolve(cwd) !== root) {
-      console.error(`[forge-vibe] File emit root = git repository top-level: ${root}`);
+      console.error(`[vibeforge] File emit root = git repository top-level: ${root}`);
       console.error(`  (cwd was ${path.resolve(cwd)}.) AGENTS.md / CLAUDE.md / GEMINI.md / host paths are written here.`);
       console.error(`  Override: --project-root <dir>`);
     }
@@ -421,11 +457,11 @@ async function main(): Promise<void> {
 
   if (cmd === "install") {
     if (values.answers) {
-      console.error("install does not accept --answers. Use: forge-vibe write --project-root <dir> --answers <file>");
+      console.error("install does not accept --answers. Use: vibeforge write --project-root <dir> --answers <file>");
       process.exit(1);
     }
     if (values.yes) {
-      console.error("install does not accept --yes. Use: forge-vibe write --yes --project-root <dir>");
+      console.error("install does not accept --yes. Use: vibeforge write --yes --project-root <dir>");
       process.exit(1);
     }
   }
@@ -444,12 +480,12 @@ async function main(): Promise<void> {
     if (ranInteractiveTui) {
       if (cmd === "install") {
         console.error(
-          `forge-vibe install → file emit root: ${root}\n(AGENTS.md, CLAUDE.md / GEMINI.md / host rules, docs — paths match each agent’s expected repo-relative locations under this root.)\n`,
+          `vibeforge install → file emit root: ${root}\n(AGENTS.md, CLAUDE.md / GEMINI.md / host rules, docs — paths match each agent’s expected repo-relative locations under this root.)\n`,
         );
       }
       if (cmd === "blueprint") {
         console.error(
-          `forge-vibe blueprint → emit root: ${root}\n(printing JSON only — no files written.)\n`,
+          `vibeforge blueprint → emit root: ${root}\n(printing JSON only — no files written.)\n`,
         );
       }
       answers = await promptInteractive(root);

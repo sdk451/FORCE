@@ -1,6 +1,6 @@
 # Element menu (assembly reference) — forge-vibe-code-enhancement
 
-**Purpose:** Use this file as a **pick list** of instruction-element *types* when rewriting root **AGENTS.md** during **`forge-vibe assemble`**. It is the forge pack copy of **`agents.md.tpl`** (full menu with pedagogical examples).
+**Purpose:** Use this file as a **pick list** of instruction-element *types* when rewriting root **AGENTS.md** during **`vibeforge assemble`**. It is the forge pack copy of **`agents.md.tpl`** (full menu with pedagogical examples).
 
 **Output shape:** Select roughly **15–20** elements that fit this repo and the install profile (**`domains`**, **`domain_requirements`**). The final **AGENTS.md** must be **concise** (~150–300 lines target) and **repo-specific**. **Do not** copy this file wholesale. **Omit** **What / Why** prose and generic **Example** blocks from the final **AGENTS.md** — replace with facts inferred from the tree (manifests, CI, README, configs) plus **docs/FORGE-INSTALL-PROFILE.json**.
 

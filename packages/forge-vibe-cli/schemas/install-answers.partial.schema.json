@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://forge-vibe.local/schemas/install-answers.partial.schema.json",
+  "$id": "https://vibeforge.local/schemas/install-answers.partial.schema.json",
   "title": "Forge install answers (partial JSON for --answers)",
   "type": "object",
   "additionalProperties": false,

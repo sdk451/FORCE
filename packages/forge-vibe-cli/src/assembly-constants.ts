@@ -7,10 +7,10 @@ export const ASSEMBLY_PROMPT_BASENAME = "FORGE-ASSEMBLE-PROMPT.md";
  * invoker `-p` message points here so the full BMAD prompt is readable. Removed after a **successful**
  * assemble (exit 0); kept on failure for IDE follow-up. Safe to add to `.gitignore`.
  */
-export const ASSEMBLY_REPO_STAGING_DIRNAME = ".forge-vibe-assemble";
+export const ASSEMBLY_REPO_STAGING_DIRNAME = ".vibeforge-assemble";
 
 /**
  * Written at the forge **project root** when the coding agent completes the assembly prompt.
- * Removed before each `forge-vibe assemble` invoke; presence after exit 0 signals completion.
+ * Removed before each `vibeforge assemble` invoke; presence after exit 0 signals completion.
  */
 export const ASSEMBLY_DONE_MARKER_BASENAME = "forge_vibe_agent_instructions_done.txt";

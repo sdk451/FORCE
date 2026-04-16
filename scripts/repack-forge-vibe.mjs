@@ -1,5 +1,5 @@
 /**
- * Local/private packaging only: npm pack the forge-vibe workspace into private-dist/.
+ * Local/private packaging only: npm pack the vibeforge workspace into private-dist/.
  * Run via: npm run repack-forge-vibe (build + test run first from package.json).
  */
 import { mkdirSync, readdirSync } from "node:fs";
@@ -14,7 +14,7 @@ mkdirSync(dest, { recursive: true });
 /** shell: true so `npm` resolves on Windows (npm.cmd) and Unix alike */
 const r = spawnSync(
   "npm",
-  ["pack", "-w", "forge-vibe", "--pack-destination", dest],
+  ["pack", "-w", "vibeforge", "--pack-destination", dest],
   { cwd: root, stdio: "inherit", shell: true },
 );
 

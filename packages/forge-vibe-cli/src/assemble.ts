@@ -115,7 +115,7 @@ async function removeRepoAssemblyStaging(repoRoot: string): Promise<void> {
 }
 
 function buildAssemblyReadme(repoRootAbs: string, workDirAbs: string): string {
-  return `# Temporary forge-vibe assembly workspace
+  return `# Temporary vibeforge assembly workspace
 
 This folder is created under your system temp directory. It holds the **assembly prompt** and **copies** of forge docs. **Do not commit it.**
 
@@ -124,7 +124,7 @@ This folder is created under your system temp directory. It holds the **assembly
 
 ## Cleanup
 
-- If **\`forge-vibe assemble\`** ran a CLI and it exited **0**, the CLI removes this folder automatically.
+- If **\`vibeforge assemble\`** ran a CLI and it exited **0**, the CLI removes this folder automatically.
 - If you used **IDE copy-paste**, **\`--no-invoke\`**, **no CLI on PATH**, or the CLI **failed**, delete this folder yourself **after** assembly succeeds (recursive delete). Example: remove the directory \`${workDirAbs}\`.
 
 Stale temp folders are safe to delete anytime if you are done assembling.
@@ -258,8 +258,8 @@ export async function runAssemble(opts: AssembleRunOptions): Promise<number> {
 
   if (opts.dryRun) {
     const placeholderAssembly: AssemblyWorkspacePaths = {
-      workDirAbs: path.join(os.tmpdir(), "forge-vibe-assemble-XXXXXX"),
-      promptAbs: path.join(os.tmpdir(), "forge-vibe-assemble-XXXXXX", ASSEMBLY_PROMPT_BASENAME),
+      workDirAbs: path.join(os.tmpdir(), "vibeforge-assemble-XXXXXX"),
+      promptAbs: path.join(os.tmpdir(), "vibeforge-assemble-XXXXXX", ASSEMBLY_PROMPT_BASENAME),
     };
     const { markdown } = await buildAssemblePromptMarkdown(answers, root, placeholderAssembly);
     console.log(
@@ -269,7 +269,7 @@ export async function runAssemble(opts: AssembleRunOptions): Promise<number> {
           ...planned,
           assembly_workspace: {
             kind: "os_tmpdir",
-            dirname_prefix: "forge-vibe-assemble-",
+            dirname_prefix: "vibeforge-assemble-",
             prompt_filename: ASSEMBLY_PROMPT_BASENAME,
             note:
               "Non–dry-run creates a unique folder under os.tmpdir(); copies profile/menu docs there; removes it after CLI exit 0.",
@@ -286,7 +286,7 @@ export async function runAssemble(opts: AssembleRunOptions): Promise<number> {
     return 0;
   }
 
-  const workDirAbs = await fs.mkdtemp(path.join(os.tmpdir(), "forge-vibe-assemble-"));
+  const workDirAbs = await fs.mkdtemp(path.join(os.tmpdir(), "vibeforge-assemble-"));
   const promptAbs = path.join(workDirAbs, ASSEMBLY_PROMPT_BASENAME);
   const assembly: AssemblyWorkspacePaths = { workDirAbs, promptAbs };
   const suggestedMonorepoRootAbs = await suggestMonorepoRootIfNestedPackage(root);
@@ -303,36 +303,36 @@ export async function runAssemble(opts: AssembleRunOptions): Promise<number> {
       invokerPromptAbs = await writeRepoAssemblyStaging(root, markdown);
       repoStagingPromptAbs = invokerPromptAbs;
       console.error(
-        `[forge-vibe assemble] Workspace-local assembly mirror (for sandboxes; optional .gitignore: ${ASSEMBLY_REPO_STAGING_DIRNAME}/): ${invokerPromptAbs}`,
+        `[vibeforge assemble] Workspace-local assembly mirror (for sandboxes; optional .gitignore: ${ASSEMBLY_REPO_STAGING_DIRNAME}/): ${invokerPromptAbs}`,
       );
     } catch (e) {
       console.error(
-        `[forge-vibe assemble] Could not mirror assembly prompt under project root (${String(
+        `[vibeforge assemble] Could not mirror assembly prompt under project root (${String(
           e,
         )}); invoker references OS-temp path only.`,
       );
     }
 
-    console.error(`[forge-vibe assemble] Assembly workspace (WIP): ${workDirAbs}`);
-    console.error(`[forge-vibe assemble] Forge project root (all edits apply here): ${root}`);
-    console.error(`[forge-vibe assemble] Rewrite target (AGENTS.md): ${path.join(root, "AGENTS.md")}`);
+    console.error(`[vibeforge assemble] Assembly workspace (WIP): ${workDirAbs}`);
+    console.error(`[vibeforge assemble] Forge project root (all edits apply here): ${root}`);
+    console.error(`[vibeforge assemble] Rewrite target (AGENTS.md): ${path.join(root, "AGENTS.md")}`);
     if (suggestedMonorepoRootAbs !== undefined) {
       console.error(
-        `[forge-vibe assemble] Monorepo: likely workspace root is ${suggestedMonorepoRootAbs} — use --project-root there if AGENTS.md should live at the repo root, not under packages/.`,
+        `[vibeforge assemble] Monorepo: likely workspace root is ${suggestedMonorepoRootAbs} — use --project-root there if AGENTS.md should live at the repo root, not under packages/.`,
       );
     }
 
     if (opts.noInvoke) {
       console.error(
-        "[forge-vibe assemble] No coding agent CLI was started (--no-invoke).",
+        "[vibeforge assemble] No coding agent CLI was started (--no-invoke).",
       );
       if (pasteDest === "stderr") {
         console.error(
-          "[forge-vibe assemble] Copy the block below into your IDE agent chat (Cursor, VS Code Copilot Chat, Cline, …):",
+          "[vibeforge assemble] Copy the block below into your IDE agent chat (Cursor, VS Code Copilot Chat, Cline, …):",
         );
       } else {
         console.error(
-          "[forge-vibe assemble] Copy the block printed on stdout into your IDE agent chat.",
+          "[vibeforge assemble] Copy the block printed on stdout into your IDE agent chat.",
         );
       }
       writeIdeAssemblyPaste(root, workDirAbs, pasteDest, suggestedMonorepoRootAbs, repoStagingPromptAbs);
@@ -346,18 +346,18 @@ export async function runAssemble(opts: AssembleRunOptions): Promise<number> {
           ? "any enabled target"
           : `${invokerDisplayName(opts.agent)} (\`${invokerBinary(opts.agent)}\`)`;
       console.error(
-        `[forge-vibe assemble] No assembler CLI on PATH for ${want}.`,
+        `[vibeforge assemble] No assembler CLI on PATH for ${want}.`,
       );
       console.error(
         "Install one of: Claude Code (`claude`), Cursor CLI (`cursor` → `cursor agent`), GitHub Copilot CLI (`copilot`), Gemini CLI (`gemini`), or OpenAI Codex (`codex`).",
       );
       if (pasteDest === "stderr") {
         console.error(
-          "[forge-vibe assemble] No agent was invoked. Copy the block below into your IDE chat (includes temp workspace path):",
+          "[vibeforge assemble] No agent was invoked. Copy the block below into your IDE chat (includes temp workspace path):",
         );
       } else {
         console.error(
-          "[forge-vibe assemble] No agent was invoked. Copy the chat block on stdout into your IDE.",
+          "[vibeforge assemble] No agent was invoked. Copy the chat block on stdout into your IDE.",
         );
       }
       writeIdeAssemblyPaste(root, workDirAbs, pasteDest, suggestedMonorepoRootAbs, repoStagingPromptAbs);
@@ -389,10 +389,10 @@ export async function runAssemble(opts: AssembleRunOptions): Promise<number> {
       );
     } else {
       console.error(
-        `[forge-vibe assemble] Invoking ${invokerAssemblingLabel(picked)} (\`${invokerBinary(picked)}\`) for assembly (cwd=${root})…`,
+        `[vibeforge assemble] Invoking ${invokerAssemblingLabel(picked)} (\`${invokerBinary(picked)}\`) for assembly (cwd=${root})…`,
       );
       console.error(
-        "[forge-vibe assemble] Most time is spent inside the coding agent (not forge-vibe); this step can take several minutes.",
+        "[vibeforge assemble] Most time is spent inside the coding agent (not vibeforge); this step can take several minutes.",
       );
     }
 
@@ -409,9 +409,9 @@ export async function runAssemble(opts: AssembleRunOptions): Promise<number> {
     }
 
     if (error) {
-      console.error(`[forge-vibe assemble] Failed to start ${invokerDisplayName(picked)}: ${String(error)}`);
+      console.error(`[vibeforge assemble] Failed to start ${invokerDisplayName(picked)}: ${String(error)}`);
       console.error(
-        "[forge-vibe assemble] Assembly workspace kept for IDE follow-up. Copy the block below, then delete the folder when done.",
+        "[vibeforge assemble] Assembly workspace kept for IDE follow-up. Copy the block below, then delete the folder when done.",
       );
       writeIdeAssemblyPaste(root, workDirAbs, pasteDest, suggestedMonorepoRootAbs, repoStagingPromptAbs);
       return 1;
@@ -431,13 +431,13 @@ export async function runAssemble(opts: AssembleRunOptions): Promise<number> {
       );
       if (!markerPresent && !agentsProgressed) {
         console.error(
-          `[forge-vibe assemble] ${invokerDisplayName(picked)} exited 0, but assembly did not complete: missing **${ASSEMBLY_DONE_MARKER_BASENAME}** at ${root} and ${agentsAbs} is still the install scaffold unchanged this run.`,
+          `[vibeforge assemble] ${invokerDisplayName(picked)} exited 0, but assembly did not complete: missing **${ASSEMBLY_DONE_MARKER_BASENAME}** at ${root} and ${agentsAbs} is still the install scaffold unchanged this run.`,
         );
         console.error(
-          `[forge-vibe assemble] Create **${path.join(root, ASSEMBLY_DONE_MARKER_BASENAME)}** immediately after saving **AGENTS.md** (see FORGE-ASSEMBLE-PROMPT **Phase P3** after **P2**; parent gates G1∧G2; the agent CLI one-shot repeats this path). Rewrite **AGENTS.md** off the install scaffold. Use --project-root if edits went to a different tree.`,
+          `[vibeforge assemble] Create **${path.join(root, ASSEMBLY_DONE_MARKER_BASENAME)}** immediately after saving **AGENTS.md** (see FORGE-ASSEMBLE-PROMPT **Phase P3** after **P2**; parent gates G1∧G2; the agent CLI one-shot repeats this path). Rewrite **AGENTS.md** off the install scaffold. Use --project-root if edits went to a different tree.`,
         );
         console.error(
-          "[forge-vibe assemble] Assembly workspace kept. Use the IDE paste block if needed, then delete the temp folder when done.",
+          "[vibeforge assemble] Assembly workspace kept. Use the IDE paste block if needed, then delete the temp folder when done.",
         );
         writeIdeAssemblyPaste(root, workDirAbs, pasteDest, suggestedMonorepoRootAbs, repoStagingPromptAbs);
         return 1;
@@ -453,16 +453,16 @@ export async function runAssemble(opts: AssembleRunOptions): Promise<number> {
           ? "No marker file (idempotent: AGENTS.md already non-scaffold, unchanged)."
           : "AGENTS.md changed off install scaffold (marker file optional in this case).";
       console.error(
-        `[forge-vibe assemble] ${invokerDisplayName(picked)} finished (exit 0). Removed assembly workspace. ${completionNote} Confirm host files (e.g. CLAUDE.md) if targets.claude_code is enabled in the profile.`,
+        `[vibeforge assemble] ${invokerDisplayName(picked)} finished (exit 0). Removed assembly workspace. ${completionNote} Confirm host files (e.g. CLAUDE.md) if targets.claude_code is enabled in the profile.`,
       );
       return 0;
     }
     console.error(
-      `[forge-vibe assemble] ${invokerDisplayName(picked)} exited with code ${status}. ` +
+      `[vibeforge assemble] ${invokerDisplayName(picked)} exited with code ${status}. ` +
         `AGENTS.md may be unchanged; assembly workspace kept.`,
     );
     console.error(
-      "[forge-vibe assemble] Copy the block below into your IDE to continue, then delete the temp workspace when assembly succeeds.",
+      "[vibeforge assemble] Copy the block below into your IDE to continue, then delete the temp workspace when assembly succeeds.",
     );
     writeIdeAssemblyPaste(root, workDirAbs, pasteDest, suggestedMonorepoRootAbs, repoStagingPromptAbs);
     return status ?? 1;

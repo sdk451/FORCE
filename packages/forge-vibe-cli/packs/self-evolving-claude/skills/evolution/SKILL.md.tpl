@@ -6,7 +6,7 @@ description: >
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash
 ---
 
-# Evolution engine (forge-vibe template)
+# Evolution engine (vibeforge template)
 
 You verify and learn from **structured memory** under `.claude/memory/`. Follow **docs/FORGE-SELF-EVOLVING.md**.
 

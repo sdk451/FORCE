@@ -16,4 +16,4 @@ If you selected optional skills, see **`.clinerules/skills/forge-<id>/`** (and *
 
 ---
 
-*Generated {{DATE_ISO}} by forge-vibe.*
+*Generated {{DATE_ISO}} by vibeforge.*

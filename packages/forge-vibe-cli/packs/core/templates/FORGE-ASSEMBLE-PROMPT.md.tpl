@@ -1,11 +1,11 @@
 # Forge agent assembly — {{PROJECT_NAME}}
 
-> **Security:** When launched via `forge-vibe assemble`, your CLI may use auto-approve / workspace-write modes. Only run in repositories you trust.
+> **Security:** When launched via `vibeforge assemble`, your CLI may use auto-approve / workspace-write modes. Only run in repositories you trust.
 
 ## Repository (authoritative paths)
 
 - **Forge project root (absolute):** `{{PROJECT_ROOT_ABS}}` — the **emit root** where **`AGENTS.md`**, **`CLAUDE.md`**, **`GEMINI.md`**, and host trees are written. By default the CLI uses **`git rev-parse --show-toplevel`** from cwd (override with **`--project-root`**). This should match the **workspace root** your coding agent opens so session context loads correctly.
-- **Shell cwd:** `forge-vibe assemble` sets the coding agent’s working directory to this root. If you intentionally used **`--project-root`** to a subdirectory (e.g. a single package), all edits belong there — do not switch to the git parent unless the profile was installed there.
+- **Shell cwd:** `vibeforge assemble` sets the coding agent’s working directory to this root. If you intentionally used **`--project-root`** to a subdirectory (e.g. a single package), all edits belong there — do not switch to the git parent unless the profile was installed there.
 - **Root AGENTS.md to rewrite (absolute):** `{{AGENTS_MD_ABS}}`
 - **Install profile (relative to root):** `docs/FORGE-INSTALL-PROFILE.json` — authoritative for `targets`, `domains`, `domain_requirements`, **`optional_skills`**, **`include_ui_workflow_pack`**, **`include_memory_enhanced`**, **`allow_hooks`**.
 
@@ -15,17 +15,17 @@
 
 - **Path:** `{{REPO_ASSEMBLY_PROMPT_ABS}}` (directory: **`{{REPO_ASSEMBLY_STAGING_ABS}}`** / `{{REPO_STAGING_DIRNAME}}/`)
 - **Contents:** same **`FORGE-ASSEMBLE-PROMPT.md`** bytes as the OS-temp copy, plus the same **`FORGE-INSTALL-PROFILE.json`**, **`FORGE-AGENTS-ELEMENT-MENU.md`**, and **`FORGE-AGENTIC-ASSEMBLY.md`** copies **next to it** under **`{{REPO_ASSEMBLY_STAGING_ABS}}`**.
-- **Why:** Many coding-agent CLIs only allow reading files **inside the git workspace**. They **cannot** open `{{ASSEMBLY_WORK_DIR_ABS}}` under OS temp — they would only see the short `-p` summary and may fail to rewrite **`AGENTS.md`**. The **`forge-vibe`** invoker points at **`{{REPO_ASSEMBLY_PROMPT_ABS}}`** when mirroring succeeds.
-- **Cleanup:** after **`forge-vibe assemble`** exits **0**, this folder is **removed** automatically. If assemble **fails**, delete **`{{REPO_ASSEMBLY_STAGING_ABS}}`** when you are done, or add **`{{REPO_STAGING_DIRNAME}}/`** to **`.gitignore`**.
+- **Why:** Many coding-agent CLIs only allow reading files **inside the git workspace**. They **cannot** open `{{ASSEMBLY_WORK_DIR_ABS}}` under OS temp — they would only see the short `-p` summary and may fail to rewrite **`AGENTS.md`**. The **`vibeforge`** invoker points at **`{{REPO_ASSEMBLY_PROMPT_ABS}}`** when mirroring succeeds.
+- **Cleanup:** after **`vibeforge assemble`** exits **0**, this folder is **removed** automatically. If assemble **fails**, delete **`{{REPO_ASSEMBLY_STAGING_ABS}}`** when you are done, or add **`{{REPO_STAGING_DIRNAME}}/`** to **`.gitignore`**.
 
 ## Temporary assembly workspace
 
 - **Path:** `{{ASSEMBLY_WORK_DIR_ABS}}` (under your OS temp directory — **not** committed to git).
 - **Contents:** this file (`{{FORGE_ASSEMBLE_PROMPT_ABS}}`), **`README-ASSEMBLY-WORKSPACE.md`**, and copies of **`FORGE-INSTALL-PROFILE.json`**, **`FORGE-AGENTS-ELEMENT-MENU.md`**, and **`FORGE-AGENTIC-ASSEMBLY.md`** when those exist in the repo’s **`docs/`**.
 - **Edits:** apply all changes to **`AGENTS.md`** and host instruction files under **`{{PROJECT_ROOT_ABS}}`** only — not inside the temp folder (except updating this prompt if you must, but prefer editing the repo).
-- **Cleanup:** when `forge-vibe assemble` runs a CLI and it exits **0**, forge **deletes** `{{ASSEMBLY_WORK_DIR_ABS}}` automatically. If you used IDE paste, `--no-invoke`, no CLI on PATH, or the CLI failed, **delete `{{ASSEMBLY_WORK_DIR_ABS}}` yourself** after assembly succeeds (recursive delete).
+- **Cleanup:** when `vibeforge assemble` runs a CLI and it exits **0**, forge **deletes** `{{ASSEMBLY_WORK_DIR_ABS}}` automatically. If you used IDE paste, `--no-invoke`, no CLI on PATH, or the CLI failed, **delete `{{ASSEMBLY_WORK_DIR_ABS}}` yourself** after assembly succeeds (recursive delete).
 
-## Parent process gates (`forge-vibe assemble` after the agent CLI exits 0)
+## Parent process gates (`vibeforge assemble` after the agent CLI exits 0)
 
 The **parent** re-reads disk. It returns **exit 1** only when **all** of the following are true:
 
@@ -52,7 +52,7 @@ The **parent** re-reads disk. It returns **exit 1** only when **all** of the fol
 | **Inputs** | Paths above; **prefer** opening **`{{REPO_ASSEMBLY_PROMPT_ABS}}`** (workspace mirror). Fallback: **`{{FORGE_ASSEMBLE_PROMPT_ABS}}`** under OS temp + `README-ASSEMBLY-WORKSPACE.md`. |
 | **Actions** | 1. Treat **shell cwd** as **`{{PROJECT_ROOT_ABS}}`**. 2. Read this prompt from **`{{REPO_ASSEMBLY_PROMPT_ABS}}`** if accessible; otherwise from **`{{FORGE_ASSEMBLE_PROMPT_ABS}}`**. 3. Note **`{{AGENTS_MD_ABS}}`** and **`{{PROJECT_ROOT_ABS}}/forge_vibe_agent_instructions_done.txt`** for later phases. |
 | **Exit criteria (all required)** | [ ] You will apply **every file write** under **`{{PROJECT_ROOT_ABS}}`**, not under `{{ASSEMBLY_WORK_DIR_ABS}}` (except optional self-edit of this prompt). [ ] You can quote back the **absolute** path to **`AGENTS.md`** and the **marker** file. |
-| **If blocked** | Stop; do not guess the root. User must re-run **`forge-vibe assemble --project-root <correct-dir>`**. |
+| **If blocked** | Stop; do not guess the root. User must re-run **`vibeforge assemble --project-root <correct-dir>`**. |
 
 ### Phase P1 — Discovery & shortlist
 
@@ -115,11 +115,11 @@ The **parent** re-reads disk. It returns **exit 1** only when **all** of the fol
 
 ## If `AGENTS.md` still looks generic after this run
 
-The **forge-vibe** CLI **never** auto-rewrites `AGENTS.md` after install — it only writes a **scaffold**. **Tailoring happens only when you execute this workflow and save edits** to `{{AGENTS_MD_ABS}}`. If the CLI spawn failed, you used `--no-invoke`, or the session stopped after a plan-only reply, the scaffold will be unchanged.
+The **vibeforge** CLI **never** auto-rewrites `AGENTS.md` after install — it only writes a **scaffold**. **Tailoring happens only when you execute this workflow and save edits** to `{{AGENTS_MD_ABS}}`. If the CLI spawn failed, you used `--no-invoke`, or the session stopped after a plan-only reply, the scaffold will be unchanged.
 
 ## What you are editing
 
-The file **`{{AGENTS_MD_ABS}}`** (also shown as root **`AGENTS.md`**) is the **forge canonical scaffold**: **eight-domain structure** and checklist-style placeholders from `forge-vibe install`. Your job is to **rewrite that file on disk** into a **project-tuned** document — not to leave instructional filler (“describe…”, “replace with…”, commented bash samples) as if it were final policy. **Remove or replace** every placeholder with **verified** repo facts.
+The file **`{{AGENTS_MD_ABS}}`** (also shown as root **`AGENTS.md`**) is the **forge canonical scaffold**: **eight-domain structure** and checklist-style placeholders from `vibeforge install`. Your job is to **rewrite that file on disk** into a **project-tuned** document — not to leave instructional filler (“describe…”, “replace with…”, commented bash samples) as if it were final policy. **Remove or replace** every placeholder with **verified** repo facts.
 
 ## Element menu & concise output
 

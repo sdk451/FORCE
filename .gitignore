@@ -7,8 +7,8 @@ dist/
 coverage/
 private-dist/*.tgz
 
-# forge-vibe assemble completion marker (regenerated each run; do not commit)
+# vibeforge assemble completion marker (regenerated each run; do not commit)
 forge_vibe_agent_instructions_done.txt
 
 # Ephemeral assembly prompt mirror (removed after successful assemble)
-.forge-vibe-assemble/
+.vibeforge-assemble/

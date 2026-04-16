@@ -75,7 +75,7 @@ describe("assembleAgentsMdIndicatesNoDiskProgress", () => {
   });
 
   it("is false when scaffold was edited away", () => {
-    const edited = tpl.replace("describe in one paragraph", "Ships forge-vibe CLI");
+    const edited = tpl.replace("describe in one paragraph", "Ships vibeforge CLI");
     expect(assembleAgentsMdIndicatesNoDiskProgress(tplNorm, edited, answers)).toBe(false);
   });
 });

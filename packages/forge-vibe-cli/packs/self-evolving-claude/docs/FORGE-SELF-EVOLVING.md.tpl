@@ -1,4 +1,4 @@
-# Self-Evolving Claude Code (forge-vibe)
+# Self-Evolving Claude Code (vibeforge)
 
 This project opted into the **Self-Evolving Claude Code** pack. It adds:
 
@@ -10,7 +10,7 @@ This project opted into the **Self-Evolving Claude Code** pack. It adds:
 
 ## Inspiration & attribution
 
-The pattern is inspired by Muditek’s public guide: **[How To Transform Claude Code Into A Self-Evolving System](https://muditek.com/resources/claude-code-self-evolving)**. This pack is an abbreviated, forge-vibe–compatible template; customize paths and commands for **{{PROJECT_NAME}}**.
+The pattern is inspired by Muditek’s public guide: **[How To Transform Claude Code Into A Self-Evolving System](https://muditek.com/resources/claude-code-self-evolving)**. This pack is an abbreviated, vibeforge–compatible template; customize paths and commands for **{{PROJECT_NAME}}**.
 
 ## Settings & hooks
 

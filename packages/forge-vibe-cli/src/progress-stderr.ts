@@ -11,7 +11,7 @@ export function makeStderrProgress(label: string, total: number): (current: numb
     return () => {};
   }
   return (current: number, path: string) => {
-    const line = `forge-vibe: ${label} ${current}/${total} ${path}`;
+    const line = `vibeforge: ${label} ${current}/${total} ${path}`;
     if (process.stderr.isTTY) {
       const w = process.stderr.columns ?? 100;
       const trimmed = line.length > w - 2 ? `${line.slice(0, w - 5)}...` : line;

@@ -36,4 +36,4 @@ The examples document provides specific examples for each of the 60+ elements, o
 
 ### Forge installer alignment
 
-The **forge-vibe** CLI (`packages/forge-vibe-cli`) maps these eight domains to portable **AGENTS.md** slices and emits **docs/FORGE-INSTALL-PROFILE.json** plus **docs/FORGE-AGENTIC-ASSEMBLY.md** so a coding agent can combine the profile with the full element catalog (**CODING_AGENT_INSTRUCTION_ELEMENTS.md**) to produce project-specific instructions.
+The **vibeforge** CLI (`packages/forge-vibe-cli`) maps these eight domains to portable **AGENTS.md** slices and emits **docs/FORGE-INSTALL-PROFILE.json** plus **docs/FORGE-AGENTIC-ASSEMBLY.md** so a coding agent can combine the profile with the full element catalog (**CODING_AGENT_INSTRUCTION_ELEMENTS.md**) to produce project-specific instructions.

@@ -4,7 +4,7 @@
 
 ### Project overview
 
-**forge-vibe-code-enhancement** is the development monorepo for **forge-vibe** — a BMAD-style CLI (`npx forge-vibe install`) that writes versioned **agent context packs** (AGENTS.md + host-specific trees) into any target repository for Claude Code, Cursor, Cline, Gemini CLI, OpenAI Codex, GitHub Copilot, and Kimi Code. It is **not** a web app, a backend service, or a UI framework. It is a developer-toolchain / scaffolding generator. The publishable unit is `packages/forge-vibe-cli` (npm: `forge-vibe`); all other top-level dirs are workspace orchestration, planning artifacts, and local build outputs.
+**forge-vibe-code-enhancement** is the development monorepo for **vibeforge** — a BMAD-style CLI (`npx vibeforge install`) that writes versioned **agent context packs** (AGENTS.md + host-specific trees) into any target repository for Claude Code, Cursor, Cline, Gemini CLI, OpenAI Codex, GitHub Copilot, and Kimi Code. It is **not** a web app, a backend service, or a UI framework. It is a developer-toolchain / scaffolding generator. The publishable unit is `packages/forge-vibe-cli` (npm: `vibeforge`); all other top-level dirs are workspace orchestration, planning artifacts, and local build outputs.
 
 ### Tech stack
 
@@ -18,14 +18,14 @@
 ### Structure
 
 ```
-packages/forge-vibe-cli/       publishable npm package (forge-vibe)
+packages/forge-vibe-cli/       publishable npm package (vibeforge)
   src/                         CLI TypeScript source (ESM)
     cli.ts                     entry point, command dispatch
     types.ts                   InstallAnswers + core types
     manifest.ts                planned file manifest
     write-files.ts             file-writing orchestration
     template.ts                template rendering (.tpl → output)
-    assemble.ts                forge-vibe assemble command
+    assemble.ts                vibeforge assemble command
     invoke-coding-agent.ts     spawns coding-agent CLIs for assembly
   packs/                       source templates (not compiled)
     core/templates/            agents.md.tpl, claude rules, cursor .mdc, etc.
@@ -71,10 +71,10 @@ npm test
 npm run repack-forge-vibe
 
 # Run the local CLI (after build)
-npm run forge-vibe -- install --project-root .
-npm run forge-vibe -- load --json --yes
-npm run forge-vibe -- check --project-root .
-npm run forge-vibe -- write --dry-run --yes --project-root path/to/repo
+npm run vibeforge -- install --project-root .
+npm run vibeforge -- load --json --yes
+npm run vibeforge -- check --project-root .
+npm run vibeforge -- write --dry-run --yes --project-root path/to/repo
 ```
 
 ### CI
@@ -137,7 +137,7 @@ Data flow: `cli.ts` dispatches to command modules (`install-profile.ts`, `manife
 
 ### Monorepo
 
-This is an npm workspaces monorepo. `packages/forge-vibe-cli` is the only publishable package. Run workspace-scoped commands via `-w forge-vibe` or from the package directory. Do not add new workspace packages without discussing it first.
+This is an npm workspaces monorepo. `packages/forge-vibe-cli` is the only publishable package. Run workspace-scoped commands via `-w vibeforge` or from the package directory. Do not add new workspace packages without discussing it first.
 
 ---
 
@@ -148,8 +148,8 @@ This is an npm workspaces monorepo. `packages/forge-vibe-cli` is the only publis
 - `npm run build` exits 0 (no TypeScript errors)
 - `npm test` exits 0 (all Vitest tests green)
 - No `any` introduced without justification
-- Template changes verified: `npm run forge-vibe -- load --json --yes` emits valid JSON without errors
-- For assembly changes: `npm run forge-vibe -- check --project-root .` as a sanity check
+- Template changes verified: `npm run vibeforge -- load --json --yes` emits valid JSON without errors
+- For assembly changes: `npm run vibeforge -- check --project-root .` as a sanity check
 
 ### Git & PR conventions
 

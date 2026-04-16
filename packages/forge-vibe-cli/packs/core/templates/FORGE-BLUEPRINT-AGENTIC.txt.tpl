@@ -1,6 +1,6 @@
 You are improving agent instructions for the repository **{{PROJECT_NAME}}**.
 
-**Hard requirement for `forge-vibe assemble`:** follow the **BMAD-style phased workflow** in **FORGE-ASSEMBLE-PROMPT.md** (P0–P6). After **Phase P2** (save root **AGENTS.md**), complete **Phase P3**: create **`forge_vibe_agent_instructions_done.txt`** in the **same directory** as **AGENTS.md** — **before** **Phase P5** host work. The CLI deletes that file before each run. Parent **gates G1∧G2** in the prompt explain exit **1**.
+**Hard requirement for `vibeforge assemble`:** follow the **BMAD-style phased workflow** in **FORGE-ASSEMBLE-PROMPT.md** (P0–P6). After **Phase P2** (save root **AGENTS.md**), complete **Phase P3**: create **`forge_vibe_agent_instructions_done.txt`** in the **same directory** as **AGENTS.md** — **before** **Phase P5** host work. The CLI deletes that file before each run. Parent **gates G1∧G2** in the prompt explain exit **1**.
 
 Read **docs/FORGE-INSTALL-PROFILE.json**, **docs/FORGE-AGENTS-ELEMENT-MENU.md** (element-type menu from forge **agents.md.tpl**), and root **AGENTS.md**. Use **CODING_AGENT_INSTRUCTION_ELEMENTS.md** at the repo root only if you need the full 60+ catalog.
 

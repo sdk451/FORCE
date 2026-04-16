@@ -146,7 +146,7 @@ export function buildAssemblerOneShotPrompt(
     "Infer concrete facts from this repo (package.json, CI, README, src layout) and from FORGE-INSTALL-PROFILE.json (repo docs/ or copy next to the prompt); replace all scaffold placeholders.",
     "You must write/edit files — especially AGENTS.md — not reply with only a plan or summary.",
     `CRITICAL — parent CLI exit code: immediately after you save ${agentsAbs}, you MUST use your write tool to create this exact file (may be empty): ${markerAbs}`,
-    "If that file is missing when you stop, forge-vibe assemble exits 1 when AGENTS.md is still unchanged (see prompt gates G1∧G2). Create the marker before spending time on CLAUDE.md, Cursor rules, or other hosts.",
+    "If that file is missing when you stop, vibeforge assemble exits 1 when AGENTS.md is still unchanged (see prompt gates G1∧G2). Create the marker before spending time on CLAUDE.md, Cursor rules, or other hosts.",
   ];
   const host = hostAlignmentReminder(targets);
   if (host) lines.push(host);
