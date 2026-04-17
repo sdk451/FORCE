@@ -2,7 +2,7 @@
 
 **Version:** 1.0  
 **Date:** 2026-04-03  
-**Status:** Normative for **forge-vibe-code-enhancement** pack authors and CLI generator (Epic 1 deliverable, stories 1.1–1.6).
+**Status:** Normative for **vibeforge** pack authors and CLI generator (Epic 1 deliverable, stories 1.1–1.6).
 
 ## References
 

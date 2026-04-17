@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import type { ContextAdvancedMap, ContextCoreMap, InstallAnswers } from "./types.js";
 import {
   CONTEXT_ADVANCED_IDS,
@@ -8,6 +10,7 @@ import {
 } from "./context-config.js";
 import { DOMAIN_H2_TITLE, DOMAIN_IDS, DOMAIN_SECTIONS, type DomainId } from "./domain-config.js";
 import { buildForgeInstallBundlesSection } from "./forge-install-bundles-md.js";
+import { packsDir } from "./pack-root.js";
 
 export interface CanonicalVars {
   PROJECT_NAME: string;
@@ -177,6 +180,28 @@ function assembleDomainChunk(domain: DomainId, a: InstallAnswers, v: CanonicalVa
   return `## ${DOMAIN_H2_TITLE[domain]}\n\n${chunks.join("\n\n")}`;
 }
 
+/**
+ * `agents.md.tpl` begins with **Core Behaviour**; **Part 1+** is the element catalog used for
+ * `docs/FORGE-AGENTS-ELEMENT-MENU.md`. Root **AGENTS.md** is composed from code + that intro block only — we slice
+ * the template at the Part 1 heading so it stays the single source of truth.
+ */
+export function extractAgentsPart0FromAgentsTpl(fullTpl: string): string {
+  const re = /\r?\n## Part 1:/;
+  const m = re.exec(fullTpl);
+  if (!m || m.index === undefined) return "";
+  return fullTpl.slice(0, m.index).trimEnd() + "\n";
+}
+
+let agentsPart0FromPackCache: string | undefined;
+
+function agentsPart0FromPack(): string {
+  if (agentsPart0FromPackCache !== undefined) return agentsPart0FromPackCache;
+  const p = path.join(packsDir(), "core/templates/agents.md.tpl");
+  const full = readFileSync(p, "utf8");
+  agentsPart0FromPackCache = extractAgentsPart0FromAgentsTpl(full);
+  return agentsPart0FromPackCache;
+}
+
 const agentsPreamble = (_v: CanonicalVars) => `# AGENTS.md — coding instructions
 
 ### Canonical scaffold (forge install)
@@ -215,7 +240,9 @@ function buildAgentsMdHostImports(a: InstallAnswers): string {
 }
 
 export function buildAgentsMd(a: InstallAnswers, v: CanonicalVars): string {
-  return `${agentsPreamble(v)}\n\n${buildPortableMarkdownSections(a, v)}${buildAgentsMdHostImports(a)}\n`;
+  const part0 = agentsPart0FromPack();
+  const head = part0 ? `${part0}\n\n` : "";
+  return `${head}${agentsPreamble(v)}\n\n${buildPortableMarkdownSections(a, v)}${buildAgentsMdHostImports(a)}\n`;
 }
 
 export function buildCopilotInstructionsMd(a: InstallAnswers, v: CanonicalVars): string {

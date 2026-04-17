@@ -20,7 +20,7 @@ assessor_note: >-
 # Implementation Readiness Assessment Report
 
 **Date:** 2026-04-03  
-**Project:** clean-code (BMM `config.yaml`); PRD working name: **forge-vibe-code-enhancement**
+**Project:** clean-code (BMM `config.yaml`); PRD working name: **vibeforge**
 
 ---
 

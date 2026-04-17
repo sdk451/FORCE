@@ -1,55 +1,71 @@
 # AGENTS.md — forge-vibe-code-enhancement
 
+## Core Behaviour
+
+### Default implementation loop
+- Plan → Code → Test → Verify
+
+Follow this unless the user specifies otherwise.
+
+### When implementing code use SOLID + DRY + KISS principles
+
+---
+
 ## Foundation
 
 ### Project overview
 
-**forge-vibe-code-enhancement** is the development monorepo for **vibeforge** — a BMAD-style CLI (`npx vibeforge install`) that writes versioned **agent context packs** (AGENTS.md + host-specific trees) into any target repository for Claude Code, Cursor, Cline, Gemini CLI, OpenAI Codex, GitHub Copilot, and Kimi Code. It is **not** a web app, a backend service, or a UI framework. It is a developer-toolchain / scaffolding generator. The publishable unit is `packages/forge-vibe-cli` (npm: `vibeforge`); all other top-level dirs are workspace orchestration, planning artifacts, and local build outputs.
+**forge-vibe-code-enhancement** is the monorepo for **vibeforge**: a BMAD-style agent context installer CLI that materialises portable `AGENTS.md`-centric instruction packs into Claude Code, Cursor, Gemini CLI, and other coding-agent hosts. It is **not** an end-user application; it is a developer tool and CLI package. The monorepo has one publishable package: `packages/forge-vibe-cli` (npm name `vibeforge`). Planning artifacts live in `_bmad-output/`.
 
 ### Tech stack
 
-- **Runtime:** Node.js ≥20 LTS
-- **Language:** TypeScript 5.7.x — strict mode, ESM (`"type": "module"`)
-- **Test:** Vitest 2.1.x (`vitest run`; tests under `packages/forge-vibe-cli/test/`)
-- **Build:** `tsc` only (no bundler)
-- **Key runtime deps:** `@clack/prompts ^1.2.0` (TUI), `ajv ^8.17.1` (JSON Schema), `yaml ^2.7.0`
-- **Dev deps:** `@types/node ^22.10.0`
+- **Language:** TypeScript 5.7, strict mode, ES2022 target, NodeNext module resolution
+- **Runtime:** Node.js 20+ (ESM throughout — `"type": "module"`)
+- **Testing:** Vitest 2.1
+- **Key deps:** `@clack/prompts` ^1.2 (TUI), `ajv` ^8.17 (JSON schema validation), `yaml` ^2.7 (YAML parsing)
+- **Build:** `tsc` to `dist/`; root workspace delegates to `packages/forge-vibe-cli`
 
-### Structure
+### Monorepo structure
 
 ```
-packages/forge-vibe-cli/       publishable npm package (vibeforge)
-  src/                         CLI TypeScript source (ESM)
-    cli.ts                     entry point, command dispatch
-    types.ts                   InstallAnswers + core types
-    manifest.ts                planned file manifest
-    write-files.ts             file-writing orchestration
-    template.ts                template rendering (.tpl → output)
-    assemble.ts                vibeforge assemble command
-    invoke-coding-agent.ts     spawns coding-agent CLIs for assembly
-  packs/                       source templates (not compiled)
-    core/templates/            agents.md.tpl, claude rules, cursor .mdc, etc.
-    stacks/                    TypeScript / Python stack variants
-    skills/                    optional skill bundles (SKILL.md + workflow.md)
-    ui-workflow/               UI workflow pack templates
-  schemas/                     install-answers.partial.schema.json (AJV draft-07)
-  test/                        Vitest test files (mirrors src/)
-docs/                          Research, deployment, compatibility matrix
-_bmad-output/                  PRD, epics, sprint status (planning only — do not edit in feature work)
-private-dist/                  Local tarballs from repack (gitignored)
+packages/forge-vibe-cli/        publishable vibeforge CLI
+  src/                          TypeScript source — CLI commands, composing, emitting
+  src/interactive/              TUI prompt modules (@clack/prompts)
+  packs/                        Template data: core/, stacks/, skills/, ui-workflow/
+  schemas/                      install-answers.partial.schema.json (AJV draft-07)
+  test/                         Vitest tests (co-located by concern, snapshots in __snapshots__/)
+  dist/                         Compiled output (git-ignored)
+docs/                           FORGE-INSTALL-PROFILE.json, research, forge metadata
+_bmad-output/                   PRD, epics, sprint status (planning artifacts)
+scripts/                        repack-forge-vibe.mjs — local private smoke-test pack
 ```
+
+### Key entry points
+
+- `packages/forge-vibe-cli/src/cli.ts` — binary entry, registers subcommands
+- `packages/forge-vibe-cli/src/compose-canonical.ts` — assembles canonical AGENTS.md from slices
+- `packages/forge-vibe-cli/src/write-files.ts` — writes host-specific file trees
+- `packages/forge-vibe-cli/src/plan.ts` — resolves full planned file list from answers
+- `packages/forge-vibe-cli/src/types.ts` — shared TypeScript types (`InstallAnswers`, etc.)
+- `packages/forge-vibe-cli/schemas/install-answers.partial.schema.json` — keep in sync with `OPTIONAL_SKILL_IDS` constant in source
 
 ---
 
 ## Standards
 
+### TypeScript conventions
+
+- Strict mode always (`strict: true`); **no `any`** — use `unknown` + type guards.
+- ESM only — `import`/`export`, never `require`. Relative imports need `.js` extension (NodeNext resolution).
+- Prefer interfaces for object shapes; `const` assertions for literal types.
+- No barrel `index.ts` that creates circular dependencies between CLI modules.
+
 ### Code style
 
-- Strict TypeScript; never use `any` — use `unknown` + type guards or a narrowed union.
-- ESM only (`import`/`export`); never `require()`.
-- Named exports preferred; default exports only where a framework demands it.
-- No `console.log` in library code — use `process.stderr.write` or the `progress-stderr.ts` helper for diagnostics.
-- Tests: `describe`/`it`, Arrange-Act-Assert, mock filesystem / spawn where needed; never hit real disk or network in unit tests.
+- 2-space indentation; no tabs.
+- Conventional Commits: `feat:`, `fix:`, `chore:`, `test:`, `docs:`, `refactor:`.
+- Comments explain *why*, not *what*; prefer self-documenting names.
+- No `console.log` in production paths — use `process.stderr.write` for CLI progress output.
 
 ---
 
@@ -58,86 +74,88 @@ private-dist/                  Local tarballs from repack (gitignored)
 ### Commands
 
 ```bash
-# Install deps (run from repo root)
-npm install
+# Install workspace deps
+npm ci
 
-# Build (compiles packages/forge-vibe-cli via tsc)
+# Build (TypeScript → dist/)
 npm run build
 
-# Test (runs Vitest in packages/forge-vibe-cli)
+# Typecheck without emit
+cd packages/forge-vibe-cli && npx tsc --noEmit
+
+# Test
 npm test
 
-# Build + test + pack to private-dist/ (local smoke-test before publish)
-npm run repack-forge-vibe
-
-# Run the local CLI (after build)
+# Run CLI locally (requires build first)
 npm run vibeforge -- install --project-root .
-npm run vibeforge -- load --json --yes
 npm run vibeforge -- check --project-root .
-npm run vibeforge -- write --dry-run --yes --project-root path/to/repo
+npm run vibeforge -- load --json --yes
+
+# Local private smoke-test pack
+npm run repack-forge-vibe    # build + test + pack to private-dist/*.tgz
 ```
 
 ### CI
 
-`.github/workflows/ci.yml` — triggers on every push: `npm ci` → `npm run build` → `npm test` on Node 20. PRs cannot merge if CI fails.
+GitHub Actions `.github/workflows/ci.yml`: `npm ci` → `npm run build` → `npm test` on Node 20; triggered on push/PR to `main`.
 
 ---
 
 ## Safety
 
+### Security boundaries
+
+- No secrets or env files in repo.
+- CLI must work **offline** — no network calls in `install`, `write`, `load`, `check`, `resolve-defaults`.
+- Pack templates are static data; do not embed outbound calls or dynamic remote fetches.
+- Dependency bumps that touch schema validation or TUI paths require explicit review.
+
 ### Boundaries
 
 **Always (autonomous):**
-- Read any file in the repo
-- `npm run build` and `npm test`
-- Search/grep the codebase
-- Create branches, stage files, draft commits
+- Read any file in the repo.
+- Run `npm run build`, `npm test`, `npx tsc --noEmit`.
+- Create branches and commits.
 
 **Ask first:**
-- Adding or updating npm dependencies
-- Changes to `schemas/install-answers.partial.schema.json` (affects answer validation)
-- Renaming or deleting template files under `packs/`
-- Changes to `OPTIONAL_SKILL_IDS` in code (must stay in sync with schema)
-- Publishing or tagging a release (`npm run repack-forge-vibe` is safe locally)
-- Editing CI workflow (`.github/workflows/ci.yml`)
+- Adding / removing / upgrading npm dependencies.
+- Changing `schemas/install-answers.partial.schema.json` (breaks CLI validation parity).
+- Modifying `packs/` templates (user-facing output changes).
+- Any change to `OPTIONAL_SKILL_IDS` in source (must stay in sync with schema).
+- Force-push or hard reset to remote.
 
 **Never:**
-- Commit secrets, `.env` files, or credentials
-- Force-push to `main`
-- Skip pre-commit hooks with `--no-verify`
-- Use `any` in TypeScript without an inline comment explaining why
-- Modify `_bmad-output/` planning artifacts as part of feature work
-- Write to `private-dist/` (build artifact; gitignored, regenerated by repack)
-
-### Security
-
-- No secrets in repo; no `.env` files.
-- `ajv` schema validation rejects unknown properties and invalid values on `--answers` input — preserve this for all CLI entry points.
-- No outbound network in core CLI commands (offline installs must work).
-- Hooks (`allow_hooks: false` in this repo's profile) — do not add shell-execution hooks without explicit user approval.
+- Commit `.env`, secrets, or API keys.
+- Use `--no-verify` to skip hooks without explicit user instruction.
+- Add network calls to core CLI commands.
+- Run `vibeforge install` against a production repo without explicit approval.
 
 ---
 
 ## Architecture
 
+### CLI command model
+
+| Command | Purpose |
+|---------|---------|
+| `install` | Interactive TUI (requires TTY) — prompts then writes files |
+| `write` | Non-interactive (`--answers`, `--yes`) for automation |
+| `load` | Resolve manifest + planned file list; `--json` for piping |
+| `check` | Diff planned vs on-disk; exit 1 on mismatch |
+| `resolve-defaults` | Print merged `InstallAnswers` after defaults |
+
+`InstallAnswers` → `plan.ts` → `compose-canonical.ts` + `write-files.ts`. Answers validated by AJV against `schemas/install-answers.partial.schema.json` (unknown keys rejected). Pack selection via `targets` + `optional_skills` + pack flags.
+
 ### Agent behavior
 
-Fix at root cause, not symptoms. Reproduce → hypothesize → test → iterate. Search existing code before adding abstractions. Plan (EnterPlanMode) before large edits touching multiple src files or packs.
+Fix at root cause, not symptoms. Reproduce → hypothesize → test → iterate. Search existing source before adding abstractions. Plan before large edits.
 
 ### Debugging protocol
 
-1. Reproduce with smallest failing case (single test or CLI invocation)
-2. One hypothesis — state it before changing code
-3. Test that hypothesis; observe result
-4. Iterate; do not paper over errors with broad try/catch
-
-### CLI architecture
-
-Data flow: `cli.ts` dispatches to command modules (`install-profile.ts`, `manifest.ts`, `write-files.ts`, `template.ts`). Templates under `packs/**/*.tpl` are rendered via `template.ts` with `InstallAnswers` context. The schema in `schemas/` gates every `--answers` JSON via AJV before it reaches manifest resolution. `assemble.ts` + `invoke-coding-agent.ts` handle the post-install assembly loop (spawns the user's coding-agent CLI with a prompt file).
-
-### Monorepo
-
-This is an npm workspaces monorepo. `packages/forge-vibe-cli` is the only publishable package. Run workspace-scoped commands via `-w vibeforge` or from the package directory. Do not add new workspace packages without discussing it first.
+1. Reproduce with the smallest failing Vitest case or `npm run vibeforge -- <cmd>` invocation.
+2. State one hypothesis.
+3. Test that hypothesis (add a Vitest case or inspect `dist/` output).
+4. Observe and iterate. Do not paper over errors without root-cause analysis.
 
 ---
 
@@ -145,18 +163,17 @@ This is an npm workspaces monorepo. `packages/forge-vibe-cli` is the only publis
 
 ### Definition of done
 
-- `npm run build` exits 0 (no TypeScript errors)
-- `npm test` exits 0 (all Vitest tests green)
-- No `any` introduced without justification
-- Template changes verified: `npm run vibeforge -- load --json --yes` emits valid JSON without errors
-- For assembly changes: `npm run vibeforge -- check --project-root .` as a sanity check
+- `npm run build` exits 0 (no TypeScript errors).
+- `npm test` exits 0 (all Vitest cases pass, including golden snapshots).
+- No new `any` types introduced (`npx tsc --noEmit` clean).
+- Pack template changes verified against `test/__snapshots__/`.
 
 ### Git & PR conventions
 
-- Branch: `feature/*`, `fix/*`, `docs/*` — never commit directly to `main`
-- Conventional Commits: `feat(cli): ...`, `fix(assemble): ...`, `docs: ...`, `test: ...`, `chore: ...`
-- PR title mirrors the commit message; description explains *why*
-- Never commit build artifacts (`dist/`, `private-dist/`) or node_modules
+- Branches: `feature/<desc>`, `fix/<desc>`, `chore/<desc>`.
+- Conventional commit messages; title ≤72 chars.
+- Do not commit build artifacts (`dist/`, `*.tgz`, `private-dist/`).
+- PR description: why the change, how to verify, any breaking changes to pack output or CLI behaviour.
 
 ---
 
@@ -164,26 +181,40 @@ This is an npm workspaces monorepo. `packages/forge-vibe-cli` is the only publis
 
 ### Memory & session handoff
 
-Use **PROJECT_MEMORY.md** for durable decisions (architecture choices, resolved bugs, constraints). Keep bullets decision-faithful — include error signatures, file paths, and rationale. Prune scratch notes after each session.
-
-### UI/UX verification
-
-This repo has no UI. Skip visual verification workflows. Playwright is not applicable here.
+Use **PROJECT_MEMORY.md** for decisions vs scratch. Keep summaries decision-faithful — preserve error signatures, rationale, and constraints. After a session, roll bullets into Decisions or delete if obsolete.
 
 ---
 
 ## Orchestration
 
-### Context management
+### Context management & compaction
 
-When context is compacted, preserve: modified file list, test commands run, open hypotheses, and user constraints. Use subagents for heavy template research or large pack refactors.
+When context is compacted, preserve: modified file list, test commands used, open hypotheses, and user constraints. Use subagents or external plan files for heavy research tasks.
 
 ---
 
 ## Optional skills & packs
 
-- **Frontend Design** (`forge-frontend-design`) — Use when working on Storybook-style visual docs or README diagrams. Not applicable to CLI internals.
-- **Superpowers workflow** (`forge-superpowers`) — Use for large feature delivery (new CLI command, new pack domain, schema changes) that spans multiple sessions.
-- **Planning with files** (`forge-planning-with-files`) — Use to maintain a persistent `plan.md` / `tasks.md` when a feature spans more than one session.
-- **UI workflow pack** — Not applicable to this CLI repo; skip for non-UI tasks.
-- **Project memory** (`PROJECT_MEMORY.md`) — Use when handing off sessions or recording stable architectural decisions.
+Skills are on-disk under each enabled host's skills tree; trigger by name or when the scenario matches.
+
+| Skill | ID | When to use |
+|-------|----|-------------|
+| Frontend Design | `forge-frontend-design` | Designing CLI output shape, TUI layout, or any user-facing text |
+| Planning with files | `forge-planning-with-files` | Persistent plan.md/tasks.md for multi-session feature work |
+| Systematic debugging | `forge-systematic-debugging` | Stuck on a CLI bug, flaky Vitest test, or unexpected pack output |
+| Code review expert | `forge-code-review-expert` | Pre-merge review on CLI logic, schema changes, or pack templates |
+| Context engineering | `forge-context-engineering` | Auditing AGENTS.md or rules files; context hygiene before large tasks |
+| Playwright / browser | `forge-playwright-browser` | E2E browser verification if a web UI is added |
+| Security review | `forge-security-review` | Reviewing pack templates or CLI for secrets handling and injection risks |
+| Test coverage review | `forge-test-coverage-review` | Hardening test quality before release; identifying gaps beyond line % |
+
+**UI workflow pack** (`docs/UI-WORKFLOW-PACK.md`) — follow when building or verifying any UI components, stories, or design-system work.
+
+**PROJECT_MEMORY.md** — record durable architecture decisions and session hand-offs; prune stale notes after each session.
+
+---
+
+## Security & legal (baseline)
+
+- No secrets in repo. No unexpected outbound calls from install scripts without explicit opt-in.
+- Base packs are **not** legal or compliance advice.

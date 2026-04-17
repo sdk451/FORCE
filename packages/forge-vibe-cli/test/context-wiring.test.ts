@@ -64,6 +64,14 @@ describe("host context wiring", () => {
     expect(md).toContain("@docs/FORGE-KIMI.md");
   });
 
+  it("AGENTS.md leads with Core Behaviour from agents.md.tpl (before # AGENTS.md heading)", () => {
+    const a = resolveDefaults({ project_name: "fixture", targets: { cursor: true, claude_code: false } });
+    const md = buildAgentsMd(a, v);
+    expect(md.indexOf("## Core Behaviour")).toBe(0);
+    expect(md.indexOf("# AGENTS.md")).toBeGreaterThan(0);
+    expect(md.indexOf("## Core Behaviour")).toBeLessThan(md.indexOf("# AGENTS.md"));
+  });
+
   it("Copilot instructions include portable sections", () => {
     const a = resolveDefaults({
       project_name: "fixture",

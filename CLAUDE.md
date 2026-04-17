@@ -14,4 +14,10 @@
 
 ## Verification
 
-Follow **AGENTS.md** verification / DOD.
+Follow **AGENTS.md** verification / DOD; use hooks only where the team has reviewed them.
+
+## Hooks & automation
+
+You selected optional skills (**Code review expert**) that work best with **PostToolUse** hooks (e.g. run tests or lint after edits). This profile has **`allow_hooks: false`** — **`.claude/settings.json`** is the no-hooks template.
+
+To wire hooks: re-run **`vibeforge`** and enable **Claude hooks**, or copy hook examples from the forge pack (**`settings.hooks.example.json`**) / **docs/FORGE-HOOK-OPTIN.md** (from a hooks-enabled install) into **`.claude/settings.json`** and add **`scripts/forge-claude/session-end-memory-hint.mjs`** if you use SessionEnd.

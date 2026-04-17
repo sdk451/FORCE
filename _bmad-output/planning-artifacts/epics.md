@@ -15,11 +15,11 @@ productOwnerNotes: >-
   principles** below. Replicate BMAD-style npx init (manifest, directories, adapters) per shipped host.
 ---
 
-# forge-vibe-code-enhancement — Epic & story breakdown
+# vibeforge — Epic & story breakdown
 
 ## Overview
 
-This document decomposes **forge-vibe-code-enhancement** into **implementation-ready epics and stories**, aligned with the **PRD**, **architecture**, **ADR-0001**, and consolidated **domain research** (`domain-agent-context-claude-cursor-gemini-research-2026-04-03.md`). It encodes the **default canonical approach**: one **normative pack source** and **host adapters**, borrowing the best-stable patterns from **[AGENTS.md](https://agents.md/)**, **Claude Code** (hooks, `.claude/rules`, skills), **Cursor** (`.mdc`, globs, `.cursor/skills`), **Gemini CLI** (`GEMINI.md`, `context.fileName`, `/memory`), **OpenAI Codex CLI** (**`AGENTS.md`**; optional **[oh-my-codex (OMX)](https://github.com/sdk451/oh-my-codex)** documented only as a **runtime companion** in pack README), and growth hosts (**Cline**, **Copilot** surfaces, **Windsurf**) per **FR-MAP-02**.
+This document decomposes **vibeforge** into **implementation-ready epics and stories**, aligned with the **PRD**, **architecture**, **ADR-0001**, and consolidated **domain research** (`domain-agent-context-claude-cursor-gemini-research-2026-04-03.md`). It encodes the **default canonical approach**: one **normative pack source** and **host adapters**, borrowing the best-stable patterns from **[AGENTS.md](https://agents.md/)**, **Claude Code** (hooks, `.claude/rules`, skills), **Cursor** (`.mdc`, globs, `.cursor/skills`), **Gemini CLI** (`GEMINI.md`, `context.fileName`, `/memory`), **OpenAI Codex CLI** (**`AGENTS.md`**; optional **[oh-my-codex (OMX)](https://github.com/sdk451/oh-my-codex)** documented only as a **runtime companion** in pack README), and growth hosts (**Cline**, **Copilot** surfaces, **Windsurf**) per **FR-MAP-02**.
 
 **Suggested implementation order:** complete **Epic 1** (template spec gate) → **Epic 2** (MVP CLI + dual host) → **Epic 3** (UI extension) in parallel with early **Epic 4** spikes only as capacity allows. Run **Epic 6** when deepening **AGENTS.md / CLAUDE.md / GEMINI.md / memory** beyond v1 stubs—or in parallel once Epic 2 questionnaire shape is stable (6.6 wires into the same TUI / `answers` JSON).
 

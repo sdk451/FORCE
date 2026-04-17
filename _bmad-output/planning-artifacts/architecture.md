@@ -8,7 +8,7 @@ inputDocuments:
   - docs/market_scan.md
 workflowType: architecture
 project_name: clean-code
-prd_working_name: forge-vibe-code-enhancement
+prd_working_name: vibeforge
 user_name: Simon
 date: "2026-04-03"
 uxDesign: none
@@ -33,7 +33,7 @@ This section keeps **architecture** and **`epics.md`** consistent when the PRD c
 
 ### Naming and scope
 
-- **PRD title / working name:** **forge-vibe-code-enhancement** (replaces earlier “clean-code” wording in the PRD document). Repository BMM config may still use `project_name: clean-code`; use the **PRD working name** for customer-facing narrative and new docs.
+- **PRD title / working name:** **vibeforge** (replaces earlier “clean-code” wording in the PRD document). Repository BMM config may still use `project_name: clean-code`; use the **PRD working name** for customer-facing narrative and new docs.
 - **Product definition (executive summary):** A **versioned library** of **coding agent context, hooks, and skills packs** expressed as a **small set of canonical interoperable artifact types** (see below) materialized through **host adapters** for **vibe coding agents**. Example roadmap hosts include **Claude Code**, **Cursor**, **Cline**, **GitHub Copilot**, **VS Code Copilot**, **OpenAI Codex CLI**, **Google Gemini CLI**, **Windsurf**, and BMAD-taxonomy peers. **MVP** ships adapters for **Claude Code + Cursor** only; others follow **FR-MAP-02 / FR30–FR31** when tested.
 
 ### Installer shape (BMAD parity)

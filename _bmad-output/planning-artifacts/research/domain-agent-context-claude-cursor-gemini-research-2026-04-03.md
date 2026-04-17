@@ -57,7 +57,7 @@ Full synthesis and citations appear in the sections below.
 
 The **AI coding agent tooling** space is converging on a small set of **interoperable artifacts**: root Markdown instructions ([AGENTS.md](https://agents.md/), CLAUDE.md, GEMINI.md), **modular rules** (`.claude/rules`, `.cursor/rules/*.mdc`), **optional skill bundles** ([Agent Skills](https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview.md)), and **tool integration** via **MCP** and (where supported) **hooks**. For **UI/UX work**, official and community guidance consistently recommends **non-text verification** (tests, screenshots, story renders) rather than prose-only acceptance.
 
-**Recommendations for pack authors (forge-vibe-code-enhancement):**
+**Recommendations for pack authors (vibeforge):**
 
 1. **Canonical “root context”** should encode commands, architecture, verification expectations, and PR conventions; map to **Cursor rules** and **Gemini/AGENTS.md** via your generator matrix (FR-MAP-01).
 2. **Split** stable stack facts from **volatile** UI checklists; use **skills** for long procedural UI flows (Figma → implement → Playwright proof).
@@ -406,7 +406,7 @@ Community consensus (summarized from recurring r/ChatGPT, r/ClaudeAI, r/cursor, 
 
 ## Research conclusion
 
-This document supports **Epic 1** (agent configuration template research) and **PRD** implementation for **forge-vibe-code-enhancement**: it ties **AGENTS.md**, **Claude Code** hooks/skills, **Cursor** rules, **Gemini CLI** context files, and **OpenAI Codex CLI** (**single matrix row**; **[oh-my-codex (OMX)](https://github.com/sdk451/oh-my-codex)** as **documented runtime companion**) into one **mapping narrative**, elevates **UI verification** (Storybook, Playwright, Figma MCP, shadcn), and adds **§9** on **user-requested supplementary sources** plus **root-cause / high-fidelity summarization** norms for rules and memory.
+This document supports **Epic 1** (agent configuration template research) and **PRD** implementation for **vibeforge**: it ties **AGENTS.md**, **Claude Code** hooks/skills, **Cursor** rules, **Gemini CLI** context files, and **OpenAI Codex CLI** (**single matrix row**; **[oh-my-codex (OMX)](https://github.com/sdk451/oh-my-codex)** as **documented runtime companion**) into one **mapping narrative**, elevates **UI verification** (Storybook, Playwright, Figma MCP, shadcn), and adds **§9** on **user-requested supplementary sources** plus **root-cause / high-fidelity summarization** norms for rules and memory.
 
 **Next steps:** Fold **§3 (Codex), §7 (Codex supplement), §8 rec. 7, §9–§10** into `docs/agent-config-template-research.md` (or equivalent) when Epic 1 Story 1.5 completes; link from `epics.md` Epic 1; **FR-MAP-02** Codex = **one row** + OMX **appendix** text in pack docs.
 

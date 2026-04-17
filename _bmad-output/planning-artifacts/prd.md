@@ -62,7 +62,7 @@ visionPriority:
   uiDevelopmentPacks: high
 ---
 
-# Product Requirements Document - forge-vibe-code-enhancement
+# Product Requirements Document - vibeforge
 
 **Author:** Simon  
 **Date:** 2026-04-03
@@ -77,7 +77,7 @@ visionPriority:
 
 ## Executive Summary
 
-**forge-vibe-code-enhancement** (working name) ships a **versioned library** of coding agent context, hooks and skills packs to enhance the performance of vibe coding agents such as **Claude Code, Cursor, Codex CLI**. Packs will consist of **guiding** context instructions like **CLAUDE.md** plus other hooks and skills in packs, such as **`.claude/rules`**, **hook recipes**, and **optional Agent Skills** so the user’s preferred / installed coding agents (e.g. Claude Code and Cursor) behave like a **production-minded** pair: clear definition of done, **advisory** instructions plus **deterministic** hooks where the host supports them, and honest positioning (**observable gates**, not vendor-internal parity).
+**vibeforge** (working name) ships a **versioned library** of coding agent context, hooks and skills packs to enhance the performance of vibe coding agents such as **Claude Code, Cursor, Codex CLI**. Packs will consist of **guiding** context instructions like **CLAUDE.md** plus other hooks and skills in packs, such as **`.claude/rules`**, **hook recipes**, and **optional Agent Skills** so the user’s preferred / installed coding agents (e.g. Claude Code and Cursor) behave like a **production-minded** pair: clear definition of done, **advisory** instructions plus **deterministic** hooks where the host supports them, and honest positioning (**observable gates**, not vendor-internal parity).
 
 **Users:** fractional CTOs, senior ICs, and teams standardizing agent behavior across repos—especially where **UI implementation** has been unreliable because agents **optimize for text feedback**, not **visual truth**.
 
@@ -235,7 +235,7 @@ _Web scan April 2026. Treat citations as pointers for your own verification befo
 - Full **three-skill** UI bundle set; Chromatic/Loki **VRT** recipe pack.
 - Community contributions or **tiered** consulting templates.
 - **Additional vibe coding agents / IDEs** using the same installer and **canonical artifact** model—per-tool **adapter** rows, install paths, and “best available” equivalents for rules/context/skills/memory (where hooks do not exist, document **substitutes**: tasks, commands, or manual checkpoints). Priority host set aligns with **FR-MAP-02** (Cline, Windsurf, GitHub Copilot, VS Code Copilot, Codex CLI, Gemini CLI, …).
-- **Agent-agnostic configurable quality verification layer (default pack — blocked on external OSS):** Simon is building a **separate open-source** product for configurable, host-agnostic quality verification. **This repo’s installer** will eventually emit a **default extension pack** that wires repos into that layer (policies, gates, evidence)—**only after** that product exists and stabilizes. **Not part of MVP**; does not block shipping forge-vibe-code-enhancement. Tracked as **FR42** (future contract).
+- **Agent-agnostic configurable quality verification layer (default pack — blocked on external OSS):** Simon is building a **separate open-source** product for configurable, host-agnostic quality verification. **This repo’s installer** will eventually emit a **default extension pack** that wires repos into that layer (policies, gates, evidence)—**only after** that product exists and stabilizes. **Not part of MVP**; does not block shipping vibeforge. Tracked as **FR42** (future contract).
 
 ### Vision (future)
 

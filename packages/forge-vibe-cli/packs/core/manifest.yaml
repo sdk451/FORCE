@@ -1,6 +1,6 @@
 id: forge-mvp-core
 version: "0.1.0"
-description: Core canonical slices for forge-vibe-code-enhancement MVP
+description: Core canonical slices for vibeforge MVP
 canonical_slices:
   - portable_root
   - modular_rules

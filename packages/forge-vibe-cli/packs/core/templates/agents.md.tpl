@@ -1,4 +1,4 @@
-## Part 0: Core Behaviour
+## Core Behaviour
 
 ### your default implementation loop is to
 - Plan

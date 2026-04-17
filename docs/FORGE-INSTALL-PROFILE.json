@@ -6,7 +6,7 @@
     "claude_code": true,
     "cursor": true,
     "cline": false,
-    "gemini_cli": false,
+    "gemini_cli": true,
     "openai_codex": false,
     "github_copilot": false,
     "kimi_code": false
@@ -23,12 +23,18 @@
   },
   "optional_skills": [
     "frontend-design",
-    "superpowers",
-    "planning-with-files"
+    "planning-with-files",
+    "systematic-debugging",
+    "code-review-expert",
+    "context-engineering",
+    "playwright-browser",
+    "security-review",
+    "test-coverage-review"
   ],
   "include_ui_workflow_pack": true,
   "include_memory_enhanced": true,
   "allow_hooks": false,
+  "include_self_evolving_claude": false,
   "derived": {
     "context_core": {
       "overview": true,

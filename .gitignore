@@ -1,6 +1,7 @@
 _bmad/
 .cursor/
 .claude/
+.gemini/
 node_modules/
 dist/
 *.tsbuildinfo

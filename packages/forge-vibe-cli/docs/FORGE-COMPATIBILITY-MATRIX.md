@@ -48,7 +48,7 @@ Skill id `tdd` → install folder `forge-tdd` (always `forge-` prefix). Each fol
 | VS Code Copilot | DRAFT — distinct row from GitHub Copilot when paths differ |
 | Windsurf | DRAFT — verify paths |
 
-Repository stubs: **forge-vibe-code-enhancement** `docs/growth-adapters/`, `docs/agent-config-template-research.md`.
+Repository stubs: **vibeforge** `docs/growth-adapters/`, `docs/agent-config-template-research.md`.
 
 ## Reserved
 

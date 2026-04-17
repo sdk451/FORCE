@@ -1,4 +1,4 @@
-# Sprint status — forge-vibe-code-enhancement (epic / FR rollup)
+# Sprint status — vibeforge (epic / FR rollup)
 #
 # Rollup level: **epic** with **FR focus** strings (see epics.md §FR coverage map).
 # Story-level rows are intentionally omitted; promote to per-story keys when you run
@@ -22,7 +22,7 @@
 
 generated: "2026-04-03"
 last_updated: "2026-04-03"
-project: forge-vibe-code-enhancement
+project: vibeforge
 project_key: forge-vibe
 tracking_system: file-system
 story_location: "_bmad-output/planning-artifacts/epics.md"

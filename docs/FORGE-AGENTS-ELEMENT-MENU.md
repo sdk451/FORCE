@@ -6,6 +6,18 @@
 
 ---
 
+## Core Behaviour
+
+### your default implementation loop is to
+- Plan
+- Code
+- Test
+- Verify
+
+follow this unless the user specifies otherwise
+
+### When implementing code use SOLID + DRY + KISS principles
+
 ## Part 1: Foundation Elements (Project Context Layer)
 
 These elements establish what the project is and how to navigate it. They're read at session start and inform all downstream decisions.
