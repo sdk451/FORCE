@@ -45,7 +45,48 @@ Teams want one **canonical** description of how AI coding agents should work in 
 
 - **Node.js 20+**
 
-## Quick start (this repo)
+## Install & run (published package)
+
+**npm package:** **`@sdk451/vibeforge`** — the CLI command on your PATH is **`vibeforge`** (after global install). See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for build, pack, and publish.
+
+### Interactive install (any project)
+
+From the **target repository root**, in a real terminal (**TTY** required for prompts):
+
+```bash
+npx @sdk451/vibeforge install
+```
+
+Optional:
+
+```bash
+npx @sdk451/vibeforge install --project-root path/to/repo
+```
+
+Emitted paths (**`AGENTS.md`**, **`.claude/`**, **`.cursor/`**, **`GEMINI.md`**, **`docs/`**, etc.) are **relative to that project root** (default: current directory).
+
+### Global install
+
+```bash
+npm install -g @sdk451/vibeforge
+vibeforge install
+vibeforge --help
+```
+
+### Automation / CI
+
+Use **`vibeforge write`** with **`--yes`** and/or **`--answers`** — not **`install`** (interactive only).
+
+### Offline (tarball)
+
+If you have a **`.tgz`** (e.g. `sdk451-vibeforge-0.1.0.tgz`; version must match):
+
+```bash
+npm install -g ./sdk451-vibeforge-0.1.0.tgz
+vibeforge install
+```
+
+## Quick start (this monorepo — contributors)
 
 ```bash
 npm install
@@ -53,25 +94,9 @@ npm run build
 npm test
 ```
 
-**Local private package (build + test + pack):** `npm run repack-forge-vibe` writes **`private-dist/sdk451-vibeforge-*.tgz`** (ignored by git). See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md#local-repack-private-smoke-test).
+**Local package tarball:** `npm run repack-forge-vibe` writes **`private-dist/sdk451-vibeforge-*.tgz`** (gitignored). See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md#local-repack-private-smoke-test).
 
-### Recommended install flow (published package)
-
-From your **repository root** (TTY required for prompts):
-
-```bash
-npx @sdk451/vibeforge install
-```
-
-All generated paths (**`AGENTS.md`**, **`.claude/`**, **`.cursor/`**, **`GEMINI.md`**, **`docs/`**, etc.) are **relative to the project root** — by default the directory where you run the command; override with **`--project-root <dir>`**.
-
-After **`npm install -g @sdk451/vibeforge`**:
-
-```bash
-vibeforge install
-```
-
-CLI help (all targets and options):
+Exercise the CLI from the repo without publishing:
 
 ```bash
 npm run vibeforge -- --help
@@ -87,7 +112,7 @@ npm run vibeforge -- --help
 | **`check`** | Compare planned files to an on-disk project; prints JSON summary; exit **1** if anything is missing or differs. Progress on **stderr** when more than **25** files are planned. |
 | **`resolve-defaults`** | Print fully merged **`InstallAnswers`** after defaults (and **`--answers`** if provided). |
 
-Examples:
+Examples (in **this** repo use `npm run vibeforge -- …`; with **`npm install -g @sdk451/vibeforge`** use `vibeforge …` instead):
 
 ```bash
 npm run vibeforge -- install --project-root .
@@ -162,7 +187,7 @@ Duplicate skill ids in the array are **deduped** after validation.
 - **FR42** (*quality verification layer*) is **reserved**; no files until an external OSS product is wired.
 - **OpenAI Codex + oh-my-codex (OMX)**: single Codex row; OMX documented as a **companion** only (`docs/FORGE-OMX-COMPANION.md` after write).
 
-## Offline / global install
+## Pack from this clone (maintainers)
 
 ```bash
 npm pack packages/forge-vibe-cli
@@ -170,7 +195,7 @@ npm install -g ./sdk451-vibeforge-0.1.0.tgz
 vibeforge install
 ```
 
-Published npm package name: **`@sdk451/vibeforge`** (this root `package.json` is a **private** workspace orchestrator; sources live under **`packages/forge-vibe-cli/`**).
+The publishable package lives under **`packages/forge-vibe-cli/`**; the repo root is a **private** workspace only.
 
 ## Documentation index
 
