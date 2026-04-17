@@ -48,6 +48,10 @@ vibeforge install
 
 (Use the actual `.tgz` filename and version you have.)
 
+### Example output
+
+The **vibeforge** development monorepo keeps **live examples** at its root—**`AGENTS.md`**, **`CLAUDE.md`**, **`GEMINI.md`**, **`PROJECT_MEMORY.md`**—so you can inspect real emitted scaffolds before running the installer on your own repo.
+
 ---
 
 You’ll get prompts for **targets**, **stack**, **instruction domains**, optional **skills** and **packs**; outputs include **`docs/FORGE-INSTALL-PROFILE.json`** and **`docs/FORGE-AGENTIC-ASSEMBLY.md`**. Existing files that differ may prompt for overwrite (use **`--force`** to skip).

@@ -86,6 +86,10 @@ npm install -g ./sdk451-vibeforge-0.1.0.tgz
 vibeforge install
 ```
 
+### Example output (this repository)
+
+To see what the installer produces in a real repo, browse the files at the root of **this** monorepo: **`AGENTS.md`**, **`CLAUDE.md`**, **`GEMINI.md`**, and **`PROJECT_MEMORY.md`**. They are **examples of vibeforge output** (emitted for this project’s install profile and optional packs). Your project’s files will follow the same shapes but reflect your answers, targets, and options—compare with **`docs/FORGE-INSTALL-PROFILE.json`** when present.
+
 ## Quick start (this monorepo — contributors)
 
 ```bash
