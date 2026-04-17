@@ -15,7 +15,7 @@ Follow this unless the user specifies otherwise.
 
 ### Project overview
 
-**forge-vibe-code-enhancement** is the monorepo for **vibeforge**: a BMAD-style agent context installer CLI that materialises portable `AGENTS.md`-centric instruction packs into Claude Code, Cursor, Gemini CLI, and other coding-agent hosts. It is **not** an end-user application; it is a developer tool and CLI package. The monorepo has one publishable package: `packages/forge-vibe-cli` (npm name `vibeforge`). Planning artifacts live in `_bmad-output/`.
+**forge-vibe-code-enhancement** is the monorepo for **vibeforge**: a BMAD-style agent context installer CLI that materialises portable `AGENTS.md`-centric instruction packs into Claude Code, Cursor, Gemini CLI, and other coding-agent hosts. It is **not** an end-user application; it is a developer tool and CLI package. The monorepo has one publishable package: `packages/forge-vibe-cli` (npm name `@sdk451/vibeforge`). Planning artifacts live in `_bmad-output/`.
 
 ### Tech stack
 
