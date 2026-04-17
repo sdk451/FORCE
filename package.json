@@ -6,8 +6,8 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build -w vibeforge",
-    "test": "npm run test -w vibeforge",
+    "build": "npm run build -w @sdk451/vibeforge",
+    "test": "npm run test -w @sdk451/vibeforge",
     "vibeforge": "node ./packages/forge-vibe-cli/dist/cli.js",
     "repack-forge-vibe": "npm run build && npm run test && node ./scripts/repack-forge-vibe.mjs"
   },

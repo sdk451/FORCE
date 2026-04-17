@@ -35,7 +35,7 @@ Teams want one **canonical** description of how AI coding agents should work in 
 
 | Path | Purpose |
 |------|---------|
-| **`packages/forge-vibe-cli`** | Publishable npm package **`vibeforge`** (folder name differs): CLI `vibeforge`, packs, JSON Schema |
+| **`packages/forge-vibe-cli`** | Publishable npm package **`@sdk451/vibeforge`** (folder name differs): CLI `vibeforge`, packs, JSON Schema |
 | **`packages/forge-vibe-cli/packs/`** | Core templates, stack variants (TypeScript / Python), optional UI workflow pack, stub **optional skills** |
 | **`packages/forge-vibe-cli/schemas/`** | **`install-answers.partial.schema.json`** — validates `--answers` JSON (draft-07; unknown keys rejected) |
 | **`docs/`** | Research (including coding agent instructions), growth adapter notes, FR42 placeholder |
@@ -53,19 +53,19 @@ npm run build
 npm test
 ```
 
-**Local private package (build + test + pack):** `npm run repack-forge-vibe` writes **`private-dist/vibeforge-*.tgz`** (ignored by git). See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md#local-repack-private-smoke-test).
+**Local private package (build + test + pack):** `npm run repack-forge-vibe` writes **`private-dist/sdk451-vibeforge-*.tgz`** (ignored by git). See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md#local-repack-private-smoke-test).
 
 ### Recommended install flow (published package)
 
 From your **repository root** (TTY required for prompts):
 
 ```bash
-npx vibeforge install
+npx @sdk451/vibeforge install
 ```
 
 All generated paths (**`AGENTS.md`**, **`.claude/`**, **`.cursor/`**, **`GEMINI.md`**, **`docs/`**, etc.) are **relative to the project root** — by default the directory where you run the command; override with **`--project-root <dir>`**.
 
-After **`npm install -g vibeforge`**:
+After **`npm install -g @sdk451/vibeforge`**:
 
 ```bash
 vibeforge install
@@ -166,11 +166,11 @@ Duplicate skill ids in the array are **deduped** after validation.
 
 ```bash
 npm pack packages/forge-vibe-cli
-npm install -g ./vibeforge-0.1.0.tgz
+npm install -g ./sdk451-vibeforge-0.1.0.tgz
 vibeforge install
 ```
 
-Published npm package name: **`vibeforge`** (this root `package.json` is a **private** workspace orchestrator; sources live under **`packages/forge-vibe-cli/`**).
+Published npm package name: **`@sdk451/vibeforge`** (this root `package.json` is a **private** workspace orchestrator; sources live under **`packages/forge-vibe-cli/`**).
 
 ## Documentation index
 

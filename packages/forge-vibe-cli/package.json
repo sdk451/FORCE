@@ -1,7 +1,7 @@
 {
-  "name": "vibeforge",
+  "name": "@sdk451/vibeforge",
   "version": "0.1.0",
-  "description": "BMAD-style agent context installer: npx vibeforge install (AGENTS.md + Claude, Cursor, Gemini, …)",
+  "description": "BMAD-style agent context installer: npx @sdk451/vibeforge install (AGENTS.md + Claude, Cursor, Gemini, …)",
   "keywords": [
     "agents.md",
     "claude",
@@ -42,5 +42,8 @@
   },
   "engines": {
     "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

@@ -153,7 +153,7 @@ async function readAnswersFile(file: string): Promise<Partial<InstallAnswers>> {
 async function promptInteractive(projectRoot: string): Promise<InstallAnswers> {
   if (!process.stdin.isTTY || !process.stdout.isTTY) {
     throw new Error(
-      "Interactive mode requires a terminal (TTY). From a terminal run: npx vibeforge install (or vibeforge install). For CI/scripts use: vibeforge write --answers <file> or --yes.",
+      "Interactive mode requires a terminal (TTY). From a terminal run: npx @sdk451/vibeforge install (or vibeforge install). For CI/scripts use: vibeforge write --answers <file> or --yes.",
     );
   }
 

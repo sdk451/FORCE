@@ -1,12 +1,12 @@
-# Deployment — publishing **`vibeforge`**
+# Deployment — publishing **`@sdk451/vibeforge`**
 
-This document describes how to **compile**, **verify**, **pack**, and **publish** the npm package in **`packages/forge-vibe-cli/`** (npm name **`vibeforge`**, CLI binary **`vibeforge`**).
+This document describes how to **compile**, **verify**, **pack**, and **publish** the npm package in **`packages/forge-vibe-cli/`** (npm name **`@sdk451/vibeforge`**, CLI binary **`vibeforge`**).
 
 The **publishable artifact** is only that package: its tarball includes **`dist/`**, **`packs/`**, and **`schemas/`** (see `files` in `packages/forge-vibe-cli/package.json`). The monorepo root is a private workspace orchestrator and is **not** published as a single npm package.
 
 ## Local repack (private smoke test)
 
-From the monorepo root, build, run tests, and create **`vibeforge-*.tgz`** under **`private-dist/`** (gitignored; not published):
+From the monorepo root, build, run tests, and create **`sdk451-vibeforge-*.tgz`** under **`private-dist/`** (gitignored; not published):
 
 ```bash
 npm run repack-forge-vibe
@@ -15,7 +15,7 @@ npm run repack-forge-vibe
 Install globally from that tarball:
 
 ```bash
-npm install -g ./private-dist/vibeforge-0.1.0.tgz
+npm install -g ./private-dist/sdk451-vibeforge-0.1.0.tgz
 ```
 
 Adjust the filename if **`version`** in `packages/forge-vibe-cli/package.json` changed.
@@ -25,7 +25,7 @@ Adjust the filename if **`version`** in `packages/forge-vibe-cli/package.json` c
 From a project repository root, with a terminal (TTY):
 
 ```bash
-npx vibeforge install
+npx @sdk451/vibeforge install
 ```
 
 That runs the interactive installer and writes **AGENTS.md**, host-specific rules/skills, and docs with paths **relative to the current directory** (or **`--project-root`**).
@@ -33,7 +33,7 @@ That runs the interactive installer and writes **AGENTS.md**, host-specific rule
 Global install:
 
 ```bash
-npm install -g vibeforge
+npm install -g @sdk451/vibeforge
 vibeforge install
 ```
 
@@ -53,7 +53,7 @@ npm install
 npm run build
 ```
 
-That runs `npm run build -w vibeforge`, which executes **`tsc`** and emits JavaScript into **`packages/forge-vibe-cli/dist/`**.
+That runs `npm run build -w @sdk451/vibeforge`, which executes **`tsc`** and emits JavaScript into **`packages/forge-vibe-cli/dist/`**.
 
 Alternatively, from the package directory:
 
@@ -71,7 +71,7 @@ npm run build
 npm test
 ```
 
-(from repo root; runs the **`vibeforge`** workspace tests.)
+(from repo root; runs the **`@sdk451/vibeforge`** workspace tests.)
 
 Or:
 
@@ -106,10 +106,10 @@ cd packages/forge-vibe-cli
 npm pack
 ```
 
-This produces something like **`vibeforge-0.1.0.tgz`** in the current directory (name matches **`package.json`** `name` + `version`). Install globally from the tarball:
+This produces something like **`sdk451-vibeforge-0.1.0.tgz`** in the current directory (scoped packages use **`scope-name-version.tgz`**). Install globally from the tarball:
 
 ```bash
-npm install -g ./vibeforge-0.1.0.tgz
+npm install -g ./sdk451-vibeforge-0.1.0.tgz
 vibeforge --help
 vibeforge install
 ```
@@ -144,8 +144,7 @@ npm pack packages/forge-vibe-cli
    npm publish --access public
    ```
 
-   - **`--access public`** is required for **unscoped** public packages on the first publish.
-   - For a **scoped** package name (e.g. `@org/vibeforge`), you still typically use `--access public` the first time unless the package is private.
+   - **`--access public`** is required for **scoped** packages on the public registry (this package sets **`publishConfig.access`** in **`package.json`**).
 
 4. Optional sanity check without uploading:
 
@@ -156,7 +155,7 @@ npm pack packages/forge-vibe-cli
 
 ### Registry and name checks
 
-- Ensure the **`name`** field (`vibeforge`) in `packages/forge-vibe-cli/package.json` is available (or yours) on the target registry.
+- Ensure the **`name`** field (`@sdk451/vibeforge`) in `packages/forge-vibe-cli/package.json` is available (or yours) on the target registry.
 - For a private registry or GitHub Packages, set **`publishConfig`** in that `package.json` and use the registry’s login instructions.
 
 ## After publish
@@ -164,9 +163,9 @@ npm pack packages/forge-vibe-cli
 Consumers:
 
 ```bash
-npx vibeforge install
+npx @sdk451/vibeforge install
 # or
-npm install -g vibeforge
+npm install -g @sdk451/vibeforge
 vibeforge install
 ```
 

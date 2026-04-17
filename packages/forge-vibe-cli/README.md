@@ -7,7 +7,7 @@ Vibeforge is BMAD-style **interactive installer** for versioned agent context: *
 From your repository root (terminal with TTY):
 
 ```bash
-npx vibeforge install
+npx @sdk451/vibeforge install
 ```
 
 You’ll get checkbox prompts for **target agents** (Step 1), **stack**, **eight instruction domains** (Foundation → Orchestration, aligned with **CODING_AGENT_INSTRUCTION_ELEMENTS.md**), optional skills, and packs; then files are written under the current directory (or `--project-root`). Emitted **docs/FORGE-INSTALL-PROFILE.json** and **docs/FORGE-AGENTIC-ASSEMBLY.md** support a follow-up agent pass to fill in project-specific detail. If something like **AGENTS.md** already exists and does not match the new output, you are asked before overwriting (use `**--force`** to skip that prompt).
@@ -15,7 +15,7 @@ You’ll get checkbox prompts for **target agents** (Step 1), **stack**, **eight
 ### Global CLI
 
 ```bash
-npm install -g vibeforge
+npm install -g @sdk451/vibeforge
 vibeforge install
 ```
 
